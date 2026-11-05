@@ -29,7 +29,7 @@ const SHORT={"Pulse drums + bass":"Drums","Fires, storms, volcanoes":"Fires + st
 function buildPads(){$("pads").innerHTML=PAN_KEYS.map(k=>`<div class="lrow" data-k="${k}" style="--c:${COLS[k]}">
     <button class="lname" data-k="${k}" title="Tap to mute, hold to solo"><i></i><span>${SHORT[LNAME[k]]||LNAME[k]}</span></button>
     <input type="range" class="lvl" data-lvl="${k}" min="0" max="1.5" step=".05" value="${CFG.vol[k]}" aria-label="${LNAME[k]} level">
-    <button class="lm" data-m="${k}" aria-pressed="false" aria-label="Mute ${LNAME[k]}">M</button><button class="ls" data-s="${k}" aria-pressed="false" aria-label="Solo ${LNAME[k]}">S</button></div>`).join("");
+    <button class="lm" data-m="${k}" aria-pressed="false" aria-label="Mute ${LNAME[k]}">Mute</button><button class="ls" data-s="${k}" aria-pressed="false" aria-label="Solo ${LNAME[k]}">Solo</button></div>`).join("");
   document.querySelectorAll(".lname").forEach(b=>{let tm=null,long=false;const k=b.dataset.k;
     b.addEventListener("pointerdown",()=>{long=false;tm=setTimeout(()=>{long=true;toggleSolo(k);navigator.vibrate&&navigator.vibrate(20)},450)});
     b.addEventListener("pointerup",()=>{clearTimeout(tm);if(!long)toggleMute(k)});b.addEventListener("pointerleave",()=>clearTimeout(tm));b.addEventListener("pointercancel",()=>clearTimeout(tm));b.oncontextmenu=e=>e.preventDefault()});
