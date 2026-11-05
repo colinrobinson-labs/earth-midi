@@ -27,3 +27,12 @@
   if(mq.matches&&!seen){setTimeout(()=>{if(state===0){side.classList.add("nudge");side.addEventListener("animationend",()=>side.classList.remove("nudge"),{once:true})}},2200)}
   head.addEventListener("pointerdown",()=>{try{localStorage.setItem("em5.sheetSeen","1")}catch(_){}},{once:true});
 })();
+/* Full-screen globe: map fills the screen (phone: above the Layers bar and dock). Esc or the button exits. */
+(()=>{const b=$("immBtn");if(!b)return;
+  const set=on=>{document.body.classList.toggle("imm",on);b.setAttribute("aria-pressed",on);b.setAttribute("aria-label",on?"Exit full-screen globe":"Full-screen globe");
+    requestAnimationFrame(()=>dispatchEvent(new Event("resize")))};
+  b.addEventListener("click",e=>{e.stopPropagation();set(!document.body.classList.contains("imm"))});
+  b.addEventListener("pointerdown",e=>e.stopPropagation());
+  addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("imm"))set(false)})})();
+/* Intro line: tap to expand on phones */
+(()=>{const t=document.querySelector(".tag");if(t)t.addEventListener("click",()=>t.classList.toggle("open"))})();
