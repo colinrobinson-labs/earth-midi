@@ -80,29 +80,29 @@ function ctl(k,label,type,o){const id="p_"+k.replace(".","_"),v=getP(CFG,k);
   if(type==="rng")return `<div class="pc"><label for="${id}">${label}</label><output id="${id}_o">${v}</output><input type="range" id="${id}" data-k="${k}" data-t="rng" min="${o[0]}" max="${o[1]}" step="${o[2]}" value="${v}"></div>`;
   if(type==="sel")return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select></div>`;
   return `<div class="pc ck"><input type="checkbox" id="${id}" data-k="${k}" data-t="ck" ${v?"checked":""}><label for="${id}">${label}</label></div>`}
-let TAB=0;
+let TAB=0,TABIN=true;
 function buildPro(){
-  $("ptabs").innerHTML=TABS.map(([n],i)=>`<button role="tab" aria-selected="${i===TAB}" data-i="${i}">${n}</button>`).join("");
-  document.querySelectorAll("#ptabs button").forEach(b=>b.onclick=()=>{TAB=+b.dataset.i;buildPro()});
+  $("ptabs").innerHTML=STUDIO.tabs(TABS,TAB);
+  document.querySelectorAll("#ptabs button").forEach(b=>b.onclick=()=>{if(TAB!==+b.dataset.i){TAB=+b.dataset.i;TABIN=true}buildPro()});
   const [name,groups]=TABS[TAB],g=$("pgrid");
-  if(name==="Mixer"){g.className="mixer";g.innerHTML=PAN_KEYS.map(k=>`<div class="strip" style="--c:${COLS[k]}"><b>${LNAME[k]}</b>${ctl("vol."+k,"Level","rng",[0,1.5,.05])}${ctl("send."+k,"Reverb send","rng",[0,1,.05])}
-     <div class="ms"><button data-m="${k}">M</button><button data-s="${k}">S</button></div></div>`).join("");bindMS();syncMS()}
+  if(name==="Mixer"){g.className="mixer";g.innerHTML=STUDIO.mixer();bindMS();syncMS()}
   else if(name==="Presets"){g.className="pgrid";renderPresets()}
-  else{g.className="pgrid";g.innerHTML=groups.map(([t,cs])=>`<div class="pgrp"><h5>${t}</h5>${cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join("")}</div>`).join("")}
-  g.querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,ty=el.dataset.t;
+  else{g.className="pgrid";g.innerHTML=groups.map(([t,cs],i)=>STUDIO.group(t,cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join(""),i)).join("")}
+  g.querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,ty=el.dataset.t;if(!ty)return;
     el.addEventListener("focus",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});el.addEventListener("pointerdown",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});
-    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)}})}
+    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)}});
+  if(name!=="Presets")STUDIO.enhance(g);
+  g.classList.toggle("enter",TABIN);TABIN=false}
 function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
-  g.innerHTML=`<div class="pgrp wide"><h5>Genres (switches to Pulse)</h5>${GENRES.map(([fam,L])=>`<div class="chips gchips"><span class="xs">${fam}</span>${L.map(([id,n,p])=>`<button data-genre="${id}" aria-pressed="${CFG.genre===id&&S.style==="pulse"}" title="${p.lo}–${p.hi} BPM · ${p.tip}">${n}</button>`).join("")}</div>`).join("")}</div><div class="pgrp wide"><h5>Factory</h5><div class="chips">${Object.keys(PRESETS).map(n=>`<button data-fp="${n}">${n}</button>`).join("")}<button data-reset>Reset all</button></div></div>
-   <div class="pgrp wide"><h5>Yours (saved in this browser)</h5><div class="chips">${Object.keys(UPRE).map(n=>`<span class="chip"><button data-up="${n}">${n.replace(/</g,"&lt;")}</button><button data-del="${n}" aria-label="delete">×</button></span>`).join("")||'<span class="xs">none yet</span>'}</div>
-   <div class="chips" style="margin-top:8px"><button id="bUP">＋ Save current as preset</button><button id="bEP">⬇ Export preset file</button><label class="btnlike">📂 Import preset<input type="file" accept=".json" hidden id="fPre"></label><button id="bLearn" aria-pressed="${LEARN.on}">🎛 MIDI learn ${LEARN.on?"ON":"off"}</button></div>
-   <p class="xs">MIDI learn: turn it on, touch any slider, then move a knob on your controller. Mapped: ${Object.keys(LEARN.map).length?Object.entries(LEARN.map).map(([c,k])=>`CC${c}→${k}`).join(", "):"nothing yet"}.</p></div>`;
-  g.querySelectorAll("[data-genre]").forEach(b=>b.onclick=()=>{if(S.style!=="pulse")setStyle("pulse");applyGenre(b.dataset.genre)});
-  g.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>applyPreset(PRESETS[b.dataset.fp],b.dataset.fp));g.querySelector("[data-reset]").onclick=()=>{CFG=clone(DEF);afterCFG();xs("Settings reset")};
-  g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`)});
+  g.innerHTML=STUDIO.presets();
+  g.querySelectorAll("[data-genre]").forEach(b=>b.onclick=()=>{if(S.style!=="pulse")setStyle("pulse");STUDIO.setLast(null);applyGenre(b.dataset.genre)});
+  g.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>{STUDIO.setLast(b.dataset.fp);applyPreset(PRESETS[b.dataset.fp],b.dataset.fp);const n=$("pgrid").querySelector(`[data-fp="${CSS.escape(b.dataset.fp)}"]`);n&&n.classList.add("flash")});
+  g.querySelector("[data-reset]").onclick=()=>{STUDIO.setLast(null);CFG=clone(DEF);afterCFG();xs("Settings reset")};
+  g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];STUDIO.setLast(b.dataset.up);CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`)});
   g.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteUserPreset(b.dataset.del));
   $("bUP").onclick=saveUserPreset;$("bEP").onclick=exportPreset;$("fPre").onchange=e=>{e.target.files[0]&&loadFile(e.target.files[0]);e.target.value=""};
-  $("bLearn").onclick=()=>{LEARN.on=!LEARN.on;if(LEARN.on&&!midi)initMIDI();renderPresets();xs(LEARN.on?"MIDI learn on: touch a slider, then move a knob":"MIDI learn off")}}
+  $("bLearn").onclick=()=>{LEARN.on=!LEARN.on;if(LEARN.on&&!midi)initMIDI();renderPresets();xs(LEARN.on?"MIDI learn on: touch a slider, then move a knob":"MIDI learn off")};
+  g.classList.toggle("enter",TABIN);TABIN=false}
 function applyPreset(p,n){CFG=clone(DEF);Object.entries(p).forEach(([k,v])=>{if(k==="style")setStyle(v);else if(typeof v==="object")Object.assign(CFG[k],v);else CFG[k]=v});afterCFG();xs(`Preset: ${n}`)}
 function afterCFG(soft){setRoot();if(+CFG.bpmMax<+CFG.bpmMin)CFG.bpmMax=CFG.bpmMin;if(A){A.pad.lastChord=0;A.choir.last=-99;setPadType();setChoirType();applyMaster()}
   try{localStorage.setItem("em5.cfg",JSON.stringify(CFG))}catch(_){}
