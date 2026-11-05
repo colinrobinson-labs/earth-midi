@@ -23,11 +23,20 @@ function bindMS(){document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=
 function toggleMute(k){S.mute[k]=!S.mute[k];syncMS()}
 function toggleSolo(k){S.solo=S.solo===k?null:k;syncMS()}
 function syncMS(){document.querySelectorAll("[data-m]").forEach(b=>b.setAttribute("aria-pressed",S.mute[b.dataset.m]));document.querySelectorAll("[data-s]").forEach(b=>b.setAttribute("aria-pressed",S.solo===b.dataset.s));
-  document.querySelectorAll(".pad").forEach(b=>{const k=b.dataset.k;b.classList.toggle("off",muted(k));b.classList.toggle("solo",S.solo===k)});document.querySelectorAll(".ch").forEach(c=>c.classList.toggle("dim",muted(c.id.slice(1))))}
-function buildPads(){$("pads").innerHTML=PAN_KEYS.map(k=>`<button class="pad" data-k="${k}" style="--c:${COLS[k]}"><i></i>${LNAME[k].replace("Pulse drums + bass","Drums").replace("Fires, storms, volcanoes","Fires+storms")}</button>`).join("");
-  document.querySelectorAll(".pad").forEach(b=>{let tm=null,long=false;const k=b.dataset.k;
+  document.querySelectorAll(".lrow").forEach(b=>{const k=b.dataset.k;b.classList.toggle("off",muted(k));b.classList.toggle("solo",S.solo===k)});layerCount();document.querySelectorAll(".ch").forEach(c=>c.classList.toggle("dim",muted(c.id.slice(1))))}
+/* ---------- layers: one row per sound (desktop side panel, phone drawer) ---------- */
+const SHORT={"Pulse drums + bass":"Drums","Fires, storms, volcanoes":"Fires + storms"};
+function buildPads(){$("pads").innerHTML=PAN_KEYS.map(k=>`<div class="lrow" data-k="${k}" style="--c:${COLS[k]}">
+    <button class="lname" data-k="${k}" title="Tap to mute, hold to solo"><i></i><span>${SHORT[LNAME[k]]||LNAME[k]}</span></button>
+    <input type="range" class="lvl" data-lvl="${k}" min="0" max="1.5" step=".05" value="${CFG.vol[k]}" aria-label="${LNAME[k]} level">
+    <button class="lm" data-m="${k}" aria-pressed="false" aria-label="Mute ${LNAME[k]}">M</button><button class="ls" data-s="${k}" aria-pressed="false" aria-label="Solo ${LNAME[k]}">S</button></div>`).join("");
+  document.querySelectorAll(".lname").forEach(b=>{let tm=null,long=false;const k=b.dataset.k;
     b.addEventListener("pointerdown",()=>{long=false;tm=setTimeout(()=>{long=true;toggleSolo(k);navigator.vibrate&&navigator.vibrate(20)},450)});
-    b.addEventListener("pointerup",()=>{clearTimeout(tm);if(!long)toggleMute(k)});b.addEventListener("pointerleave",()=>clearTimeout(tm));b.oncontextmenu=e=>e.preventDefault()})}
+    b.addEventListener("pointerup",()=>{clearTimeout(tm);if(!long)toggleMute(k)});b.addEventListener("pointerleave",()=>clearTimeout(tm));b.addEventListener("pointercancel",()=>clearTimeout(tm));b.oncontextmenu=e=>e.preventDefault()});
+  document.querySelectorAll(".lvl").forEach(el=>el.oninput=()=>{const k=el.dataset.lvl;setP(CFG,"vol."+k,+el.value);const m=$("p_vol_"+k);if(m){m.value=el.value;const o=$("p_vol_"+k+"_o");if(o)o.textContent=el.value}afterCFG(true)});
+  bindMS()}
+function syncLevels(){document.querySelectorAll(".lvl").forEach(el=>{const v=CFG.vol[el.dataset.lvl];if(document.activeElement!==el&&+el.value!==+v)el.value=v})}
+function layerCount(){const on=PAN_KEYS.filter(k=>!muted(k)).length,c=$("layCount");if(c)c.textContent=S.solo?`solo: ${SHORT[LNAME[S.solo]]||LNAME[S.solo]}`:`${on} of ${PAN_KEYS.length} on`}
 
 /* ---------- producer panel ---------- */
 const SEL=(a)=>a;
@@ -93,6 +102,7 @@ function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
 function applyPreset(p,n){CFG=clone(DEF);Object.entries(p).forEach(([k,v])=>{if(k==="style")setStyle(v);else if(typeof v==="object")Object.assign(CFG[k],v);else CFG[k]=v});afterCFG();xs(`Preset: ${n}`)}
 function afterCFG(soft){setRoot();if(+CFG.bpmMax<+CFG.bpmMin)CFG.bpmMax=CFG.bpmMin;if(A){A.pad.lastChord=0;A.choir.last=-99;setPadType();setChoirType();applyMaster()}
   try{localStorage.setItem("em5.cfg",JSON.stringify(CFG))}catch(_){}
+  syncLevels();
   if(!soft){buildPro();buildCards();syncMS()}document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===CFG.mapView));document.body.classList.toggle("flat",CFG.mapView==="flat")}
 function setStyle(v){S.style=v;document.querySelectorAll("[data-style]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.style===v));seq={next:0,step:0,fill:false}}
 
