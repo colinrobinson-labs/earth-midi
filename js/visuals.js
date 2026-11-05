@@ -14,10 +14,10 @@ for(let i=0;i<260;i++)STARS.push([Math.random(),Math.random(),Math.random()*1.2+
 /* projection: flat equirectangular or orthographic globe */
 function proj(lon,lat){const W=cv.width,H=cv.height;
   if(CFG.mapView==="flat"){return [(lon+180)/360*W,(90-lat)/180*H,1]}
-  const R=Math.min(W,H)*.46*VIEW.zoom,cxp=W/2,cyp=H/2,l=(lon-VIEW.lon)*D2R,p=lat*D2R,p0=VIEW.lat*D2R;
+  const R=Math.min(W,H)*.46*VIEW.zoom*(1+(window.BEATG||0)),cxp=W/2,cyp=H/2,l=(lon-VIEW.lon)*D2R,p=lat*D2R,p0=VIEW.lat*D2R;
   const cosc=Math.sin(p0)*Math.sin(p)+Math.cos(p0)*Math.cos(p)*Math.cos(l);
   return [cxp+R*Math.cos(p)*Math.sin(l),cyp-R*(Math.cos(p0)*Math.sin(p)-Math.sin(p0)*Math.cos(p)*Math.cos(l)),cosc]}
-const globeR=()=>Math.min(cv.width,cv.height)*.46*VIEW.zoom;
+const globeR=()=>Math.min(cv.width,cv.height)*.46*VIEW.zoom*(1+(window.BEATG||0)); // BEATG: the globe breathing with the beat (js/beat.js)
 function smallCircle(lat0,lon0,ang,n=72){const out=[],p1=lat0*D2R,d=ang*D2R;for(let i=0;i<=n;i++){const th=i/n*2*Math.PI,p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(th)),l2=lon0+Math.atan2(Math.sin(th)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2))/D2R;out.push([((l2+540)%360)-180,p2/D2R])}return out}
 function strokePath(pts){cx.beginPath();let pen=false,prev=null;for(const [lo,la] of pts){const [x,y,v]=proj(lo,la);const brk=!v||v<0||(CFG.mapView==="flat"&&prev!==null&&Math.abs(lo-prev)>180);if(brk){pen=false}else{pen?cx.lineTo(x,y):cx.moveTo(x,y);pen=true}prev=lo}cx.stroke()}
 let parts=[];S.flashes=[];
@@ -32,7 +32,7 @@ function drawMap(now){
   cx.strokeStyle=bz<-5?"rgba(255,120,90,.45)":"rgba(255,210,120,.3)";cx.lineWidth=DPR;const dir=globe?(((sp.lon-VIEW.lon+540)%360-180)>0?-1:1):1;
   parts.forEach(p=>{const v=spd/400*2.2*DPR*p.l;p.x+=v*dir;if(p.x>W)p.x=0;if(p.x<0)p.x=W;cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(p.x-v*6*dir,p.y);cx.stroke()});
   if(globe){const R=globeR(),gx=W/2,gy=H/2,rms=S.rms||0;
-    const at=cx.createRadialGradient(gx,gy,R*.95,gx,gy,R*1.18+rms*R*.3);at.addColorStop(0,"rgba(60,200,255,.35)");at.addColorStop(.4,`rgba(60,160,255,${.12+rms*.6})`);at.addColorStop(1,"rgba(60,160,255,0)");cx.fillStyle=at;cx.beginPath();cx.arc(gx,gy,R*1.3,0,7);cx.fill();
+    const at=cx.createRadialGradient(gx,gy,R*.95,gx,gy,R*1.18+rms*R*.3);at.addColorStop(0,"rgba(60,200,255,.35)");at.addColorStop(.4,`rgba(60,160,255,${.12+rms*.6+(window.BEATG||0)*9})`);at.addColorStop(1,"rgba(60,160,255,0)");cx.fillStyle=at;cx.beginPath();cx.arc(gx,gy,R*1.3,0,7);cx.fill();
     const oc=cx.createRadialGradient(gx-R*.35,gy-R*.35,R*.1,gx,gy,R);oc.addColorStop(0,"#0f2233");oc.addColorStop(1,"#060b12");cx.fillStyle=oc;cx.beginPath();cx.arc(gx,gy,R,0,7);cx.fill();
     // graticule
     cx.strokeStyle="rgba(120,170,220,.08)";cx.lineWidth=DPR*.7;for(let l=-150;l<=180;l+=30){const pts=[];for(let la=-90;la<=90;la+=4)pts.push([l,la]);strokePath(pts)}for(let la=-60;la<=60;la+=30){const pts=[];for(let l=-180;l<=180;l+=4)pts.push([l,la]);strokePath(pts)}

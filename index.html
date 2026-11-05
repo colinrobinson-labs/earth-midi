@@ -54,6 +54,9 @@ h1 .sp{display:inline-block;width:.24em}
 #title.flash{animation:flash .9s ease-out}
 @keyframes flash{0%{filter:brightness(1)}12%{filter:brightness(1.9) saturate(1.3)}100%{filter:brightness(1)}}
 @media (hover:hover){#title .L:hover{translate:0 -.04em}}
+/* beat bounce (js/beat.js): the whole title lifts and swells a touch on each kick; letters keep their own motion */
+#title{transform:translateY(calc(var(--bt,0)*-.03em)) scale(calc(1 + var(--bt,0)*.022));transform-origin:50% 85%}
+@media (prefers-reduced-motion:reduce){#title{transform:none}}
 .immb{position:absolute;right:12px;bottom:34px;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(11,16,22,.75);border:1px solid var(--line2);color:var(--fg);z-index:3}
 .immb .ic{width:18px;height:18px;margin:0}.immb .co{display:none}
 body.imm .immb .ex{display:none}body.imm .immb .co{display:inline}
@@ -573,8 +576,8 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="js/core.js?v=19"></script>
-<script src="js/audio.js?v=19"></script>
-<script src="js/visuals.js?v=19"></script>
+<script src="js/audio.js?v=20"></script>
+<script src="js/visuals.js?v=20"></script>
 <script src="js/weather.js?v=18"></script>
 <script src="js/groove.js?v=1"></script>
 <script src="js/focus.js?v=19"></script>
@@ -587,5 +590,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <script src="js/record.js?v=3"></script>
 <script src="js/welcome.js?v=2"></script>
 <script src="js/procta.js?v=1"></script>
+<script src="js/beat.js?v=1"></script>
+<script src="js/home.js?v=1"></script>
 </body>
 </html>

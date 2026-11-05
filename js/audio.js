@@ -230,7 +230,7 @@ function schedulePulse(){
   if(seq.next<c)seq.next=c+.05;
   while(seq.next<c+.15){const s16=seq.step%16,hum=CFG.humanize*(Math.random()-.5)*.02,tm=seq.next+(s16%2===1?sw*st:0)+hum;
     const fillNow=seq.fill&&s16>=12,K=G.k[s16],Sn=G.s[s16],H=G.h[s16],B=G.b[s16];
-    if(K==="x"||K==="g"||(fillNow&&s16%2===0)){const v=fillNow?.8:K==="g"?.5:1;drum("k",tm,v*TR);midiNote(CH("d"),36,Math.round(110*v),80)}
+    if(K==="x"||K==="g"||(fillNow&&s16%2===0)){const v=fillNow?.8:K==="g"?.5:1;drum("k",tm,v*TR);midiNote(CH("d"),36,Math.round(110*v),80);if(window.onKick)onKick(tm,v)}
     if(Sn==="x"){drum("s",tm,TR);midiNote(CH("d"),38,100,80)}else if(Sn==="r"){drum("s",tm,.32);midiNote(CH("d"),37,70,60)}else if(Sn==="g"||(ghost&&Math.random()<ghost)){drum("s",tm,.25);midiNote(CH("d"),38,35,40)}
     // hats: the groove sets where, the last hour's quake count sets how many land; a busy hour adds extra 16ths
     if(H&&H!=="."){if(Math.random()<hatP){const op=H==="o",v=(H==="-"?.35+Math.random()*.15:.6+Math.random()*.4)*(K==="x"?.6:1)*(op?.8:1);drum(op?"o":"h",tm,v*TR);midiNote(CH("d"),op?46:42,Math.round(v*90),40)}}
