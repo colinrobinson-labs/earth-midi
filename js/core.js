@@ -33,7 +33,7 @@ const DEF={
   vol:{q:1,s:1,o:1,x:1,w:1,t:1,c:1,r:1,i:.8,e:.9,g:.9,a:1,u:.9},
   send:{q:.7,s:.5,o:.4,x:.5,w:.45,t:.45,c:.45,r:.12,i:.55,e:.4,g:.5,a:.4,u:.65},
   ch:{q:1,s:2,o:3,x:4,w:5,t:6,c:7,m:8,b:9,d:10,i:11,e:12,g:13,a:14,u:15},
-  clock:false,loop:false,playAlong:false,mapView:"globe",spin:true
+  clock:false,loop:false,playAlong:false,mapView:"globe",spin:true,weather:true
 };
 const clone=o=>JSON.parse(JSON.stringify(o));
 function mergeCFG(src){const c=clone(DEF);if(!src)return c;for(const k in src){if(c[k]&&typeof c[k]==="object"&&!Array.isArray(c[k]))Object.assign(c[k],src[k]);else if(k in c)c[k]=src[k]}return c}
