@@ -32,13 +32,18 @@ const FOCUS={
   weighted(pts,val){let s=0,w=0;for(const o of pts){const v=val(o);if(!Number.isFinite(v))continue;const k=Math.pow(this.near(o.lat,o.lon),2)+.02;s+=v*k;w+=k}return w?s/w:NaN},
   facing:null};
 
-/* ---------- regional readings (full mode): you hear the weather you are looking at ---------- */
-function viewOcean(t){if(!FOCUS.full()||!S.ocean.length)return oceanAt(t);const h=FOCUS.weighted(S.ocean,o=>at(o.ht,o.hist,t)),p=FOCUS.weighted(S.ocean,o=>o.p);const g=oceanAt(t);return {h:Number.isFinite(h)?h:g.h,p:Number.isFinite(p)?p:g.p}}
-function viewJet(t){if(!FOCUS.full()||!S.jet.length)return jetAvg(t);const v=FOCUS.weighted(S.jet,p=>tsAt(p,t));return Number.isFinite(v)?v:jetAvg(t)}
-function viewAir(t){const g=airAt(t);if(!FOCUS.full()||!S.air.length)return g;const pm=FOCUS.weighted(S.air,o=>at(o.t,o.pm,t)),uv=FOCUS.weighted(S.air,o=>at(o.t,o.uv,t));return Object.assign({},g,{pm:Number.isFinite(pm)?pm:g.pm,uv:Number.isFinite(uv)?uv:g.uv})}
-function viewTide(){if(!S.tides.length)return null;if(!FOCUS.full())return S.tides[0];return S.tides.reduce((a,o)=>FOCUS.near(o.lat,o.lon)>FOCUS.near(a.lat,a.lon)?o:a)}
-/* events: each active fire / volcano / storm counts by how much it faces you */
-function viewCount(list){if(!FOCUS.on())return list.length;const m=VIEWMIX[FOCUS.mode()];return list.reduce((a,e)=>a+lerp(m.floor,1,FOCUS.near(e.lat,e.lon)),0)}
+/* ---------- regional readings (full mode): you hear the weather you are looking at ----------
+   A layer with a zone (js/zones.js) only averages the sensors inside its zone, in any view mode. */
+function zAvg(k,pts,val){if(!ZN.has(k))return FOCUS.weighted(pts,val);const f=FOCUS.full();let s=0,w=0;
+  for(const o of pts){const v=val(o);if(!Number.isFinite(v))continue;const zw=ZN.w(k,o.lat,o.lon);if(zw<=.001)continue;const q=zw*(f?Math.pow(FOCUS.near(o.lat,o.lon),2)+.02:1);s+=v*q;w+=q}return w?s/w:NaN}
+const zOff=k=>!FOCUS.full()&&!ZN.has(k);
+function viewOcean(t){if(zOff("o")||!S.ocean.length)return oceanAt(t);const h=zAvg("o",S.ocean,o=>at(o.ht,o.hist,t)),p=zAvg("o",S.ocean,o=>o.p);const g=oceanAt(t);return {h:Number.isFinite(h)?h:g.h,p:Number.isFinite(p)?p:g.p}}
+function viewJet(t){if(zOff("w")||!S.jet.length)return jetAvg(t);const v=zAvg("w",S.jet,p=>tsAt(p,t));return Number.isFinite(v)?v:jetAvg(t)}
+function viewAir(t){const g=airAt(t);if(zOff("a")||!S.air.length)return g;const pm=zAvg("a",S.air,o=>at(o.t,o.pm,t)),uv=zAvg("a",S.air,o=>at(o.t,o.uv,t));return Object.assign({},g,{pm:Number.isFinite(pm)?pm:g.pm,uv:Number.isFinite(uv)?uv:g.uv})}
+function viewTide(){if(!S.tides.length)return null;let L=S.tides;if(ZN.has("t")){const inz=L.filter(o=>ZN.w("t",o.lat,o.lon)>.02);if(inz.length)L=inz;if(!FOCUS.full())return L.reduce((a,o)=>ZN.w("t",o.lat,o.lon)>ZN.w("t",a.lat,a.lon)?o:a)}
+  if(!FOCUS.full())return L[0];return L.reduce((a,o)=>FOCUS.near(o.lat,o.lon)>FOCUS.near(a.lat,a.lon)?o:a)}
+/* events: each active fire / volcano / storm counts by how much it faces you (and whether it is inside the zone) */
+function viewCount(list){const z=ZN.has("e");if(!FOCUS.on()&&!z)return list.length;const m=VIEWMIX[FOCUS.mode()];return list.reduce((a,e)=>a+(z?ZN.w("e",e.lat,e.lon):1)*lerp(m.floor,1,FOCUS.near(e.lat,e.lon)),0)}
 
 /* ---------- motion: angular velocity of the globe, whoever moves it ---------- */
 const MOTION={vlon:0,vlat:0,speed:0,energy:0,dir:0,tilt:0,push:0,brake:0,throw:0,inertia:null,samples:[],last:null,label:"",labelT:0};
