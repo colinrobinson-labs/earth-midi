@@ -58,7 +58,7 @@
   <button class="wlc-x" data-c="silent" aria-label="Close and enter silently">×</button>
   <h2 class="wlc-h" id="wlcH" aria-label="Earth MIDI">${title}</h2>
   <p class="wlc-p">The planet, played live. Earthquakes, solar wind, ocean swell, tides, the ISS and more, turned into sound and MIDI as they happen.</p>
-  <p class="wlc-fine">Every note is a real sensor reading run through a fixed formula. Nothing here is AI-generated.</p>
+  <p class="wlc-fine">AI helped write this site's code. It doesn't make the music. Every note comes straight from a live sensor reading, run through the same rule every time, so the same quake always makes the same sound.</p>
   <p class="wlc-live" id="wlcLive" aria-live="polite"></p>
   <div class="wlc-opts">
     <button class="wlc-o" data-c="ambient" style="--oc:var(--o)"><span class="wlc-g g-amb" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Ambient</b><small>Slow and spacious. Every event rings out on its own.</small></span><span class="go-ar" aria-hidden="true">→</span></button>
