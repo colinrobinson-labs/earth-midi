@@ -128,6 +128,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .wxl .wxk .c{background:#eef4fb}.wxl .wxk .r{background:#4ac8ff}.wxl .wxk .h{background:#e85cff}
 .wxl .wxs{opacity:.8}.wxl .wxh{color:var(--fg);margin-top:2px}.wxl .wxh:empty{display:none}
 .hud2 .seg button{font-size:11.5px;padding:7px 12px;background:rgba(11,16,22,.75)}.hud2 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.hud2{right:52px;flex-wrap:wrap}.vmix{align-items:center;background:rgba(11,16,22,.75);order:5}.vmix .vlbl{font:10.5px var(--mono);color:var(--mute);padding:0 4px 0 10px;white-space:nowrap}.hud2 .vmix button{padding:7px 10px}.vmix.dim{opacity:.4}
+#motionLbl{position:absolute;bottom:52px;left:12px;font:11px var(--mono);color:var(--fg);background:rgba(5,7,10,.7);border:1px solid var(--line);border-radius:8px;padding:5px 9px;opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s;pointer-events:none;max-width:calc(100% - 24px)}#motionLbl.on{opacity:1;transform:none}.hud2 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 #bpmLbl{font:600 12px var(--mono);color:var(--fg);text-shadow:0 0 12px var(--q)}
 #clock{font:600 13px var(--mono);color:var(--fg)}
 .prog{position:absolute;left:0;top:0;height:2px;background:linear-gradient(90deg,var(--q),var(--s));width:0;box-shadow:0 0 12px var(--q);z-index:2}
@@ -270,6 +272,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  #map{aspect-ratio:1/1}
  body.flat #map{aspect-ratio:2/1}
  .hud{font-size:10px}.hud .hint2{display:none}
+ .vmix .vlbl{display:inline;padding-left:9px}.hud2 .vmix button{padding:7px 9px}#motionLbl{bottom:78px}
  #tl{height:58px}
  .main{gap:10px}
  :root{--peek:64px}
@@ -448,9 +451,9 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
   <div class="prog" id="prog"></div>
   <div class="mapwrap">
     <canvas id="map"></canvas>
-    <div class="hud2"><div class="seg"><button data-view="globe" aria-pressed="true">Globe</button><button data-view="flat" aria-pressed="false">Flat</button></div><div class="seg"><button id="wxBtn" aria-pressed="true" title="Live weather (w)">Weather</button></div><span id="bpmLbl"></span></div>
+    <div class="hud2"><div class="seg"><button data-view="globe" aria-pressed="true">Globe</button><button data-view="flat" aria-pressed="false">Flat</button></div><div class="seg"><button id="wxBtn" aria-pressed="true" title="Live weather (w)">Weather</button></div><div class="seg vmix" id="vmixWrap" title="How much the view shapes the sound"><span class="vlbl">Sound follows view</span><button data-vmix="off" aria-pressed="false">Off</button><button data-vmix="focus" aria-pressed="false">Focus</button><button data-vmix="full" aria-pressed="false">Full</button></div><span id="bpmLbl"></span></div>
     <div class="wxl" id="wxl" hidden></div>
-    <div class="hud"><span class="clk"><b id="clock">--:--:-- UTC</b> · <span id="modeLbl">idle</span></span><span class="hint2">drag to spin · tap anywhere to hear its weather</span></div>
+    <div id="motionLbl" aria-live="polite"></div><div class="hud"><span class="clk"><b id="clock">--:--:-- UTC</b> · <span id="modeLbl">idle</span></span><span class="hint2">drag or flick to spin · tap anywhere to hear its weather</span></div>
     <div class="tip" id="tip"></div>
   </div>
   <canvas id="tl" aria-label="24 hour timeline, tap to jump"></canvas>
@@ -540,14 +543,15 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="js/core.js?v=14"></script>
-<script src="js/audio.js?v=14"></script>
-<script src="js/visuals.js?v=14"></script>
-<script src="js/weather.js?v=14"></script>
-<script src="js/io.js?v=14"></script>
+<script src="js/core.js?v=16"></script>
+<script src="js/audio.js?v=16"></script>
+<script src="js/visuals.js?v=16"></script>
+<script src="js/weather.js?v=16"></script>
+<script src="js/focus.js?v=16"></script>
+<script src="js/io.js?v=16"></script>
 <script src="js/god.js?v=3"></script>
-<script src="js/ui.js?v=14"></script>
-<script src="js/sheet.js?v=14"></script>
+<script src="js/ui.js?v=16"></script>
+<script src="js/sheet.js?v=16"></script>
 <script src="js/record.js?v=2"></script>
 </body>
 </html>

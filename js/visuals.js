@@ -23,7 +23,7 @@ function strokePath(pts){cx.beginPath();let pen=false,prev=null;for(const [lo,la
 let parts=[];S.flashes=[];
 function drawMap(now){
   const W=cv.width,H=cv.height,t=realNow(),globe=CFG.mapView!=="flat";cx.clearRect(0,0,W,H);
-  if(globe&&CFG.spin&&!VIEW.drag&&now-VIEW.lastInteract>4000)VIEW.lon=((VIEW.lon+.03+540)%360)-180;
+  if(globe&&CFG.spin&&!VIEW.drag&&!(typeof MOTION!=="undefined"&&MOTION.inertia)&&now-VIEW.lastInteract>4000)VIEW.lon=((VIEW.lon+.03+540)%360)-180;
   const sp=sunPos(t),c=S.cur||{};
   // solar wind particles (background): count from density, speed from wind speed, colour from Bz
   const spd=Number.isFinite(c.sp)?c.sp:400,den=Number.isFinite(c.de)?c.de:4,bz=Number.isFinite(c.bz)?c.bz:0;
@@ -227,7 +227,7 @@ function logEv(txt,k,q,tr){const real=q?q.time:realNow();if(S.on&&EVENTS.length<
 
 let lastFrame=0;
 function frame(now){
-  try{drawMap(now);drawTimeline();if(now-lastFrame>(IS_MOBILE?120:60)){drawSparks();lastFrame=now}drawRoll(now);const rms=drawScope();S.rms=rms||0;drawMeters();drawTitle();
+  try{drawMap(now);if(window.drawFocus)drawFocus(now);drawTimeline();if(now-lastFrame>(IS_MOBILE?120:60)){drawSparks();lastFrame=now}drawRoll(now);const rms=drawScope();S.rms=rms||0;drawMeters();drawTitle();
   const glow=clamp((rms||0)*6+S.hit.q*.6,0,1);document.documentElement.style.setProperty("--glow",glow.toFixed(3));
   [...PAN_KEYS,"m"].forEach(k=>{S.hit[k]*=.93;const el=$("c"+k);if(el)el.style.setProperty("--hit",S.hit[k].toFixed(3))});
   if($("mini"))$("mini").style.setProperty("--lvl",clamp((rms||0)*5,0,1).toFixed(3))}catch(err){console.error(err)}
