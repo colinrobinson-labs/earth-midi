@@ -44,9 +44,21 @@ const INST={q:[["bell","FM bell"],["marimba","Marimba"],["glass","Glass"],["gong
 const TABS=[
  ["Sound",[
   ["Key + scale",[["key","Key","sel",KEYS.map((k,i)=>[i,k])],["oct","Octave shift","rng",-2,2,1],["scale","Scale","sel",[["auto","Auto (from Kp storm level)"],["majpent","Major pentatonic"],["minpent","Minor pentatonic"],["ionian","Major"],["aeolian","Natural minor"],["dorian","Dorian"],["lydian","Lydian"],["mixo","Mixolydian"],["phrygian","Phrygian"],["harmmin","Harmonic minor"],["blues","Blues"],["hirajoshi","Hirajoshi"],["insen","In-sen"],["pelog","Pelog-ish"],["wholetone","Whole tone"],["chromatic","Chromatic"]]],["tune","Tuning A4 (Hz)","rng",415,466,1]]],
-  ["Harmony",[["prog","Pad progression","sel",[["classic","I–vi–IV–V shape"],["minor","Minor turn"],["modal","Modal shift"],["rising","Rising steps"],["drone","Single drone chord"],["kp","Follows Kp (calm/stormy)"]]],["chordEvery","Chord change every (s)","rng",2,30,1],["coct","Planet chord octave","rng",-2,1,1]]],
-  ["Instruments",[["inst.q","Earthquakes","sel",INST.q],["inst.s","Solar pad","sel",INST.s],["inst.c","Planet chord","sel",INST.c],["inst.i","Space station","sel",INST.i],["inst.u","Sunrise chorus","sel",INST.u]]],
-  ["Earthquakes",[["mmin","Min magnitude","rng",0,6,.5],["region","Region","sel",[["world","Whole planet"],["ring","Pacific Ring of Fire"],["americas","Americas"],["asia","Asia-Pacific"],["japan","Japan"],["indo","Indonesia"],["andes","Andes"],["eurmed","Europe, Med & Middle East"],["alaska","Alaska"],["california","California"]]],["qpitch","Pitch from","sel",[["depth","Depth (shallow = high)"],["lat","Latitude (north = high)"],["mag","Magnitude (big = high)"]]],["qpan","Pan from","sel",[["lon","Longitude"],["lat","Latitude"]]],["vcurve","Velocity curve","sel",[["linear","Linear"],["soft","Soft"],["hard","Hard"]]],["velMin","Velocity floor","rng",1,100,1],["velMax","Velocity ceiling","rng",40,127,1],["len","Note length ×","rng",.25,4,.25],["dens","Max notes / sec","rng",1,30,1],["qoct","Quake octave","rng",-2,2,1]]]]],
+  ["Harmony",[["prog","Pad progression","sel",[["classic","I–vi–IV–V shape"],["minor","Minor turn"],["modal","Modal shift"],["rising","Rising steps"],["drone","Single drone chord"],["kp","Follows Kp (calm/stormy)"]]],["chordEvery","Chord change every (s)","rng",2,30,1]]],
+  ["Earthquakes",[["inst.q","Instrument","sel",INST.q],["mmin","Min magnitude","rng",0,6,.5],["region","Region","sel",[["world","Whole planet"],["ring","Pacific Ring of Fire"],["americas","Americas"],["asia","Asia-Pacific"],["japan","Japan"],["indo","Indonesia"],["andes","Andes"],["eurmed","Europe, Med & Middle East"],["alaska","Alaska"],["california","California"]]],["qpitch","Pitch from","sel",[["depth","Depth (shallow = high)"],["lat","Latitude (north = high)"],["mag","Magnitude (big = high)"]]],["qpan","Pan from","sel",[["lon","Longitude"],["lat","Latitude"]]],["vcurve","Velocity curve","sel",[["linear","Linear"],["soft","Soft"],["hard","Hard"]]],["velMin","Velocity floor","rng",1,100,1],["velMax","Velocity ceiling","rng",40,127,1],["len","Note length ×","rng",.25,4,.25],["dens","Max notes / sec","rng",1,30,1],["qoct","Quake octave","rng",-2,2,1]],"q"],
+  ["Solar wind",[["inst.s","Pad","sel",INST.s]],"s"],
+  ["Ocean swell",[["snd.oTone","Surf colour (dark ↔ bright)","rng",-1,1,.1],["snd.oQ","Surf focus (wide wash ↔ narrow hiss)","rng",.3,4,.1]],"o"],
+  ["Solar X-rays",[["snd.xBell","Flare bell","sel",[["triangle","Soft"],["sine","Pure"],["square","Hollow"],["sawtooth","Bright"]]],["snd.xOct","Shimmer register (octaves)","rng",-1,1,1]],"x"],
+  ["Jet stream",[["snd.wTone","Wind pitch (octaves)","rng",-1,1,.1],["snd.wQ","Breathy ↔ whistling","rng",.4,2.5,.1]],"w"],
+  ["Tides",[["snd.tWave","Drone","sel",[["sine","Sine"],["triangle","Warm"],["square","Hollow"],["sawtooth","Buzz"]]],["snd.tOct","Register (octaves)","rng",-1,1,1],["snd.tLp","Drone filter (Hz)","rng",150,2000,10]],"t"],
+  ["Planet chord",[["inst.c","Voice","sel",INST.c],["coct","Octave","rng",-2,1,1]],"c"],
+  ["Space station",[["inst.i","Pluck","sel",INST.i]],"i"],
+  ["Fires, storms, volcanoes",[["snd.eHp","Fire crackle brightness (Hz)","rng",400,6000,50],["snd.eOct","Volcano drone register (octaves)","rng",-1,1,1]],"e"],
+  ["Magnetosphere",[["snd.gMode","Storm drone","sel",[["metal","Metallic (follows Dst)"],["fifth","Fifth"],["octave","Octave"]]],["snd.gOct","Proton glitter register (octaves)","rng",-1,1,1]],"g"],
+  ["Air",[["snd.aTone","Haze colour (dark ↔ bright)","rng",-1,1,.1]],"a"],
+  ["Sunrise chorus",[["inst.u","Chime","sel",INST.u]],"u"],
+  ["Pulse drums + bass",[["snd.rKick","Kick tune (semitones)","rng",-7,7,1],["snd.rDec","Kick length ×","rng",.4,2,.1],["snd.rBass","Bass wave","sel",[["sawtooth","Saw"],["square","Square"],["sine","Sub sine"],["triangle","Soft"]]],["snd.rTone","Bass brightness (octaves)","rng",-1,1,.1]],"r"],
+  ["Moon",[["_","The moon isn't a voice of its own. Its illumination sets the reverb size whenever Master → Reverb level is at −1, so a full moon plays in a bigger room. Pick the room itself on Master.","info"]],"m"]]],
  ["Mixer",null],
  ["Rhythm",[
   ["Genre",[["genre","Genre + style","selg",[["custom","Your own (set it below)"]],GENRES],["tempoSrc","Tempo follows","sel",Object.entries(TSRC).map(([k,v])=>[k,v.n])],["tempoArea","Measured","sel",[["world","Across the whole planet"],["view","Where the globe is facing"]]],["note","tempoNow"]]],
@@ -76,6 +88,7 @@ const PRESETS={
 };
 function ctl(k,label,type,o){const id="p_"+k.replace(".","_"),v=getP(CFG,k);
   if(k==="note")return `<p class="xs tnow" id="${label}" aria-live="off"></p>`;
+  if(type==="info")return `<p class="xs linfo">${label}</p>`;
   if(type==="selg"){const g=GENRE_BY[v];return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${a===v?"selected":""}>${b}</option>`).join("")}${o[1].map(([fam,L])=>`<optgroup label="${fam}">${L.map(([a,b,p])=>`<option value="${a}" ${a===v?"selected":""}>${b} · ${p.lo}–${p.hi}</option>`).join("")}</optgroup>`).join("")}</select>${g?`<small class="xs gtip">${g.tip}</small>`:""}</div>`}
   if(type==="rng")return `<div class="pc"><label for="${id}">${label}</label><output id="${id}_o">${v}</output><input type="range" id="${id}" data-k="${k}" data-t="rng" min="${o[0]}" max="${o[1]}" step="${o[2]}" value="${v}"></div>`;
   if(type==="sel")return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select></div>`;
@@ -87,11 +100,11 @@ function buildPro(){
   const [name,groups]=TABS[TAB],g=$("pgrid");
   if(name==="Mixer"){g.className="mixer";g.innerHTML=STUDIO.mixer();bindMS();syncMS()}
   else if(name==="Presets"){g.className="pgrid";renderPresets()}
-  else{g.className="pgrid";g.innerHTML=groups.map(([t,cs],i)=>STUDIO.group(t,cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join(""),i)).join("")}
+  else{g.className="pgrid";g.innerHTML=groups.map(([t,cs,lk],i)=>STUDIO.group(t,cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join(""),i,lk)).join("")}
   g.querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,ty=el.dataset.t;if(!ty)return;
     el.addEventListener("focus",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});el.addEventListener("pointerdown",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});
     el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)};
-    if(ty==="sel"||(ty==="rng"&&/^(oct|tune|coct|qoct)$/.test(k)))el.addEventListener("change",()=>AUD.pick(k))});
+    if(ty==="sel"||(ty==="rng"&&/^(oct|tune|coct|qoct|snd\.)/.test(k)))el.addEventListener("change",()=>AUD.pick(k))});
   if(name!=="Presets")STUDIO.enhance(g);
   g.classList.toggle("enter",TABIN);TABIN=false}
 function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;

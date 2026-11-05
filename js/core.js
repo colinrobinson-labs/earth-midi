@@ -28,6 +28,8 @@ const DEF={
   key:2,oct:0,scale:"auto",tune:440,prog:"classic",chordEvery:8,
   qpitch:"depth",qpan:"lon",mmin:0,region:"world",vcurve:"linear",velMin:20,velMax:127,len:1,dens:12,qoct:0,quant:false,humanize:0,
   inst:{q:"bell",s:"saw",c:"voices",i:"pluck",u:"chime"},
+  // per-layer sound shaping (Producer → Sound). 0 / 1 / the first option = the original sound
+  snd:{oTone:0,oQ:.6,xOct:0,xBell:"triangle",wTone:0,wQ:1,tOct:0,tWave:"sine",tLp:420,eHp:1800,eOct:0,gMode:"metal",gOct:0,aTone:0,rKick:0,rDec:1,rBass:"sawtooth",rTone:0},
   bpmMin:112,bpmMax:134,bpmLock:0,swing:0,hats:1,pattern:"four",duck:.45,fills:true,genre:"custom",tempoSrc:"sun",tempoArea:"world",wxFeel:true,
   rev:-1,revType:"hall",dtime:"0.375",dfb:.38,mlp:20000,hpf:20,drive:.2,width:1,lowEq:0,highEq:0,coct:0,
   vol:{q:1,s:1,o:1,x:1,w:1,t:1,c:1,r:1,i:.8,e:.9,g:.9,a:1,u:.9},
