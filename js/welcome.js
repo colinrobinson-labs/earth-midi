@@ -1,5 +1,5 @@
 /* Earth MIDI · first-visit welcome: what this is, and how to start (Ambient, Pulse, or silent).
-   Shows once per browser. Never shows over a shared link (#s=…, #zeus, #how …). Reopen with #welcome or the footer link. */
+   Shows on every fresh visit, last choice pre-selected. Never shows over a shared link (#s=…, #zeus, #how …). Reopen with #welcome or the footer link. */
 "use strict";
 (()=>{
   const KEY="em.welcome",CHOICES=["ambient","pulse","silent"];
@@ -100,6 +100,6 @@
   addEventListener("hashchange",()=>{if(location.hash==="#welcome")open()});
   document.querySelectorAll("[data-welcome]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();open()}));
 
-  // first visit only, and never on top of a shared link
-  if(hash==="welcome"||(!saved&&!hash))setTimeout(open,350);
+  // every fresh visit (one tap = sound on, since browsers only allow audio after a tap); never on top of a shared link
+  if(hash==="welcome"||!hash)setTimeout(open,350);
 })();

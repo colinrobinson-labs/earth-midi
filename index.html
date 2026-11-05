@@ -101,8 +101,11 @@ body.imm .hud2{top:calc(10px + env(safe-area-inset-top,0px))}
 button,select,.btnlike{font:500 13px var(--mono);color:var(--fg);background:#101820;border:1px solid var(--line2);border-radius:10px;padding:9px 12px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
 button:hover,.btnlike:hover{border-color:#3d566b}button:active{transform:scale(.97)}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--o);outline-offset:2px}
-.go{font:700 15px var(--mono);letter-spacing:.06em;background:var(--fg);color:var(--bg);border-color:var(--fg);height:44px;padding:0 22px;min-width:128px;display:inline-flex;gap:10px;align-items:center;justify-content:center;border-radius:12px}
-.go i{width:0;height:0;border-left:11px solid currentColor;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.go{font:700 17px var(--mono);letter-spacing:.08em;background:var(--fg);color:var(--bg);border-color:var(--fg);height:50px;padding:0 28px;min-width:150px;display:inline-flex;gap:10px;align-items:center;justify-content:center;border-radius:12px}
+.go i{width:0;height:0;border-left:13px solid currentColor;border-top:8px solid transparent;border-bottom:8px solid transparent}
+body:not(.playing) .go{animation:goCall 2.4s ease-in-out infinite}
+@keyframes goCall{0%,100%{box-shadow:0 0 0 0 rgba(230,237,243,.55),0 0 18px rgba(230,237,243,.25)}60%{box-shadow:0 0 0 10px rgba(230,237,243,0),0 0 28px rgba(230,237,243,.4)}}
+@media (prefers-reduced-motion:reduce){body:not(.playing) .go{animation:none;box-shadow:0 0 0 3px rgba(230,237,243,.35)}}
 .go.on{background:var(--q);border-color:var(--q);color:#fff;box-shadow:0 0 calc(14px + var(--glow)*40px) rgba(255,90,60,.55)}
 .go.on i{border:0;width:11px;height:11px;background:currentColor;border-radius:2px}
 .ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -333,7 +336,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  .pro{scroll-margin-top:12px}
  .dock{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;z-index:50;padding:9px max(12px,env(safe-area-inset-left,0px)) calc(9px + env(safe-area-inset-bottom,0px));background:rgba(8,12,17,.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line2);box-shadow:0 -10px 30px rgba(0,0,0,.45)}
  .drow{display:flex;gap:6px;align-items:center;justify-content:center;max-width:460px;width:100%;margin:0 auto}
- .dock .go{width:52px;height:52px;min-width:0;flex:0 0 52px;padding:0;border-radius:50%;justify-content:center;gap:0;box-shadow:0 0 18px rgba(232,240,248,.25)}
+ .dock .go{width:56px;height:56px;min-width:0;flex:0 0 56px;padding:0;border-radius:50%;justify-content:center;gap:0;box-shadow:0 0 18px rgba(232,240,248,.25)}
  .dock .go span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
  .dock .go i{border-left-width:16px;border-top-width:10px;border-bottom-width:10px;margin-left:4px}
  .dock .go.on i{width:15px;height:15px;margin-left:0}
@@ -441,11 +444,11 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 
 <div class="bar" role="toolbar" aria-label="Player">
   <button class="go" aria-label="Play or stop"><i></i><span>PLAY</span></button>
-  <label class="ctl ctl-mode"><span class="cap">Playback</span><select id="mode" aria-label="Playback mode">
-    <option value="180">Replay 24h in 3 min, then live</option>
-    <option value="600">Replay 24h in 10 min, then live</option>
-    <option value="60">Replay 24h in 60 s, then live</option>
-    <option value="0">Live only</option>
+  <label class="ctl ctl-mode"><span class="cap">Playback</span><select id="mode" aria-label="Playback mode" autocomplete="off">
+    <option value="0" selected>Live</option>
+    <option value="180">Replay last 24h in 3 min, then live</option>
+    <option value="600">Replay last 24h in 10 min, then live</option>
+    <option value="60">Replay last 24h in 60 s, then live</option>
   </select></label>
   <div class="ctl ctl-style"><span class="cap">Style</span><div class="seg"><button data-style="ambient" aria-pressed="true">Ambient</button><button data-style="pulse" aria-pressed="false">Pulse</button></div></div>
   <label class="ctl ctl-vol"><span class="cap">Volume</span><input type="range" id="vol" min="0" max="1" step=".01" value=".8" aria-label="Volume"></label>
@@ -589,7 +592,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <script src="js/sheet.js?v=19"></script>
 <script src="js/title.js?v=2"></script>
 <script src="js/record.js?v=3"></script>
-<script src="js/welcome.js?v=2"></script>
+<script src="js/welcome.js?v=3"></script>
 <script src="js/procta.js?v=1"></script>
 <script src="js/beat.js?v=1"></script>
 <script src="js/home.js?v=1"></script>
