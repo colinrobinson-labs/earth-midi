@@ -404,5 +404,5 @@ function loop(now){requestAnimationFrame(loop);const pro=$("pro");if(!pro||pro.h
   if($("smapl")&&CFG.scale==="auto")paintKey()}
 requestAnimationFrame(loop);
 
-return {tabs,group,mixer,presets,enhance,setLast:n=>{lastPre=n},IC,ic};
+return {tabs,group,mixer,presets,enhance,setLast:n=>{lastPre=n},IC,ic,LIC,FAM,grid};
 })();
