@@ -303,7 +303,7 @@ function midiClock(){if(!out||!CFG.clock||!S.on){if(clk.on&&out){out.send([0xFC]
 let LEARN={armed:null,on:false,map:{}};try{LEARN.map=JSON.parse(localStorage.getItem("em5.learn")||"{}")}catch(_){}
 function onMidiIn(e){const [st,d1,d2]=e.data,typ=st&0xF0;
   if(typ===0xB0){if(LEARN.on&&LEARN.armed){LEARN.map[d1]=LEARN.armed;try{localStorage.setItem("em5.learn",JSON.stringify(LEARN.map))}catch(_){}xs(`CC ${d1} → ${LEARN.armed}`);LEARN.armed=null;return}
-    const k=LEARN.map[d1];if(k){const el=$("p_"+k.replace(".","_"));if(el&&el.type==="range"){el.value=+el.min+(d2/127)*(el.max-el.min);el.dispatchEvent(new Event("input"))}}}
+    const k=LEARN.map[d1];if(k){const el=$("p_"+k.replace(".","_"));if(el&&el.type==="range"){el.value=+el.min+(d2/127)*(el.max-el.min);el.dispatchEvent(new Event("input"))}else if(typeof CONSOLE!=="undefined")CONSOLE.cc(k,d2/127)}}
   else if(typ===0x90&&d2>0&&CFG.playAlong&&A){const sc=scaleFor(S.cur.kp||2),pc=((d1-ROOT)%12+12)%12;let best=sc[0];sc.forEach(s=>{if(Math.abs(s-pc)<Math.abs(best-pc))best=s});const n=d1-pc+best;
     const fake={mag:map(d2,1,127,1,7),depth:0,lon:map(d1,36,96,-180,180),lat:0,time:realNow()};const sv=CFG.qpitch;const r=quakeVoiceRaw(n,d2,fake);pushNote(n,"q",d2,r)}}
 function quakeVoiceRaw(note,vel,q){if(!A)return 1;const {ctx}=A,c=ctx.currentTime+.005,I=QINST[CFG.inst.q]||QINST.bell,f=mtof(note),amp=Math.pow(vel/127,1.6)*.5,dec=2.2*CFG.len*I.dec;
