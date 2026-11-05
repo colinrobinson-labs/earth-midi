@@ -1,0 +1,77 @@
+/* Earth MIDI · audition: pick something in the Producer panel and hear it.
+   Choosing an instrument, key, scale, room, progression, genre or preset plays a short preview built the
+   same way as the real voice (same waveforms, FM ratios and room impulse), in the current key and scale.
+   Previews run on their own little bus straight to the speakers, so they never leak into recordings and
+   never wake the stopped mix. Stopped: normal level. Playing: much quieter, and genres/presets are skipped
+   because the live mix already changes. Level follows the volume slider; a limiter keeps it clean. */
+"use strict";
+const AUD=(()=>{
+let pv=null,slot=null,lastK="",lastT=0,idle=null;
+function bus(){if(!A)initAudio();const ctx=A.ctx;if(pv&&pv.ctx===ctx)return pv;
+  const inp=ctx.createGain(),wet=ctx.createConvolver(),wg=ctx.createGain(),out=ctx.createGain(),lim=ctx.createDynamicsCompressor();
+  wet.buffer=genIR(ctx,CFG.revType);wg.gain.value=.32;lim.threshold.value=-6;lim.knee.value=4;lim.ratio.value=12;lim.attack.value=.002;lim.release.value=.12;
+  inp.connect(out);inp.connect(wet);wet.connect(wg);wg.connect(out);out.connect(lim);lim.connect(ctx.destination);
+  pv={ctx,inp,wet,wg,out,room:CFG.revType};return pv}
+function level(){const v=clamp(+($("vol")?.value??.8),0,1);return v*(S.on?.28:.9)}
+// each preview gets a slot; a new pick fades the previous one so they never pile up
+function start(k){iosUnlock();const b=bus();A.ctx.resume();const c=A.ctx.currentTime;
+  if(b.room!==CFG.revType){b.wet.buffer=genIR(A.ctx,CFG.revType);b.room=CFG.revType}
+  b.wg.gain.setValueAtTime(k==="revType"?.8:.3,c);b.out.gain.cancelScheduledValues(c);b.out.gain.setValueAtTime(level(),c);
+  if(slot){const g=slot.gain;g.cancelScheduledValues(c);g.setTargetAtTime(0,c,.03)}
+  slot=A.ctx.createGain();slot.connect(b.inp);
+  clearTimeout(idle);idle=setTimeout(()=>{if(!S.on&&typeof UNLOCK!=="undefined"&&UNLOCK)UNLOCK.pause()},6000);
+  return {ctx:A.ctx,c:c+.02,to:slot}}
+const sc=()=>scaleFor(S.cur.kp||2),root=()=>48+(+CFG.key)+12*(+CFG.oct);
+function env(ctx,g,t,peak,att,dec){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+att);g.gain.exponentialRampToValueAtTime(.0003,t+att+dec)}
+function osc(ctx,type,f,t,len){const o=ctx.createOscillator();o.type=type;o.frequency.value=f;o.start(t);o.stop(t+len+.05);return o}
+
+/* the voices, mirroring audio.js */
+function fm(P,n,t,amp){const {ctx,to}=P,I=QINST[CFG.inst.q]||QINST.bell,f=mtof(n),dec=1.6*I.dec,pl=CFG.inst.q==="pluck";
+  const car=osc(ctx,pl?"triangle":"sine",f,t,dec+.3),mod=osc(ctx,"sine",f*I.r,t,dec+.3),mg=ctx.createGain(),g=ctx.createGain();
+  mg.gain.setValueAtTime(f*I.idx[1]*.6,t);mg.gain.exponentialRampToValueAtTime(f*.02,t+dec*(pl?.15:.6));mod.connect(mg);mg.connect(car.frequency);
+  env(ctx,g,t,amp,.004,dec);car.connect(g);g.connect(to)}
+function pad(P,notes,t,len,amp){const {ctx,to}=P,lp=ctx.createBiquadFilter(),g=ctx.createGain();lp.type="lowpass";lp.frequency.setValueAtTime(500,t);lp.frequency.linearRampToValueAtTime(1800,t+len*.6);lp.Q.value=2;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+.35);g.gain.setValueAtTime(amp,t+len-.4);g.gain.exponentialRampToValueAtTime(.0003,t+len+.6);lp.connect(g);g.connect(to);
+  notes.forEach(n=>[-7,7].forEach(d=>{const o=osc(ctx,PADTYPE[CFG.inst.s]||"sawtooth",mtof(n),t,len+.6),vg=ctx.createGain(),p=ctx.createStereoPanner();o.detune.value=d;vg.gain.value=.5/notes.length;p.pan.value=d<0?-.4:.4;o.connect(vg);vg.connect(p);p.connect(lp)}))}
+function choir(P,notes,t,len,amp){const {ctx,to}=P,[ty,form]=CHORDTYPE[CFG.inst.c]||CHORDTYPE.voices,mix=ctx.createGain(),g=ctx.createGain(),f1=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),dry=ctx.createGain(),fg=ctx.createGain();
+  f1.type=f2.type="bandpass";f1.frequency.value=720;f1.Q.value=3;f2.frequency.value=1150;f2.Q.value=4;fg.gain.value=form*2.2;dry.gain.value=form?.35:.9;
+  mix.connect(fg);fg.connect(f1);fg.connect(f2);mix.connect(dry);[f1,f2,dry].forEach(x=>x.connect(g));g.connect(to);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+.25);g.gain.setValueAtTime(amp,t+len-.3);g.gain.exponentialRampToValueAtTime(.0003,t+len+.5);
+  const vib=osc(ctx,"sine",4.6,t,len+.5),vg=ctx.createGain();vg.gain.value=4;vib.connect(vg);
+  notes.forEach((n,i)=>{const o=osc(ctx,ty,mtof(n),t,len+.5),og=ctx.createGain(),p=ctx.createStereoPanner();vg.connect(o.detune);og.gain.value=.6/notes.length;p.pan.value=(i/(notes.length-1||1)-.5)*1.2;o.connect(og);og.connect(p);p.connect(mix)})}
+function pluck(P,n,t,amp,land){const {ctx,to}=P,inst=CFG.inst.i,f=mtof(n),o=osc(ctx,inst==="square"?"square":"sine",f,t,2.5),m=osc(ctx,"sine",f*(land?3:2),t,2.5),mg=ctx.createGain(),g=ctx.createGain();
+  mg.gain.setValueAtTime(f*(inst==="pluck"?2.5:inst==="glass"?1.2:.4),t);mg.gain.exponentialRampToValueAtTime(f*.01,t+.25);m.connect(mg);mg.connect(o.frequency);
+  env(ctx,g,t,amp*(inst==="square"?.5:1),.004,inst==="glass"?2.2:.8);o.connect(g);g.connect(to)}
+function chime(P,n,t,amp,rise){const {ctx,to}=P,inst=CFG.inst.u,s=sc();(rise?[0,4,7]:[7,4,0]).forEach((st,i)=>{const nn=n+(st===4?(s.includes(4)?4:3):st),tt=t+i*.11,g=ctx.createGain(),g2=ctx.createGain();
+  const o=osc(ctx,inst==="warm"?"triangle":"sine",mtof(nn),tt,2.4),o2=osc(ctx,"sine",mtof(nn)*(inst==="chime"?2.76:2),tt,2.4);g2.gain.value=inst==="soft"?0:.35;o2.connect(g2);g2.connect(g);o.connect(g);env(ctx,g,tt,amp,.01,2.2);g.connect(to)})}
+function soft(P,n,t,amp,dec=.7){const {ctx,to}=P,o=osc(ctx,"triangle",mtof(n),t,dec+.1),g=ctx.createGain();env(ctx,g,t,amp,.005,dec);o.connect(g);g.connect(to)}
+function drum(P,k,t,v){const {ctx,to}=P;
+  if(k==="k"){const o=osc(ctx,"sine",150,t,.45),g=ctx.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(44,t+.12);env(ctx,g,t,.5*v,.002,.38);o.connect(g);g.connect(to);return}
+  const n=ctx.createBufferSource();n.buffer=A.nb;const f=ctx.createBiquadFilter(),g=ctx.createGain();
+  if(k==="s"){f.type="bandpass";f.frequency.value=1900;f.Q.value=.7;env(ctx,g,t,.32*v,.002,.17)}else{f.type="highpass";f.frequency.value=7500;env(ctx,g,t,.16*v,.001,k==="o"?.16:.04)}
+  n.connect(f);f.connect(g);g.connect(to);n.start(t,Math.random()*2);n.stop(t+.25)}
+
+/* one preview per kind of pick */
+function pick(k){const now=performance.now();if(k===lastK&&now-lastT<200)return;lastK=k;lastT=now;
+  const r=root(),s=sc(),d=i=>{const o=Math.floor(i/s.length);return r+12*o+s[((i%s.length)+s.length)%s.length]};
+  if(S.on&&!/^(inst\.|key$|scale$|oct$|tune$|revType$|prog$|coct$|qoct$)/.test(k))return;
+  const P=start(k),t=P.c;
+  switch(k){
+   case "inst.q":case "qoct":[0,2,4].forEach((i,j)=>fm(P,d(i+s.length)+12*CFG.qoct,t+j*.28,.2));break;
+   case "inst.s":pad(P,[0,2,4,7].map(i=>d(i)-12),t,1.8,.2);break;
+   case "inst.c":case "coct":choir(P,[0,2,4,6].map(i=>d(i)+12*CFG.coct),t,1.6,.22);break;
+   case "inst.i":[2,4,6,9].forEach((i,j)=>pluck(P,d(i+s.length),t+j*.16,.18,j%2));break;
+   case "inst.u":chime(P,d(s.length),t,.15,true);break;
+   case "key":case "scale":case "oct":case "tune":for(let i=0;i<=s.length;i++)soft(P,d(i),t+i*.13,.16,i===s.length?1.2:.5);break;
+   case "revType":fm(P,d(s.length),t,.22);soft(P,d(s.length+2),t+.35,.12,.4);break;
+   case "prog":{const pr=PROGS[CFG.prog]||PROGS.classic;pr.forEach((ch,j)=>pad(P,ch.map(i=>d(i)-12),t+j*.55,.5,.16));break}
+   case "genre":{const G=GROOVES[CFG.pattern]||GROOVES.four,g=GENRE_BY[CFG.genre],bpm=g?(g.lo+g.hi)/2:(+CFG.bpmMin+ +CFG.bpmMax)/2,st=60/bpm/4,sw=+CFG.swing||0;
+     for(let i=0;i<16;i++){const tt=t+i*st+(i%2?sw*st:0);if(G.k[i]==="x"||G.k[i]==="g")drum(P,"k",tt,G.k[i]==="g"?.5:1);
+       if(G.s[i]==="x")drum(P,"s",tt,1);else if(G.s[i]==="r"||G.s[i]==="g")drum(P,"s",tt,.35);
+       if(G.h[i]&&G.h[i]!==".")drum(P,G.h[i]==="o"?"o":"h",tt,G.h[i]==="-"?.45:.8);
+       if(G.b[i]&&G.b[i]!=="."){const bn=d(G.b[i]==="f"?2:0)-12+(G.b[i]==="o"?12:0),o=osc(P.ctx,"sawtooth",mtof(bn),tt,st*(G.bl||1.6)),lp=P.ctx.createBiquadFilter(),bg=P.ctx.createGain();lp.type="lowpass";lp.frequency.setValueAtTime(900,tt);lp.frequency.exponentialRampToValueAtTime(160,tt+st*(G.bl||1.6));env(P.ctx,bg,tt,.18,.004,st*(G.bl||1.6));o.connect(lp);lp.connect(bg);bg.connect(P.to)}}
+     break}
+   case "preset":[0,2,4,7,4].forEach((i,j)=>fm(P,d(i+s.length),t+j*.2,.17));pad(P,[0,2,4].map(i=>d(i)-12),t,1.4,.12);break;
+   default:return}}
+return {pick,_bus:()=>pv};
+})();
