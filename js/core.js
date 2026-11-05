@@ -206,7 +206,16 @@ function realNow(){
     return S.replayFrom+frac*((S.endT||Date.now())-S.replayFrom)}
   return Date.now();
 }
-function setMode(){const el=$("modeLbl");if(!el)return;el.textContent=!S.on?"idle":S.mode>0&&!S.liveSince?`replaying the last 24h at ${Math.round(86400/S.mode)}× speed`:"LIVE · events play as the sensors publish them"}
+function setMode(){const el=$("modeLbl");if(!el)return;el.textContent=!S.on?"idle":S.mode>0&&!S.liveSince?`replaying the last 24h at ${Math.round(86400/S.mode)}× speed`:"LIVE · events play as the sensors publish them";liveSync()}
+/* timeline "now" end: a LIVE badge while live, a Go live button while replaying or stopped (like a livestream player) */
+function liveSync(){const b=$("liveBtn");if(!b)return;const st=!S.on?"off":S.mode>0&&!S.liveSince?"behind":"live";
+  b.dataset.st=st;b.setAttribute("aria-pressed",st==="live");b.querySelector("span").textContent=st==="live"?"LIVE":st==="behind"?"Go live":"Play live";
+  b.title=st==="live"?"You're hearing the planet right now":st==="behind"?"Jump to right now":"Start playing live";document.body.classList.toggle("is-live",st==="live")}
+function goLive(){if(S.frozen)return;
+  const m=$("mode");if(m)m.value="0";
+  if(!S.on){startStop();return}
+  S.mode=0;S.liveSince=Date.now();S.endT=Date.now();S.quakes.forEach(q=>S.played.add(q.id));S.events.forEach(e=>S.evPlayed.add(e.id));S.rings=[];S.sunState={};setMode();
+  typeof xs==="function"&&xs("Live: events play as the sensors publish them")}
 function seekTo(frac){if(!S.on)return;frac=clamp(frac,0,.999);
   if(S.liveSince||S.mode===0){S.mode=S.mode||180;S.liveSince=0;S.endT=Date.now();S.replayFrom=S.endT-864e5}
   S.replayStart=performance.now()-frac*S.mode*1000;const t=realNow();
