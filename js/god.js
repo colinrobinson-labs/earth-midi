@@ -1,4 +1,4 @@
-/* Earth MIDI · HAND OF GOD sandbox.
+/* Earth MIDI · ZEUS MODE sandbox (internal name: god).
    A separate "what if" mode. Nothing in here is real data: you are the weather.
    Gestures on the globe drive their own synths and MIDI, recorded as takes you can replay and export.
    Self-contained: wraps initAudio + drawMap, injects its own UI and CSS. Sandbox audio enters the master
@@ -171,12 +171,12 @@ wrap.addEventListener("pointerdown",e=>{if(!G.on||e.target!==cv)return;e.stopPro
   if(P.size===2){const [a,b]=[...P.values()],mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
     if(GS&&GS.kind==="flare"){GS.pinch=true;GS.pd0=Math.max(1,dist(a,b));GS.pd=GS.pd0;return}
     if(GS&&GS.kind==="storm")endGesture(GS);else if(GS&&GS.stop)GS.stop();
-    GS=(G.tool==="auto"||G.tool==="flare")&&hit(sunPx(),mid,2.4)?{kind:"flare",t:now_(),pinch:true,pd0:Math.max(1,dist(a,b)),pd:dist(a,b)}:{kind:"zoom",d0:Math.max(1,dist(a,b)),z0:VIEW.zoom};return}
-  if(P.size>2)return;GS=startGesture(pt)},{capture:true});
+    GS=(G.tool==="auto"||G.tool==="flare")&&hit(sunPx(),mid,2.4)?{kind:"flare",t:now_(),pinch:true,pd0:Math.max(1,dist(a,b)),pd:dist(a,b)}:{kind:"zoom",d0:Math.max(1,dist(a,b)),z0:VIEW.zoom,m0:mid,lon:VIEW.lon,lat:VIEW.lat};return}
+  if(P.size>2)return;GS=(e.button===1||e.button===2||e.shiftKey)?{kind:"spin",x:pt.x,y:pt.y,lon:VIEW.lon,lat:VIEW.lat}:startGesture(pt)},{capture:true});
 wrap.addEventListener("pointermove",e=>{if(!G.on||(e.target!==cv&&!P.has(e.pointerId)))return;e.stopPropagation();const pt=toPx(e);
   if(!P.has(e.pointerId)){if(e.pointerType==="mouse"){const ll=unproj(pt.x,pt.y);cv.style.cursor=hit(sunPx(),pt)?"pointer":hit(moonPx(),pt)?"grab":!ll?"move":Math.abs(ll[1])>=58?"cell":"crosshair"}return}
   P.set(e.pointerId,pt);if(!GS)return;
-  if(P.size===2){const [a,b]=[...P.values()],d=dist(a,b);if(GS.kind==="zoom"&&CFG.mapView!=="flat")VIEW.zoom=clamp(GS.z0*d/GS.d0,.7,3.2);else if(GS.kind==="flare")GS.pd=d;return}
+  if(P.size===2){const [a,b]=[...P.values()],d=dist(a,b);if(GS.kind==="zoom"&&CFG.mapView!=="flat"){VIEW.zoom=clamp(GS.z0*d/GS.d0,.7,3.2);const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2},k=180/(globeR()/DPR*Math.PI)/DPR;VIEW.lon=((GS.lon-(mid.x-GS.m0.x)*k+540)%360)-180;VIEW.lat=clamp(GS.lat+(mid.y-GS.m0.y)*k,-80,80);VIEW.lastInteract=now_()}else if(GS.kind==="flare")GS.pd=d;return}
   moveGesture(GS,pt)},{capture:true});
 const up=e=>{if(!P.has(e.pointerId))return;e.stopPropagation();P.delete(e.pointerId);if(!P.size)document.body.classList.remove("god-drag");if(!GS)return;
   if(e.type==="pointercancel"){if(GS.stop)GS.stop();if(GS.kind==="storm")endGesture(GS);GS=null;return}
@@ -250,11 +250,11 @@ function overlay(now,t,dt){const W=cv.width,H=cv.height,a=G.amt,globe=CFG.mapVie
   const vg=cx.createRadialGradient(gx,gy,m*.35,gx,gy,Math.hypot(W,H)*.62);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,`rgba(20,10,0,${.6*a})`);cx.fillStyle=vg;cx.fillRect(0,0,W,H);
   if(t<G.hintT){const ha=clamp((G.hintT-t)/1500,0,1)*a;tag("☀ hold or pinch: flare",sp.x,sp.y+sp.r*2.6,ha);tag("☾ drag: tides",mp.x,mp.y-mp.r-12*DPR,ha)}
   // watermark (also lands in recorded video)
-  {const s=`✋ HAND OF GOD · SANDBOX · NOT REAL DATA`;cx.font=`800 ${10.5*DPR}px "IBM Plex Mono",monospace`;const tw=cx.measureText(s).width,px=W-tw-22*DPR,py=H-(S.recVideo?44:W/DPR<560?58:40)*DPR;cx.fillStyle=`rgba(20,12,0,${.75*a})`;rr(px-8*DPR,py-14*DPR,tw+16*DPR,22*DPR,11*DPR);cx.fill();cx.fillStyle=`rgba(255,200,61,${a})`;cx.fillText(s,px,py+1*DPR)}
-  if(S.recVideo){cx.fillStyle="#1a1200";cx.fillRect(0,H-28*DPR,W,28*DPR);cx.fillStyle=GOLD;cx.font=`700 ${12*DPR}px "IBM Plex Mono",monospace`;cx.fillText("EARTH MIDI · HAND OF GOD SANDBOX · performed by hand, not real data · earthmidi.com",12*DPR,H-10*DPR)}
+  {const s=`⚡ ZEUS MODE · SANDBOX · NOT REAL DATA`;cx.font=`800 ${10.5*DPR}px "IBM Plex Mono",monospace`;const tw=cx.measureText(s).width,px=W-tw-22*DPR,py=H-(S.recVideo?44:W/DPR<560?58:40)*DPR;cx.fillStyle=`rgba(20,12,0,${.75*a})`;rr(px-8*DPR,py-14*DPR,tw+16*DPR,22*DPR,11*DPR);cx.fill();cx.fillStyle=`rgba(255,200,61,${a})`;cx.fillText(s,px,py+1*DPR)}
+  if(S.recVideo){cx.fillStyle="#1a1200";cx.fillRect(0,H-28*DPR,W,28*DPR);cx.fillStyle=GOLD;cx.font=`700 ${12*DPR}px "IBM Plex Mono",monospace`;cx.fillText("EARTH MIDI · ZEUS MODE SANDBOX · performed by hand, not real data · earthmidi.com",12*DPR,H-10*DPR)}
   // 10. entrance title
   const ea=(t-G.tEnter)/2600;if(G.on&&ea>=0&&ea<1){const k=ea<.15?ea/.15:ea>.7?(1-ea)/.3:1,sc=1.25-.25*Math.min(1,ea/.25),fs=Math.min(W/7.2,H/4.2);cx.save();cx.translate(gx,gy);cx.scale(sc,sc);cx.textAlign="center";cx.textBaseline="middle";
-    cx.font=`800 ${fs}px Syne,system-ui,sans-serif`;cx.shadowColor="rgba(255,190,40,.95)";cx.shadowBlur=40*DPR;cx.fillStyle=`rgba(255,236,170,${k})`;cx.fillText("HAND OF GOD",0,-fs*.12);cx.shadowBlur=0;
+    cx.font=`800 ${fs}px Syne,system-ui,sans-serif`;cx.shadowColor="rgba(255,190,40,.95)";cx.shadowBlur=40*DPR;cx.fillStyle=`rgba(255,236,170,${k})`;cx.fillText("ZEUS MODE",0,-fs*.12);cx.shadowBlur=0;
     cx.font=`700 ${Math.max(11*DPR,fs*.16)}px "IBM Plex Mono",monospace`;cx.fillStyle=`rgba(255,210,100,${k})`;cx.fillText("SANDBOX · YOU ARE THE WEATHER · NOT REAL DATA",0,fs*.55);cx.restore()}
   const xa=(t-G.tExit)/1400;if(!G.on&&xa>=0&&xa<1){const fs=Math.min(W/12,H/7);cx.textAlign="center";cx.textBaseline="middle";cx.font=`800 ${fs}px Syne,system-ui,sans-serif`;cx.fillStyle=`rgba(230,240,255,${(1-xa)})`;cx.fillText("BACK TO REAL EARTH",gx,gy);cx.textAlign="left";cx.textBaseline="alphabetic"}
   cx.restore();
@@ -272,11 +272,11 @@ function replayTake(){if(!G.take||!G.take.ev.length){msg("Record a take first");
 function exportMid(){const tk=G.take;if(!tk||!tk.midi.length){msg("Record a take first: ● Record take, then play the globe");return}
   const bpm=120,tpq=480,k=tpq*bpm/60000,names={1:"Quakes · note = latitude, velocity = magnitude",2:"Hurricanes · note per storm, CC1 + CC74 = intensity",3:"Solar flares · chord, velocity = flare class",4:"Aurora · sparkle notes, CC11 = aurora strength",5:"Tides · drone note from the moon's angle, CC1 + pitch bend = tidal pull"},by={};
   tk.midi.forEach(([ms,b])=>{const ch=(b[0]&15)+1;(by[ch]=by[ch]||[]).push([ms*k,b])});
-  const tracks=[{name:"Earth MIDI · Hand of God take",text:["HAND OF GOD SANDBOX TAKE: performed by hand on the globe. NOT real planetary data.",`Recorded ${tk.made} · ${(tk.dur/1000).toFixed(1)} s · key ${KEYS[CFG.key]}`],ev:[]}];
+  const tracks=[{name:"Earth MIDI · Zeus Mode take",text:["ZEUS MODE SANDBOX TAKE: performed by hand on the globe. NOT real planetary data.",`Recorded ${tk.made} · ${(tk.dur/1000).toFixed(1)} s · key ${KEYS[CFG.key]}`],ev:[]}];
   Object.keys(by).sort((a,b)=>a-b).forEach(ch=>tracks.push({name:`ch ${ch} · ${names[ch]||"sandbox"}`,ev:by[ch]}));
-  download(`earth-midi-hand-of-god_${stamp()}.mid`,smf(tracks,tpq,bpm));msg(`Saved take MIDI: ${tk.midi.length} events on ${tracks.length-1} tracks`)}
-function exportTake(){const tk=G.take;if(!tk){msg("Record a take first");return}download(`earth-midi-hand-of-god_${stamp()}.json`,new Blob([JSON.stringify({app:"Earth MIDI",godTake:true,version:VERSION,note:"Hand of God sandbox take. Gestures performed by hand, not real data.",credit:CREDIT,made:tk.made,dur:tk.dur,ev:tk.ev,midi:tk.midi})],{type:"application/json"}));msg("Take file saved. Load it later to replay it")}
-async function loadTake(f){try{const j=JSON.parse(await f.text());if(!j.godTake||!Array.isArray(j.ev))throw new Error("not a Hand of God take");G.take={ev:j.ev,midi:j.midi||[],dur:j.dur||((j.ev.at(-1)||[0])[0]+1000),made:j.made};if(!G.on)setGod(true);replayTake()}catch(e){msg("Couldn't load: "+e.message)}}
+  download(`earth-midi-zeus-mode_${stamp()}.mid`,smf(tracks,tpq,bpm));msg(`Saved take MIDI: ${tk.midi.length} events on ${tracks.length-1} tracks`)}
+function exportTake(){const tk=G.take;if(!tk){msg("Record a take first");return}download(`earth-midi-zeus-mode_${stamp()}.json`,new Blob([JSON.stringify({app:"Earth MIDI",godTake:true,version:VERSION,note:"Zeus Mode sandbox take. Gestures performed by hand, not real data.",credit:CREDIT,made:tk.made,dur:tk.dur,ev:tk.ev,midi:tk.midi})],{type:"application/json"}));msg("Take file saved. Load it later to replay it")}
+async function loadTake(f){try{const j=JSON.parse(await f.text());if(!j.godTake||!Array.isArray(j.ev))throw new Error("not a Zeus Mode take");G.take={ev:j.ev,midi:j.midi||[],dur:j.dur||((j.ev.at(-1)||[0])[0]+1000),made:j.made};if(!G.on)setGod(true);replayTake()}catch(e){msg("Couldn't load: "+e.message)}}
 
 /* ================= UI ================= */
 const css=`
@@ -298,6 +298,7 @@ body.god-drag{-webkit-user-select:none;user-select:none}
 body.god .mapwrap{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 body.god #map{cursor:crosshair}
 body.god .hud .hint2{display:none}
+body.god #wxl,body.god #motionLbl{display:none}
 body.god #tl,body.god .tlh{opacity:.3}
 body.god .grid,body.god .row2,body.god #trace,body.god .zero{opacity:.4}
 .grid,.row2,#trace,.zero{transition:opacity .6s}
@@ -327,16 +328,16 @@ body.god #godFrame{opacity:1}
 @media (max-width:700px){body.god .hud2{display:none}.gp-h span{display:none}.gp-h b{font-size:15px}.gp-h button{margin-left:auto;padding:7px 10px;font-size:12px}#godPanel{padding:10px}.gp-tools{display:grid;grid-template-columns:repeat(4,1fr)}.gp-tools button{padding:8px 4px;font-size:11.5px}.gp-row{display:grid;grid-template-columns:1fr 1fr}.gp-row button,.gp-row .btnlike{justify-content:center}.gp-mix{grid-column:1/-1;margin:4px 0 0}.gp-mix input{flex:1}.gp-h button{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.godbtn::after,#godTicker div,#godFrame::after{animation:none}}`;
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
-const TOOLS=[["auto","✋ Auto"],["quake","⚡ Quake"],["storm","🌀 Storm"],["flare","☀ Flare"],["aurora","✦ Aurora"],["tide","☾ Tides"],["spin","↻ Spin"]];
-const HINTS={auto:"<b>Tap the globe</b> to drop a quake (hold longer for a bigger one). <b>Drag across it</b> to spin up a hurricane. <b>Swipe near a pole</b> for aurora. <b>Hold or pinch the sun</b> for a flare. <b>Drag the moon</b> to pull the tides. Drag empty space to turn the planet.",
+const TOOLS=[["auto","⚡ Auto"],["quake","◉ Quake"],["storm","🌀 Storm"],["flare","☀ Flare"],["aurora","✦ Aurora"],["tide","☾ Tides"],["spin","↻ Spin"]];
+const HINTS={auto:"<b>Tap the globe</b> to drop a quake (hold longer for a bigger one). <b>Drag across it</b> to spin up a hurricane. <b>Swipe near a pole</b> for aurora. <b>Hold or pinch the sun</b> for a flare. <b>Drag the moon</b> to pull the tides. <b>Turn the planet:</b> drag empty space, two fingers on a phone, or right-drag / Shift+drag with a mouse.",
   quake:"<b>Tap anywhere on the globe.</b> Hold to charge: up to M9 at 2 seconds. Pitch follows latitude, magnitude sets velocity.",storm:"<b>Drag across the globe.</b> Faster, longer strokes build a stronger storm. Let go and it drifts on its own.",
   flare:"<b>Hold anywhere</b> (or pinch the sun) to charge, release to fire. C, M or X class. A big flare lights up the aurora a moment later.",aurora:"<b>Swipe anywhere</b> to feed the aurora. Top half feeds the north, bottom half the south. A strong aurora turns the scale minor.",
-  tide:"<b>Drag the moon</b> anywhere. Closer to the planet means stronger tides and a louder, brighter drone. Its angle sets the drone note.",spin:"<b>Drag to turn the planet</b>, pinch or scroll to zoom. Your storms ride along with it."};
-const ticker=document.createElement("div");ticker.id="godTicker";ticker.setAttribute("aria-hidden","true");ticker.innerHTML=`<div>${Array(12).fill("<span>✋ HAND OF GOD</span><span>SANDBOX · NOT REAL DATA</span>").join("")}</div>`;wrap.appendChild(ticker);
+  tide:"<b>Drag the moon</b> anywhere. Closer to the planet means stronger tides and a louder, brighter drone. Its angle sets the drone note.",spin:"<b>Drag anywhere to turn the planet</b>, pinch or scroll to zoom. Your storms ride along with it. In any tool, two fingers (phone) or right-drag / Shift+drag (mouse) also turns it."};
+const ticker=document.createElement("div");ticker.id="godTicker";ticker.setAttribute("aria-hidden","true");ticker.innerHTML=`<div>${Array(12).fill("<span>⚡ ZEUS MODE</span><span>SANDBOX · NOT REAL DATA</span>").join("")}</div>`;wrap.appendChild(ticker);
 const frameEl=document.createElement("div");frameEl.id="godFrame";frameEl.setAttribute("aria-hidden","true");document.body.appendChild(frameEl);
-const btn=document.createElement("button");btn.className="godbtn";btn.id="godBtn";btn.setAttribute("aria-pressed","false");btn.title="Hand of God sandbox (h)";btn.textContent="✋ Hand of God";(wrap.querySelector(".hud2")||wrap).appendChild(btn);
+const btn=document.createElement("button");btn.className="godbtn";btn.id="godBtn";btn.setAttribute("aria-pressed","false");btn.title="Zeus Mode sandbox (z)";btn.textContent="⚡ Zeus Mode";(wrap.querySelector(".hud2")||wrap).appendChild(btn);
 const panel=document.createElement("div");panel.id="godPanel";panel.hidden=true;
-panel.innerHTML=`<div class="gp-h"><b>✋ HAND OF GOD</b><span>Sandbox · not real data</span><button id="gExit">Back to real Earth</button></div>
+panel.innerHTML=`<div class="gp-h"><b>⚡ ZEUS MODE</b><span>Sandbox · not real data</span><button id="gExit">Back to real Earth</button></div>
 <div class="gp-tools" role="toolbar" aria-label="Sandbox tools">${TOOLS.map(([k,l])=>`<button data-tool="${k}" aria-pressed="${k==="auto"}">${l}</button>`).join("")}</div>
 <p class="gp-hint" id="gHint"></p>
 <div class="gp-row"><button id="gRec">● Record take</button><button id="gPlay">▶ Replay take</button><button id="gMid">⬇ Take MIDI</button><button id="gJson">⬇ Take file</button><label class="btnlike">📂 Load take<input type="file" id="gLoad" accept=".json,application/json" hidden></label><button id="gCalm">✦ Calm the planet</button>
@@ -355,14 +356,15 @@ btn.addEventListener("click",e=>{e.stopPropagation();setGod(!G.on)});
 setTool("auto");syncBtns();
 setInterval(()=>{if(!G.on)return;const s=g$("gStat");if(s){const kp=godKp(),txt=`${G.storms.length} storm${G.storms.length===1?"":"s"} · aurora Kp ${kp.toFixed(1)} · tidal pull ${Math.round(G.tideF*100)}%${G.last?" · last: "+G.last:""}${G.rec?" · ● REC "+((now_()-G.rec.t0)/1000).toFixed(0)+" s":""}`;if(!s._msgUntil||now_()>s._msgUntil)s.textContent=txt}},250);
 
-function setGod(on){if(on===G.on)return;G.on=on;document.body.classList.toggle("god",on);btn.setAttribute("aria-pressed",on);btn.textContent=on?"✕ Exit sandbox":"✋ Hand of God";panel.hidden=!on;
+function setGod(on){if(on===G.on)return;G.on=on;document.body.classList.toggle("god",on);btn.setAttribute("aria-pressed",on);btn.textContent=on?"✕ Exit sandbox":"⚡ Zeus Mode";panel.hidden=!on;
   const tip=$("tip");if(tip)tip.style.display="none";
-  if(on){G.tEnter=now_();setTimeout(measureHud,450);if(!G.moonMoved)G.moon=moonHome();G.hintT=now_()+12000;G.flash=1;G.flashRGB="255,236,180";G.shake=10;ensureAudio();enterSound(true);try{if(!location.hash||location.hash==="#")history.replaceState(null,"","#god")}catch(_){}
+  if(on){G.tEnter=now_();setTimeout(measureHud,450);if(!G.moonMoved)G.moon=moonHome();G.hintT=now_()+12000;G.flash=1;G.flashRGB="255,236,180";G.shake=10;ensureAudio();enterSound(true);try{if(!location.hash||location.hash==="#")history.replaceState(null,"","#zeus")}catch(_){}
     if(window.matchMedia("(max-width:700px)").matches)setTimeout(()=>$("map").scrollIntoView({behavior:"smooth",block:"start"}),60)}
   else{G.tExit=now_();if(G.rec)recToggle();G.replay=null;syncBtns();G.storms.forEach(s=>{s.held=false;stormKill(s)});G.storms=[];if(G.tideNote!=null){gtx([0x84,G.tideNote,0]);G.tideNote=null;G.tideStep=-1}cv.style.cursor="";enterSound(false);
-    if(A&&!S.on){const c=A.ctx.currentTime;A.out.gain.setTargetAtTime(0,c+1.4,.4)}try{if(location.hash==="#god")history.replaceState(null,"",location.pathname+location.search)}catch(_){}}
+    if(A&&!S.on){const c=A.ctx.currentTime;A.out.gain.setTargetAtTime(0,c+1.4,.4)}try{if(location.hash==="#zeus"||location.hash==="#god")history.replaceState(null,"",location.pathname+location.search)}catch(_){}}
   setMix()}
 G.set=setGod;
-addEventListener("keydown",e=>{if(e.target.matches&&e.target.matches("input,select,textarea"))return;if(e.key==="h"&&!e.metaKey&&!e.ctrlKey)setGod(!G.on);else if(e.key==="Escape"&&G.on)setGod(false)});
-if(location.hash==="#god")setTimeout(()=>setGod(true),300);
+addEventListener("keydown",e=>{if(e.target.matches&&e.target.matches("input,select,textarea"))return;if((e.key==="z"||e.key==="h")&&!e.metaKey&&!e.ctrlKey)setGod(!G.on);else if(e.key==="Escape"&&G.on)setGod(false)});
+if(location.hash==="#god")try{history.replaceState(null,"","#zeus")}catch(_){}
+if(location.hash==="#zeus"||location.hash==="#god")setTimeout(()=>setGod(true),300);
 })();
