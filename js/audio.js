@@ -265,7 +265,7 @@ function flareBell(cls,f){if(A&&!muted("x")){const {ctx}=A,c=ctx.currentTime;[0,
 let midi=null,out=null;
 const MREC=[];const lastCC={};
 async function initMIDI(){
-  if(!navigator.requestMIDIAccess){$("midiState").textContent=IS_MOBILE?"":"Web MIDI needs Chrome or Edge";return}
+  if(!navigator.requestMIDIAccess){$("midiState").textContent=IS_MOBILE?"":(!window.isSecureContext?"MIDI out needs the https:// address":"MIDI out needs Chrome or Edge (Safari has no Web MIDI). Use Export → MIDI instead");return}
   try{midi=await navigator.requestMIDIAccess();fillPorts();midi.onstatechange=fillPorts}catch(e){$("midiState").textContent="MIDI permission denied"}
 }
 function fillPorts(){const s=$("midiOut"),v=s.value;s.innerHTML='<option value="">MIDI out: off</option>';midi.outputs.forEach(o=>{const op=document.createElement("option");op.value=o.id;op.textContent="MIDI → "+o.name;s.appendChild(op)});s.value=v;

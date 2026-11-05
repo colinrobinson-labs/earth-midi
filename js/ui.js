@@ -145,13 +145,19 @@ setInterval(tick,50);
 setInterval(()=>S.on&&!S.frozen&&refresh(),60000);
 
 /* ---------- transport ---------- */
+/* iPhone: play through the silent switch (audio session = playback) */
+let UNLOCK=null;function iosUnlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(_){}
+  if(UNLOCK){UNLOCK.play().catch(()=>{});return}if(!/iP(hone|ad|od)|Macintosh/.test(navigator.userAgent)||!("ontouchend" in document))return;
+  const n=4410,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>[...t].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+  w(0,"RIFF");v.setUint32(4,36+n*2,true);w(8,"WAVEfmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,44100,true);v.setUint32(28,88200,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*2,true);
+  UNLOCK=new Audio(URL.createObjectURL(new Blob([b],{type:"audio/wav"})));UNLOCK.loop=true;UNLOCK.setAttribute("playsinline","");UNLOCK.play().catch(()=>{})}
 async function startStop(){
   if(!S.on){
-    if(!A)initAudio();await A.ctx.resume();A.out.gain.setTargetAtTime(+$("vol").value,A.ctx.currentTime,.3);
+    iosUnlock();if(!A)initAudio();await A.ctx.resume();A.out.gain.setTargetAtTime(+$("vol").value,A.ctx.currentTime,.3);
     S.mode=+$("mode").value;S.played.clear();S.evPlayed.clear();S.sunState={};issStep=null;S.liveSince=0;S.replayStart=performance.now();S.endT=S.frozen?S.endT:Date.now();S.replayFrom=S.endT-864e5;if(S.frozen&&S.mode===0)S.mode=180;MREC.length=0;EVENTS.length=0;S.startPerf=performance.now();
     if(S.mode===0){S.quakes.forEach(q=>S.played.add(q.id));S.events.forEach(e=>S.evPlayed.add(e.id));S.liveSince=Date.now()}
     S.on=true;document.body.classList.add("playing");document.querySelectorAll(".go").forEach(b=>{b.classList.add("on");b.querySelector("span").textContent="STOP"});setMode();if(!S.frozen)refresh();initMIDI();
-  }else{S.on=false;A.out.gain.setTargetAtTime(0,A.ctx.currentTime,.4);document.body.classList.remove("playing");document.querySelectorAll(".go").forEach(b=>{b.classList.remove("on");b.querySelector("span").textContent="PLAY"});setMode();$("prog").style.width="0";if(REC)stopRec();if(MR)MR.rec.stop()}
+  }else{S.on=false;if(UNLOCK)UNLOCK.pause();A.out.gain.setTargetAtTime(0,A.ctx.currentTime,.4);document.body.classList.remove("playing");document.querySelectorAll(".go").forEach(b=>{b.classList.remove("on");b.querySelector("span").textContent="PLAY"});setMode();$("prog").style.width="0";if(REC)stopRec();if(MR)MR.rec.stop()}
 }
 
 /* ---------- boot ---------- */
