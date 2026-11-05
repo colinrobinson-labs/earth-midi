@@ -202,7 +202,7 @@ function makeCompositor(shape,god){
       if(ev&&(shape==="vertical"||shape==="wide")){const ty=wy-wh-Math.round(30*u);g.fillStyle=COLS[ev.layer]||"#e6edf3";g.beginPath();g.arc(pad+8*u,ty-8*u,7*u,0,Math.PI*2);g.fill();
         g.fillStyle="#e6edf3";g.font=`500 ${Math.round(26*u)}px "IBM Plex Sans",system-ui,sans-serif`;g.fillText(fitText(g,ev.text,W-pad*2-30*u),pad+26*u,ty)}}
     // credit
-    g.fillStyle="#7d8b99";g.font=`500 ${Math.round(19*u)}px "IBM Plex Mono",ui-monospace,monospace`;g.fillText(fitText(g,god?"Earth MIDI by Colin Robinson · earthmidi.com":"Real data · 0% AI audio · Earth MIDI by Colin Robinson · earthmidi.com",W-pad*2),pad,fy);
+    g.fillStyle="#7d8b99";g.font=`500 ${Math.round(19*u)}px "IBM Plex Mono",ui-monospace,monospace`;g.fillText(fitText(g,god?"Earth MIDI by Colin Robinson · earthmidi.com":"Real data · no active AI · Earth MIDI by Colin Robinson · earthmidi.com",W-pad*2),pad,fy);
     if(god)drawGod(g,W,H,u,now)}
   draw();
   return {stream,W,H,stop(){alive=false;cancelAnimationFrame(raf);stream.getTracks().forEach(t=>t.stop());c.remove()}}}
