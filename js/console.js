@@ -6,7 +6,7 @@
    or reordered channels, fader size) is saved in this browser. */
 "use strict";
 const CONSOLE=(()=>{
-const LS="em5.console",SEEN="em5.console.seen";
+const LS="em5.console",SEEN="em5.console.seen",START="em5.view";
 const SECS={ch:{n:"Channels",s:"level · send · mute · solo",c:"var(--o)",i:"mixer"},sound:{n:"Sound",s:"key · scale · harmony",c:"var(--c)",i:"note"},pulse:{n:"Pulse",s:"genre · groove · feel",c:"var(--q)",i:"rhythm"},master:{n:"Master",s:"space · tone · volume",c:"var(--s)",i:"master"}};
 const DEFL={order:["ch","sound","pulse","master"],hide:[],chOrder:[...PAN_KEYS],chHide:[],size:"auto"};
 const TINY={q:"Quakes",s:"Solar",o:"Swell",x:"X-rays",w:"Jet",t:"Tides",c:"Chord",r:"Drums",i:"ISS",e:"Fires",g:"Magneto",a:"Air",u:"Sunrise"};
@@ -168,8 +168,27 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 .mrow{display:flex;gap:10px 16px;flex-wrap:wrap}
 .mrow .cg{flex:1 1 170px;min-width:0}
 /* entry points */
-#bCon{position:relative}
-#bCon.nudge::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--k);box-shadow:0 0 10px var(--k);animation:bl 1.2s infinite}
+/* view switch: Globe | Console, in the bar and in the console's own top bar */
+.vsw{display:inline-flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden;flex:none;background:#0b1016}
+.vsw button{height:44px;display:inline-flex;align-items:center;gap:7px;padding:0 13px;border:0;border-radius:0;background:transparent;color:var(--mute);font:600 12px var(--mono);position:relative;touch-action:manipulation}
+.vsw button+button{border-left:1px solid var(--line2)}
+.vsw button:hover{color:var(--fg)}
+.vsw button[aria-pressed="true"]{background:var(--fg);color:#05070a}
+.vsw button[aria-pressed="true"] .ic circle{fill:var(--fg)}
+.vsw .ic,.vsw .sic{width:17px;height:17px}
+.vsw.nudge button[data-vw="console"]::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--k);box-shadow:0 0 10px var(--k);animation:bl 1.2s infinite}
+.cns-top .vsw button{height:42px}
+/* one-time tablet suggestion */
+.vtip{position:fixed;left:50%;bottom:calc(18px + var(--dock,0px) + env(safe-area-inset-bottom,0px));z-index:77;width:min(560px,calc(100vw - 24px));transform:translateX(-50%);display:grid;grid-template-columns:44px 1fr;gap:4px 14px;align-items:center;padding:14px 14px 14px 16px;border-radius:16px;
+ background:linear-gradient(160deg,color-mix(in srgb,var(--k) 12%,#0d141b),#0a0f15 70%);border:1px solid color-mix(in srgb,var(--k) 40%,var(--line2));box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 30px color-mix(in srgb,var(--k) 15%,transparent);animation:vtIn .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes vtIn{from{opacity:0;transform:translate(-50%,16px)}}
+.vtip .gi{--ac:var(--k);width:44px;height:44px;border-radius:12px;grid-row:1/3}.vtip .gi .sic{width:24px;height:24px}
+.vtip b{font:700 15px var(--disp);color:var(--fg)}
+.vtip p{margin:0;font:12.5px/1.45 var(--body);color:var(--mute)}
+.vtip .va{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.vtip .va button{height:42px;padding:0 14px;border-radius:11px;font:600 12px var(--mono);background:#0d141b;color:var(--fg);border:1px solid var(--line2);touch-action:manipulation}
+.vtip .va .pri{background:var(--k);color:#05070a;border-color:var(--k)}
+.vtip .va .nn{margin-left:auto;color:var(--mute)}
 .pro h2 .cns-go{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;font:600 12px var(--mono);letter-spacing:0;text-transform:none;background:#0a0f15;border:1px solid color-mix(in srgb,var(--k) 45%,var(--line2));color:var(--fg)}
 .pro h2 .cns-go:hover{border-color:var(--k)}
 .pro h2 .cns-go .sic{width:16px;height:16px;color:var(--k)}
@@ -188,7 +207,7 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 @media (max-width:900px){.cs{flex-basis:54px;min-width:54px;padding-left:4px;padding-right:4px}.cs-ms{grid-template-columns:1fr}.cs-ms button,.cns.tight .cs-ms button{height:36px}.cs-h b{font-size:9.5px}}
 @media (max-width:820px){.cns-top h2 small,.cns-rd .rk{display:none}.cns-tb .lbl{display:none}.cns-tb{width:44px;padding:0;justify-content:center}}
 @media (max-width:560px){.cns-top{flex-wrap:wrap}.cns-rd{order:9;flex-basis:100%}.cns-top h2{display:none}.cs{flex-basis:58px;min-width:58px}}
-@media (prefers-reduced-motion:reduce){.cns,#bCon.nudge::after{animation:none}}
+@media (prefers-reduced-motion:reduce){.cns,.vsw.nudge button::after,.vtip{animation:none}}
 `;
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 
@@ -276,9 +295,10 @@ function build(){Object.keys(FD).forEach(k=>delete FD[k]);
     <div class="cns-rd" id="cnRd" aria-live="off"></div><span class="cns-sp"></span>
     <button type="button" class="cns-tb" id="cnEdit" aria-pressed="false" title="Rearrange or hide sections and channels">${ic("presets")}<span class="lbl">Layout</span></button>
     ${fsOK?`<button type="button" class="cns-tb" id="cnFs" title="Full screen">${svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>')}<span class="lbl">Full screen</span></button>`:""}
-    <button type="button" class="cns-tb x" id="cnX" aria-label="Close console" title="Close (Esc)">${ic("x")}</button></div>
+    <div class="vsw" role="group" aria-label="View"><button type="button" id="cnX" data-vw="globe" aria-pressed="false" title="Back to the globe (Esc)">${ic("globe")}Globe</button><button type="button" data-vw="console" aria-pressed="true">${ic("mixer")}<span class="lbl">Console</span></button></div></div>
    <div class="cns-tray"><div><em>Hidden sections</em>${hidden}</div><div><em>Hidden channels</em>${hch}</div>
     <div><em>Fader size</em>${["compact","auto","roomy"].map(s=>`<button type="button" data-size="${s}" aria-pressed="${L.size===s}">${s==="auto"?"Fit screen":s[0].toUpperCase()+s.slice(1)}</button>`).join("")}</div>
+    <div><em>Start in</em>${[["globe","Globe"],["console","Console"]].map(([v,n])=>`<button type="button" data-start="${v}" aria-pressed="${startIn()===v}">${n}</button>`).join("")}</div>
     <div><button type="button" id="cnReset">Reset layout</button><button type="button" id="cnDone" aria-pressed="true">Done</button></div></div>
    <div class="cns-body" id="cnBody">${L.order.filter(k=>!L.hide.includes(k)).map(k=>SEC[k]()).join("")||`<p class="pnote" style="padding:20px">Every section is hidden. Tap a section under Hidden sections to bring it back.</p>`}</div>`;
   body=$("cnBody");
@@ -346,6 +366,8 @@ function bind(){
   root.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const ds=b.dataset;
     if(b.id==="cnPlay"){startStop();setTimeout(()=>syncAll(false),60);return}
     if(b.id==="cnX"){close();return}
+    if(ds.vw==="console")return;
+    if(ds.start){setStart(ds.start);root.querySelectorAll("[data-start]").forEach(x=>x.setAttribute("aria-pressed",x===b));xs(ds.start==="console"?"This browser now opens in Console":"This browser now opens on the globe");return}
     if(b.id==="cnEdit"||b.id==="cnDone"){editing=!editing;if(b.id==="cnDone")editing=false;root.classList.toggle("edit",editing);$("cnEdit").setAttribute("aria-pressed",editing);fit();return}
     if(b.id==="cnFs"){toggleFs();return}
     if(b.id==="cnReset"){L=clone(DEFL);save();build();return}
@@ -374,25 +396,39 @@ function cc(k,f){const d=FD[k];if(!open_||!d)return false;setV(d,fromP(d,f));ret
 /* ---------- open / close ---------- */
 function open(){if(!root){root=document.createElement("div");root.className="cns";root.id="console";root.setAttribute("role","dialog");root.setAttribute("aria-modal","true");root.setAttribute("aria-label","Console");root.hidden=true;document.body.appendChild(root);bind()}
   editing=false;root.classList.remove("edit");root.hidden=false;open_=true;document.documentElement.classList.add("cns-on");build();
-  try{localStorage.setItem(SEEN,"1")}catch(_){}document.querySelectorAll("#bCon").forEach(b=>{b.classList.remove("nudge");b.setAttribute("aria-expanded","true")});
+  try{localStorage.setItem(SEEN,"1")}catch(_){}syncSw();tipHide();
   try{if(location.hash!=="#console")history.replaceState(null,"","#console")}catch(_){}
   requestAnimationFrame(loop);setTimeout(fit,60);const pl=$("cnPlay");pl&&pl.focus({preventScroll:true})}
+function syncSw(){document.querySelectorAll("#viewSw button").forEach(b=>{b.setAttribute("aria-pressed",(b.dataset.vw==="console")===open_)});const v=$("viewSw");if(v&&open_)v.classList.remove("nudge")}
+function startIn(){try{return localStorage.getItem(START)==="console"?"console":"globe"}catch(_){return "globe"}}
+function setStart(v){try{localStorage.setItem(START,v)}catch(_){}}
 function close(){if(!root||root.hidden)return;open_=false;root.hidden=true;document.documentElement.classList.remove("cns-on");drags.clear();
   if(document.fullscreenElement||document.webkitFullscreenElement)toggleFs();
-  document.querySelectorAll("#bCon").forEach(b=>b.setAttribute("aria-expanded","false"));
+  syncSw();
   try{if(location.hash==="#console")history.replaceState(null,"",location.pathname+location.search)}catch(_){}
   if(dirty){dirty=false;const p=$("pro");if(p&&!p.hidden&&typeof buildPro==="function")buildPro()}}
-addEventListener("keydown",e=>{if(e.key==="Escape"&&open_&&!(document.fullscreenElement||document.webkitFullscreenElement)){e.preventDefault();close()}});
+addEventListener("keydown",e=>{if(e.key==="Escape"&&open_&&!document.querySelector("dialog[open]")&&!(document.fullscreenElement||document.webkitFullscreenElement)){e.preventDefault();close()}});
 addEventListener("resize",()=>{if(open_){clearTimeout(fit._t);fit._t=setTimeout(fit,120)}});
 addEventListener("hashchange",()=>{if(location.hash==="#console")open()});
 
-/* entry points: bar button, a button in the Producer header, #console. Tablets get a one-time dot on the button */
-const bc=$("bCon");if(bc)bc.onclick=()=>open_?close():open();
+/* entry points: the Globe | Console switch in the bar, a Console button in the Producer header, #console,
+   "Start in: Console" (saved per browser), and a one-time suggestion on tablet-size touch screens. Never switches on its own. */
+document.querySelectorAll("#viewSw button").forEach(b=>b.onclick=()=>b.dataset.vw==="console"?open():close());
 const ph=document.querySelector("#pro h2");if(ph){const b=document.createElement("button");b.type="button";b.className="cns-go";b.innerHTML=`${ic("mixer")}Console`;b.title="Open the full-screen mixing console";b.onclick=open;ph.insertBefore(b,$("pstat"))}
-const tablet=matchMedia("(pointer:coarse)").matches&&Math.min(screen.width,screen.height)>=700;
+const ipadOS=/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1;
+const tablet=(matchMedia("(pointer:coarse)").matches||ipadOS)&&Math.min(screen.width,screen.height)>=700&&Math.min(innerWidth,innerHeight)>=600;
 let seen=false;try{seen=!!localStorage.getItem(SEEN)}catch(_){}
-if(bc&&tablet&&!seen){bc.classList.add("nudge");bc.title="New: a full-screen mixing console made for touch"}
-if(location.hash==="#console")setTimeout(open,350);
+let tip=null;
+function tipHide(){if(tip){tip.remove();tip=null}try{localStorage.setItem(SEEN,"1")}catch(_){}}
+function tipShow(){if(tip||open_||seen)return;
+  tip=document.createElement("div");tip.className="vtip";tip.setAttribute("role","dialog");tip.setAttribute("aria-label","Try the Console");
+  tip.innerHTML=`<span class="gi">${ic("mixer")}</span><b>Tablet screen detected</b><p>Console puts all 13 layer faders, Sound, Pulse and Master on one screen, built for fingers. Switch back any time with <b style="font:inherit;color:var(--fg)">Globe</b>.</p>
+   <div class="va"><button type="button" class="pri" data-t="try">Try Console</button><button type="button" data-t="always">Always start in Console</button><button type="button" class="nn" data-t="no">Not now</button></div>`;
+  tip.onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;const t=b.dataset.t;tipHide();if(t==="always")setStart("console");if(t!=="no")open();else xs("Console is always one tap away: Globe | Console, top right")};
+  document.body.appendChild(tip)}
+const vs=$("viewSw");if(vs&&tablet&&!seen)vs.classList.add("nudge");
+if(tablet&&!seen&&!location.hash){const wait=()=>{if(open_||seen)return;if(document.querySelector("dialog[open]")){setTimeout(wait,800);return}setTimeout(()=>{if(!document.querySelector("dialog[open]"))tipShow();else wait()},1600)};setTimeout(wait,1200)}
+if(location.hash==="#console"||(!location.hash&&startIn()==="console"))setTimeout(open,350);
 
 return {open,close,cc,get isOpen(){return open_}};
 })();
