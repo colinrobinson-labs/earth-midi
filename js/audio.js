@@ -21,7 +21,12 @@ function genIR(ctx,type){const r=ROOMS[type]||ROOMS.hall,sr=ctx.sampleRate,len=M
     for(let i=pre;i<len;i++){const t=(i-pre)/(len-pre),n=Math.random()*2-1,k=r.bright*(1-r.damp*t);lp+=(n-lp)*clamp(k,.03,1);d[i]=lp*Math.pow(1-t,2.4)*(i-pre<sr*.01?(i-pre)/(sr*.01):1)}
     for(let e=0;e<r.er;e++){const at=pre+Math.floor(sr*(.008+Math.random()*.09*(1+e/4))),g=(Math.random()*.6+.2)*(1-e/(r.er+2))*(c?-1:1)*(Math.random()<.5?-1:1);if(at<len)d[at]+=g}}
   return ir}
-function driveCurve(amt){const n=2048,c=new Float32Array(n),k=1+amt*6;for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/Math.tanh(k)}return c}
+/* Tape saturation with a clean zone: unity gain below the knee, smooth tanh rounding above it.
+   The shaper's [-1,1] input represents [-2,2] (pre-gain halves, post-gain doubles) so loud hits
+   bend instead of hard-clipping at the curve's edge. Old curve had ~2.3x gain at low level and
+   squared off anything above ~0.4, which is what made quake hits and the tide drone crunch. */
+function driveCurve(amt){const n=4096,c=new Float32Array(n),T=Math.max(.2,1.1-amt*1.4),C=1.6;
+  for(let i=0;i<n;i++){const x=(i/(n-1)*2-1)*2,a=Math.abs(x),y=a<=T?a:T+(C-T)*Math.tanh((a-T)/(C-T));c[i]=Math.sign(x)*y/2}return c}
 
 function initAudio(){
   const ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:"playback"});
@@ -58,7 +63,7 @@ function initAudio(){
 }
 function applyMaster(force){if(!A)return;const c=A.ctx.currentTime;
   A.hp.frequency.setTargetAtTime(+CFG.hpf,c,.05);A.ls.gain.setTargetAtTime(+CFG.lowEq,c,.05);A.hs.gain.setTargetAtTime(+CFG.highEq,c,.05);
-  A.pre.gain.setTargetAtTime(1+CFG.drive*1.5,c,.05);A.post.gain.setTargetAtTime(1/(1+CFG.drive*1.1),c,.05);
+  A.pre.gain.setTargetAtTime(.5*(1+CFG.drive*.6),c,.05);A.post.gain.setTargetAtTime(3/(1+CFG.drive*.3),c,.05); // 2x undoes the shaper scaling, 1.5x makeup into the compressor
   if(force||A.curDrive!==CFG.drive){A.sh.curve=driveCurve(+CFG.drive);A.curDrive=CFG.drive}
   if(force||A.curRev!==CFG.revType){A.rev.buffer=genIR(A.ctx,CFG.revType);A.curRev=CFG.revType}
   PAN_KEYS.forEach(k=>A.sends[k].gain.setTargetAtTime(+CFG.send[k],c,.05))}
@@ -252,10 +257,10 @@ function quakeVoice(q){
   const p2=ctx.createOscillator(),p2g=ctx.createGain();p2.frequency.value=f*I.p;p2g.gain.setValueAtTime(amp*.12,c);p2g.gain.exponentialRampToValueAtTime(.0001,c+dec*.35);p2.connect(p2g);p2g.connect(pan);
   [car,mod,p2].forEach(o=>{o.start(c);o.stop(c+dec+.1)});
   if(q.mag>=4.5){
-    const s=ctx.createOscillator(),sg=ctx.createGain();s.type="sine";s.frequency.setValueAtTime(mtof(ROOT-12)*2.2,c);s.frequency.exponentialRampToValueAtTime(mtof(ROOT-24),c+.35);
-    sg.gain.setValueAtTime(0,c);sg.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.45,.9),c+.01);sg.gain.exponentialRampToValueAtTime(.0005,c+1.5+q.mag*.4);s.connect(sg);sg.connect(A.buses.q);s.start(c);s.stop(c+4+q.mag);
+    const s=ctx.createOscillator(),sg=ctx.createGain();s.type="sine";s.frequency.setValueAtTime(mtof(ROOT-12)*2.2,c);s.frequency.exponentialRampToValueAtTime(mtof(ROOT-12),c+.35);
+    sg.gain.setValueAtTime(0,c);sg.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.24,.45),c+.01);sg.gain.exponentialRampToValueAtTime(.0005,c+1.5+q.mag*.4);s.connect(sg);sg.connect(A.buses.q);s.start(c);s.stop(c+4+q.mag);
     const n=ctx.createBufferSource();n.buffer=A.nb;const nf=ctx.createBiquadFilter();nf.type="lowpass";nf.frequency.value=140;const ng=ctx.createGain();
-    ng.gain.setValueAtTime(0,c);ng.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.6,1.4),c+.08);ng.gain.exponentialRampToValueAtTime(.0005,c+q.mag*.9);n.connect(nf);nf.connect(ng);ng.connect(A.buses.q);n.start(c);n.stop(c+q.mag);
+    ng.gain.setValueAtTime(0,c);ng.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.35,.75),c+.08);ng.gain.exponentialRampToValueAtTime(.0005,c+q.mag*.9);n.connect(nf);nf.connect(ng);ng.connect(A.buses.q);n.start(c);n.stop(c+q.mag);
     if(CFG.fills)seq.fill=true;
   }
   return {note,vel,dur:dec};
