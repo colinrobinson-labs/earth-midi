@@ -1,0 +1,25 @@
+/* Earth MIDI v0.6 · layers drawer on phones: drag between peek, half and full; glow rows with their layer's level */
+"use strict";
+(()=>{
+  const side=$("side"),head=$("sheetHead"),mq=matchMedia("(max-width:700px)");
+  const PEEK=52;let state=0,h=PEEK,drag=null;
+  const full=()=>side.offsetHeight,snaps=()=>[PEEK,Math.round(Math.min(full(),innerHeight*.48)),full()];
+  function setH(px,anim){h=px;side.classList.toggle("drag",!anim);side.style.setProperty("--sheetH",px+"px")}
+  function go(i){state=clamp(i,0,2);setH(snaps()[state],true);side.dataset.state=state;head.setAttribute("aria-expanded",state>0);
+    if(state===0)$("pads").scrollTop=0}
+  head.addEventListener("pointerdown",e=>{if(!mq.matches)return;drag={y:e.clientY,h,t:performance.now(),moved:0};head.setPointerCapture(e.pointerId)});
+  head.addEventListener("pointermove",e=>{if(!drag)return;const dy=drag.y-e.clientY;drag.moved=Math.max(drag.moved,Math.abs(dy));if(drag.moved<6)return;setH(clamp(drag.h+dy,PEEK,full()),false)});
+  const end=e=>{if(!drag)return;const d=drag;drag=null;
+    if(d.moved<6){go(state===0?1:0);return}
+    const v=(d.y-e.clientY)/Math.max(1,performance.now()-d.t),sn=snaps();
+    if(Math.abs(v)>.6)go(v>0?Math.min(2,sn.findIndex(x=>x>h-1)===-1?2:sn.findIndex(x=>x>h-1)):Math.max(0,sn.map(x=>x<h+1).lastIndexOf(true)));
+    else go(sn.reduce((b,x,i)=>Math.abs(x-h)<Math.abs(sn[b]-h)?i:b,0))};
+  head.addEventListener("pointerup",end);head.addEventListener("pointercancel",end);
+  head.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go(state===0?1:0)}else if(e.key==="ArrowUp")go(state+1);else if(e.key==="ArrowDown"||e.key==="Escape")go(state-1)});
+  const reset=()=>{if(mq.matches)go(state);else{side.style.removeProperty("--sheetH");side.classList.remove("drag")}};
+  mq.addEventListener?mq.addEventListener("change",reset):mq.addListener(reset);addEventListener("resize",()=>mq.matches&&go(state));
+  reset();
+  // rows breathe with their layer
+  const rows={};document.querySelectorAll(".lrow").forEach(r=>rows[r.dataset.k]=r);
+  (function glow(){for(const k in rows){const v=(S.hit[k]||0);rows[k].style.setProperty("--hit",v.toFixed(3))}requestAnimationFrame(glow)})();
+})();

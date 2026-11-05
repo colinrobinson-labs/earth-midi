@@ -95,7 +95,7 @@ function toggleRec(stems){
   const proc=A.ctx.createScriptProcessor(4096,nch,2),data=keys.map(()=>[[],[]]),rate=A.ctx.sampleRate,max=rate*60*(stems?3:20);let n=0;
   proc.onaudioprocess=e=>{const o=e.outputBuffer;o.getChannelData(0).fill(0);o.getChannelData(1).fill(0);if(n>=max){if(REC&&!REC.stopping){REC.stopping=1;setTimeout(stopRec,0)}return}
     for(let i=0;i<keys.length;i++){data[i][0].push(f2i(e.inputBuffer.getChannelData(i*2)));data[i][1].push(f2i(e.inputBuffer.getChannelData(i*2+1)))}n+=4096;
-    if(n%rate<4096){const s=Math.floor(n/rate),lbl=`■ ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}${stems?" / 3:00":""}`;REC.btn.textContent=lbl;$("recDot")&&($("recDot").textContent=lbl)}};
+    if(n%rate<4096){const s=Math.floor(n/rate),lbl=`■ ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}${stems?" / 3:00":""}`;if(REC)REC.btn.textContent=lbl;$("recDot")&&($("recDot").textContent=lbl)}};
   merger.connect(proc);proc.connect(A.ctx.destination);
   const btn=stems?$("bStems"):$("bRec");btn.classList.add("on");document.body.classList.add("recording");
   REC={proc,merger,srcs,data,keys,rate,stems,btn,label:btn.textContent,start:realNow()};
