@@ -1,11 +1,11 @@
-/* Earth MIDI v0.5 · core: helpers, settings, state, live data, astronomy.
+/* Earth MIDI v0.6 · core: helpers, settings, state, live data, astronomy.
    Every number here is either fetched from a public sensor feed or computed
    from published physics. Nothing is generated or guessed by a model. */
 "use strict";
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,map=(v,a,b,c,d)=>lerp(c,d,clamp((v-a)/(b-a),0,1));
 const DPR=Math.min(2,window.devicePixelRatio||1);
-const VERSION="0.5";
+const VERSION="0.6";
 const IS_MOBILE=matchMedia("(max-width:700px)").matches;
 
 /* ================= layers ================= */

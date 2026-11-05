@@ -4,4 +4,4 @@
 
 Live at **https://earthmidi.com**
 
-Any music made with Earth MIDI must credit "Earth MIDI by Colin Robinson". See the license section in the app.
+Any music made with Earth MIDI must credit "Planetary data sonified with Earth MIDI by Colin Robinson · earthmidi.com". © 2026 Colin Robinson. See [LICENSE.md](LICENSE.md) for the full terms, data sources and privacy note.

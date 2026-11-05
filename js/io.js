@@ -1,7 +1,7 @@
-/* Earth MIDI v0.5 · export, import, save, share, credit, network ledger */
+/* Earth MIDI v0.6 · export, import, save, share, credit, network ledger */
 "use strict";
 const CREDIT="Planetary data sonified with Earth MIDI by Colin Robinson · earthmidi.com";
-const SOURCES="Data: USGS/ANSS earthquakes; NOAA SWPC real-time solar wind (DSCOVR/ACE/IMAP), Kp, Dst, GOES X-rays and protons; NOAA CO-OPS tides (all public domain); NASA EONET natural events (public domain); ISS orbital elements (NORAD via wheretheiss.at / CelesTrak); Open-Meteo weather, upper-air, marine and air quality (CC BY 4.0, open-meteo.com).";
+const SOURCES="Data: USGS/ANSS earthquakes; NOAA SWPC real-time solar wind (DSCOVR/ACE/IMAP), Kp, Dst, GOES X-rays and protons; NOAA CO-OPS tides (all public domain); NASA EONET natural events (public domain); ISS orbital elements (NORAD via wheretheiss.at / CelesTrak); Open-Meteo weather, upper-air, marine and air quality (CC BY 4.0, open-meteo.com); air quality contains modified Copernicus Atmosphere Monitoring Service information; land outlines from Natural Earth (public domain).";
 const LICENSE="Free to use in music and media, commercial included. Credit required: "+CREDIT;
 function xs(m){const e=$("xState");if(!e)return;e.textContent=m;e.classList.add("on");clearTimeout(xs.t);xs.t=setTimeout(()=>{e.textContent="";e.classList.remove("on")},4500)}
 const stamp=()=>new Date().toISOString().slice(0,16).replace(/[-:T]/g,"").replace(/(\d{8})(\d{4})/,"$1-$2");
@@ -138,7 +138,7 @@ async function loadFile(f){try{const j=JSON.parse(await f.text());if(j.app!=="Ea
   if(j.preset){CFG=mergeCFG(j.cfg);if(j.style)setStyle(j.style);afterCFG();xs(`Preset loaded: ${j.name||"preset"}`);return}
   if(!j.data)throw new Error("no data in file");Object.assign(S,j.data);S.endT=j.endT;S.frozen=true;CFG=mergeCFG(j.cfg);setStyle(j.style||"ambient");afterCFG();
   $("dataState").innerHTML=`<span class="dot" style="background:var(--s);box-shadow:0 0 8px var(--s)"></span>saved session · ${new Date(j.endT-864e5).toISOString().slice(0,16)} → ${new Date(j.endT).toISOString().slice(0,16)} UTC`;
-  if(S.on)$("go").click();xs("Session loaded. Press PLAY to replay it exactly")}catch(err){xs("Couldn't load: "+err.message)}}
+  if(S.on)startStop();xs("Session loaded. Press PLAY to replay it exactly")}catch(err){xs("Couldn't load: "+err.message)}}
 const shareURL=()=>location.origin+location.pathname+"#s="+btoa(unescape(encodeURIComponent(JSON.stringify({cfg:CFG,style:S.style,mode:+$("mode").value}))));
 async function shareLink(){const u=shareURL();history.replaceState(null,"",u.slice(u.indexOf("#")));
   if(navigator.share&&IS_MOBILE){try{await navigator.share({title:"Earth MIDI",text:"The planet as an instrument, with my settings",url:u});return}catch(_){}}
