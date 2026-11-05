@@ -85,6 +85,15 @@ body.imm .hud2{top:calc(10px + env(safe-area-inset-top,0px))}
 .pipe li b{display:block;font:600 12.5px var(--body);margin-bottom:2px}
 .pipe li::before{content:counter(p);font:600 10px var(--mono);color:var(--mute);display:block;margin-bottom:3px}
 .pipe li span{color:var(--mute)}
+.worked{margin:14px 0 4px}.worked h5{margin:0 0 8px;font:700 12px var(--disp);text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+.wk-row{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:0;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.wk{padding:11px 14px;background:var(--panel2);position:relative}.wk+.wk{border-left:1px solid var(--line2)}
+.wk+.wk::before{content:"→";position:absolute;left:-9px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:var(--panel);border:1px solid var(--line2);font:10px/14px var(--mono);text-align:center;color:var(--mute)}
+.wk small{display:block;font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.wk b{display:block;font:600 13px var(--body);color:var(--fg)}.wk span{display:block;font:12px var(--mono);color:var(--mute);margin-top:2px}
+.wk code{display:block;font:12px/1.6 var(--mono);color:var(--s)}
+.worked p{font-size:13px;color:var(--mute);margin:8px 0 0;max-width:760px}
+@media (max-width:700px){.wk-row{grid-template-columns:1fr}.wk+.wk{border-left:0;border-top:1px solid var(--line2)}.wk+.wk::before{content:"↓";left:14px;top:-9px;transform:none}}
 .hstats{display:flex;flex-wrap:wrap;gap:6px 18px;margin:12px 0;font:12px var(--mono);color:var(--mute)}.hstats b{color:var(--fg);font-weight:600}
 .howgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px}
 .howgrid h5,.onlyai h5{margin:0 0 6px;font:700 12px var(--disp);text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
@@ -537,6 +546,15 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
     <li><b>Oscillators play</b><span>Web Audio synthesis, built live</span></li>
     <li><b>You produce</b><span>listen, record, or export the data</span></li>
   </ol>
+  <div class="worked" aria-label="Worked example">
+    <h5>So what turns a reading into sound?</h5>
+    <div class="wk-row">
+      <div class="wk"><small>1 · Reading</small><b>USGS: M5.1 quake</b><span>10 km deep · 142°E</span></div>
+      <div class="wk wk-rule"><small>2 · Rule</small><code>velocity = 20 + (mag − 1) ÷ 6 × 107<br>shallower → higher note<br>longitude → left/right</code></div>
+      <div class="wk"><small>3 · Sound</small><b>Bell at velocity 93</b><span>high note · panned right · rings ~6 s</span></div>
+    </div>
+    <p>That rule is a few lines of plain code, like a synth patch, written once. Nothing listens, learns or improvises. Feed it the same reading tomorrow and you get the same note. Every card below prints its own rule, and tapping any event in the log shows its full chain.</p>
+  </div>
   <div class="hstats"><span><b id="feedCount">14</b> live feeds</span><span><b>0</b> samples or loops</span><span><b>0</b> AI models on this page</span><span><b id="aiHits">0</b> requests to AI services</span></div>
   <div class="howgrid">
     <div class="howt"><table>
@@ -592,7 +610,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <script src="js/sheet.js?v=19"></script>
 <script src="js/title.js?v=2"></script>
 <script src="js/record.js?v=3"></script>
-<script src="js/welcome.js?v=3"></script>
+<script src="js/welcome.js?v=4"></script>
 <script src="js/procta.js?v=1"></script>
 <script src="js/beat.js?v=1"></script>
 <script src="js/home.js?v=1"></script>

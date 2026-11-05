@@ -22,6 +22,10 @@
 .wlc-h span{color:var(--c_)}
 .wlc-p{font:15px/1.5 var(--body);color:var(--fg);margin:0 0 10px;max-width:44ch}
 .wlc-fine{font:11px/1.55 var(--mono);color:var(--mute);margin:0 0 6px;letter-spacing:.01em}
+.wlc-why{margin:0 0 8px;font:11px/1.55 var(--mono);color:var(--mute)}
+.wlc-why summary{cursor:pointer;color:var(--fg);list-style:none;display:inline-block;border-bottom:1px dashed var(--line2)}.wlc-why summary::-webkit-details-marker{display:none}
+.wlc-why summary::after{content:" +";color:var(--mute)}.wlc-why[open] summary::after{content:" −"}
+.wlc-why p{margin:6px 0 0;padding:8px 10px;border-left:2px solid var(--s);background:#0a0f15;border-radius:0 8px 8px 0}.wlc-why a{color:var(--fg)}
 .wlc-live{font:11px/1.55 var(--mono);color:var(--mute);margin:0 0 18px;min-height:1.55em}
 .wlc-live b{color:var(--fg);font-weight:500}.wlc-live i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--k);margin-right:7px;vertical-align:1px;animation:wlcBlink 2s ease-in-out infinite}
 @keyframes wlcBlink{50%{opacity:.25}}
@@ -59,6 +63,7 @@
   <h2 class="wlc-h" id="wlcH" aria-label="Earth MIDI">${title}</h2>
   <p class="wlc-p">The planet, played live. Earthquakes, solar wind, ocean swell, tides, the ISS and more, turned into sound and MIDI as they happen.</p>
   <p class="wlc-fine">AI helped write this site's code. It doesn't make the music. Every note comes straight from a live sensor reading, run through the same rule every time, so the same quake always makes the same sound.</p>
+  <details class="wlc-why"><summary>What turns a reading into sound?</summary><p>Plain code, like a synth patch, written once. An M5.1 quake becomes a bell at velocity 93, pitched by its depth, panned by its longitude. Nothing listens, learns or improvises. <a href="#how" data-c="how">See the rules</a></p></details>
   <p class="wlc-live" id="wlcLive" aria-live="polite"></p>
   <div class="wlc-opts">
     <button class="wlc-o" data-c="ambient" style="--oc:var(--o)"><span class="wlc-g g-amb" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Ambient</b><small>Slow and spacious. Every event rings out on its own.</small></span><span class="go-ar" aria-hidden="true">→</span></button>
