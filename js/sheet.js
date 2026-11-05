@@ -2,7 +2,7 @@
 "use strict";
 (()=>{
   const side=$("side"),head=$("sheetHead"),mq=matchMedia("(max-width:700px)");
-  const PEEK=52;let state=0,h=PEEK,drag=null;
+  const PEEK=64;let state=0,h=PEEK,drag=null;
   const full=()=>side.offsetHeight,snaps=()=>[PEEK,Math.round(Math.min(full(),innerHeight*.48)),full()];
   function setH(px,anim){h=px;side.classList.toggle("drag",!anim);side.style.setProperty("--sheetH",px+"px")}
   function go(i){state=clamp(i,0,2);setH(snaps()[state],true);side.dataset.state=state;head.setAttribute("aria-expanded",state>0);
@@ -20,6 +20,10 @@
   mq.addEventListener?mq.addEventListener("change",reset):mq.addListener(reset);addEventListener("resize",()=>mq.matches&&go(state));
   reset();
   // rows breathe with their layer
-  const rows={};document.querySelectorAll(".lrow").forEach(r=>rows[r.dataset.k]=r);
-  (function glow(){for(const k in rows){const v=(S.hit[k]||0);rows[k].style.setProperty("--hit",v.toFixed(3))}requestAnimationFrame(glow)})();
+  const rows={},dots={},dw=$("ldots");document.querySelectorAll(".lrow").forEach(r=>{const k=r.dataset.k;rows[k]=r;const d=document.createElement("i");d.style.setProperty("--c",COLS[k]);dw.appendChild(d);dots[k]=d});
+  (function glow(){for(const k in rows){const v=(S.hit[k]||0).toFixed(3);rows[k].style.setProperty("--hit",v);if(mq.matches){dots[k].style.setProperty("--hit",v);dots[k].classList.toggle("off",muted(k))}}requestAnimationFrame(glow)})();
+  // first visit on a phone: a small lift so people see the drawer is there
+  let seen=false;try{seen=!!localStorage.getItem("em5.sheetSeen")}catch(_){}
+  if(mq.matches&&!seen){setTimeout(()=>{if(state===0){side.classList.add("nudge");side.addEventListener("animationend",()=>side.classList.remove("nudge"),{once:true})}},2200)}
+  head.addEventListener("pointerdown",()=>{try{localStorage.setItem("em5.sheetSeen","1")}catch(_){}},{once:true});
 })();
