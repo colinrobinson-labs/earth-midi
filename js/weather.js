@@ -6,7 +6,7 @@
    fractions; the fine cloud texture is a fixed pattern that gives the 15° cells some grain, nothing more.
    Tap anywhere on the map: the exact point is fetched from the same model and played on the Jet stream bus. */
 "use strict";
-const WX_LON=[...Array(24)].map((_,i)=>-180+i*15),WX_LAT=[...Array(17)].map((_,j)=>80-j*10),WX_N=408;
+// grid (WX_LON, WX_LAT, WX_N) and request URLs live in feeds.js, shared with the snapshot job
 const WX={t:[],u:null,v:null,c:null,p:null,T:null,f:{u:new Float32Array(WX_N),v:new Float32Array(WX_N),c:new Float32Array(WX_N),p:new Float32Array(WX_N),T:new Float32Array(WX_N),P:new Float32Array(WX_N)},
   ok:false,err:"",loading:false,at:0,fT:NaN,texT:NaN,texC:new Float32Array(64800),texR:new Float32Array(64800),parts:[],pins:[],
   g:null,gLat:NaN,gSize:0,gc:null,fc:null,fT2:0,lastNow:0,hoverAt:0};
@@ -21,9 +21,7 @@ async function loadWX(force){
   if(WX.loading)return;if(!force&&WX.ok&&Date.now()-WX.at<90*6e4)return;WX.loading=true;
   try{let d=null;
     if(!force)try{const c=JSON.parse(localStorage.getItem("em.wx")||"null");if(c&&c.v===2&&Date.now()-c.at<90*6e4)d=c}catch(_){}
-    if(!d){const pts=[];WX_LAT.forEach(la=>WX_LON.forEach(lo=>pts.push([la,lo])));
-      const url=g=>`https://api.open-meteo.com/v1/forecast?latitude=${g.map(p=>p[0])}&longitude=${g.map(p=>p[1])}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,pressure_msl&past_days=1&forecast_days=1&timezone=GMT`;
-      const res=(await Promise.all([pts.slice(0,204),pts.slice(204)].map(g=>getJSON(url(g),30000)))).flatMap(arr);
+    if(!d){const res=(await Promise.all([FEED.wx0,FEED.wx1].map(u=>getJSON(u,30000)))).flatMap(arr);
       if(res.length!==WX_N||!res[0].hourly)throw new Error("grid");
       const R=a=>a.map(v=>v==null?null:Math.round(v*10)/10);
       d={v:2,at:Date.now(),P:res.map(x=>R(x.hourly.pressure_msl)),time:res[0].hourly.time,T:res.map(x=>R(x.hourly.temperature_2m)),p:res.map(x=>R(x.hourly.precipitation)),c:res.map(x=>x.hourly.cloud_cover),s:res.map(x=>R(x.hourly.wind_speed_10m)),d:res.map(x=>x.hourly.wind_direction_10m)};

@@ -136,6 +136,7 @@ body:not(.playing) .go{animation:goCall 2.4s ease-in-out infinite}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--k);margin-right:5px;box-shadow:0 0 8px var(--k);animation:bl 1.4s infinite}
 @keyframes bl{50%{opacity:.3}}
 .warn{color:var(--s)}
+.late{color:var(--mute);border-bottom:1px dotted currentColor;cursor:help}
 #xState{color:var(--k);opacity:0;transition:opacity .3s;margin-left:auto}#xState.on{opacity:1}
 button.on:not(.go){background:#ff2d55!important;border-color:#ff2d55!important;color:#fff!important;animation:bl 1s infinite}
 select:disabled{opacity:.55;cursor:not-allowed}
@@ -605,10 +606,11 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="js/core.js?v=21"></script>
+<script src="js/feeds.js?v=1"></script>
+<script src="js/core.js?v=22"></script>
 <script src="js/audio.js?v=23"></script>
 <script src="js/visuals.js?v=22"></script>
-<script src="js/weather.js?v=19"></script>
+<script src="js/weather.js?v=20"></script>
 <script src="js/groove.js?v=1"></script>
 <script src="js/studio.js?v=3"></script>
 <script src="js/focus.js?v=19"></script>
