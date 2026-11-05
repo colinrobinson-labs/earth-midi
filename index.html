@@ -459,7 +459,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 </div>
 
 <section class="pro" id="pro" hidden>
-  <h2>Producer controls <small>saved in this browser · share them with Share</small></h2>
+  <h2>Producer controls <span class="pstat" id="pstat" aria-live="off"></span><small>saved in this browser · share them with Share</small></h2>
   <div id="ptabs" role="tablist"></div>
   <div id="pgrid" class="pgrid"></div>
 </section>
@@ -467,14 +467,14 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <section class="pro" id="exp" hidden>
   <div class="exph">Export, import, save, share <small>every file carries the credit</small></div>
   <div class="exp">
-    <div class="pgrp hero"><h5>Data only · no sounds</h5><p>For DJs and producers who want the planet, not our synths. The last 24 hours as <b>MIDI notes + CC automation lanes</b> (one track per measurement), plus CSV and JSON tables, timed to your tempo. Drag it into Ableton, Logic, FL or Bitwig and drive your own instruments.</p>
+    <div class="pgrp hero" style="--ac:var(--k)"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v2M12 7v2M12 11v2"/><rect x="10.5" y="14" width="3" height="4" rx="1"/></svg></span>Data only · no sounds</h5><p>For DJs and producers who want the planet, not our synths. The last 24 hours as <b>MIDI notes + CC automation lanes</b> (one track per measurement), plus CSV and JSON tables, timed to your tempo. Drag it into Ableton, Logic, FL or Bitwig and drive your own instruments.</p>
       <div class="row"><select id="dpBpm" aria-label="Tempo"><option>90</option><option>100</option><option selected>120</option><option>124</option><option>128</option><option>140</option><option>170</option></select>
       <select id="dpBars" aria-label="Length"><option value="32">24h → 32 bars</option><option value="64" selected>24h → 64 bars</option><option value="128">24h → 128 bars</option><option value="256">24h → 256 bars</option><option value="1440">24h → 1440 bars</option></select>
-      <button class="primary" id="bPack">⬇ Data pack (.zip)</button><button id="bPackMid">⬇ .mid only</button></div></div>
-    <div class="pgrp"><h5>Record</h5><p>WAV and stems start on press and stop on the next press. Video and compressed audio open the recorder, with sharing built in. Playing the EARTH MIDI title follows the “Playing the EARTH MIDI title” choice in the recorder: in the mix, its own file (or its own stem), or not recorded.</p><div class="row"><button id="bRec">● WAV master</button><button id="bStems">● Stems (WAV, 3 min)</button><button id="bAac">● Small audio (M4A)</button><button id="bVid">● Video for socials</button></div></div>
-    <div class="pgrp"><h5>MIDI + data from your session</h5><p>Everything that played since you hit PLAY.</p><div class="row"><button id="bMid">⬇ Performance MIDI</button><button id="bCsv">⬇ Event log CSV</button></div></div>
-    <div class="pgrp"><h5>Save + import</h5><p>A session freezes the exact data so it replays identically, anywhere.</p><div class="row"><button id="bSave">💾 Save session</button><label class="btnlike">📂 Import session or preset<input type="file" id="fLoad" accept=".json,application/json" hidden></label></div></div>
-    <div class="pgrp"><h5>Credit</h5><p>Free to use, commercial included. Credit required.</p><div class="row"><button id="bCredit">Copy credit line</button></div></div>
+      <button class="primary" id="bPack"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Data pack (.zip)</button><button id="bPackMid"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>.mid only</button></div></div>
+    <div class="pgrp" style="--ac:#ff2d55"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" class="f"/></svg></span>Record</h5><p>WAV and stems start on press and stop on the next press. Video and compressed audio open the recorder, with sharing built in. Playing the EARTH MIDI title follows the “Playing the EARTH MIDI title” choice in the recorder: in the mix, its own file (or its own stem), or not recorded.</p><div class="row"><button id="bRec"><i class="rdot"></i>WAV master</button><button id="bStems"><i class="rdot"></i>Stems (WAV, 3 min)</button><button id="bAac"><i class="rdot"></i>Small audio (M4A)</button><button id="bVid"><i class="rdot"></i>Video for socials</button></div></div>
+    <div class="pgrp" style="--ac:var(--o)"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="7.2" cy="12" r="1.2" class="f"/><circle cx="16.8" cy="12" r="1.2" class="f"/><circle cx="8.6" cy="8.4" r="1.2" class="f"/><circle cx="15.4" cy="8.4" r="1.2" class="f"/><circle cx="12" cy="7" r="1.2" class="f"/><path d="M10 18h4"/></svg></span>MIDI + data from your session</h5><p>Everything that played since you hit PLAY.</p><div class="row"><button id="bMid"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Performance MIDI</button><button id="bCsv"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8.5 9h7M8.5 13h7M8.5 17h4"/></svg>Event log CSV</button></div></div>
+    <div class="pgrp" style="--ac:var(--s)"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>Save + import</h5><p>A session freezes the exact data so it replays identically, anywhere.</p><div class="row"><button id="bSave"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7M8.5 12h7"/></svg>Save session</button><label class="btnlike"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5V4.5m0 0L7.5 9M12 4.5L16.5 9M5 19.5h14"/></svg>Import session or preset<input type="file" id="fLoad" accept=".json,application/json" hidden></label></div></div>
+    <div class="pgrp" style="--ac:var(--c)"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span>Credit</h5><p>Free to use, commercial included. Credit required.</p><div class="row"><button id="bCredit"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Copy credit line</button></div></div>
   </div>
 </section>
 
@@ -515,13 +515,13 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <div class="panel" style="margin-top:12px"><h3>Output <small>spectrum · waveform · stereo field</small></h3><canvas id="scope"></canvas></div>
 
 <div class="info">
-  <div><h4>Use it in your DAW</h4><ul>
-    <li><b>Live MIDI on Mac:</b> Audio MIDI Setup → MIDI Studio → IAC Driver → “Device is online”. Pick it above, arm a MIDI track.</li>
-    <li><b>Windows:</b> install loopMIDI, create a port, pick it above.</li>
-    <li><b>Genres:</b> Producer controls → Rhythm → pick a genre and style. Each sets its own tempo range and groove, and you choose which real data moves the tempo: solar wind, wind, rain, air pressure, storms, quakes, tides and more.</li>
-    <li><b>Sync:</b> Producer controls → MIDI → “Send MIDI clock” and your DAW follows the planet's tempo.</li>
-    <li><b>No live MIDI?</b> Export the data pack and drag the .mid in. Each layer has its own channel and CC lanes.</li></ul></div>
-  <div><h4>Accuracy</h4><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div>
+  <div style="--ac:var(--o)"><h4><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="7.2" cy="12" r="1.2" class="f"/><circle cx="16.8" cy="12" r="1.2" class="f"/><circle cx="8.6" cy="8.4" r="1.2" class="f"/><circle cx="15.4" cy="8.4" r="1.2" class="f"/><circle cx="12" cy="7" r="1.2" class="f"/><path d="M10 18h4"/></svg></span>Use it in your DAW</h4><ul>
+    <li><span class="gi" style="--lc:var(--fg)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><span><b>Live MIDI on Mac:</b> Audio MIDI Setup → MIDI Studio → IAC Driver → “Device is online”. Pick it above, arm a MIDI track.</span></li>
+    <li><span class="gi" style="--lc:var(--w)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M12 9v11"/></svg></span><span><b>Windows:</b> install loopMIDI, create a port, pick it above.</span></li>
+    <li><span class="gi" style="--lc:var(--q)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r=".6" class="f"/></svg></span><span><b>Genres:</b> Producer controls → Rhythm → pick a genre and style. Each sets its own tempo range and groove, and you choose which real data moves the tempo: solar wind, wind, rain, air pressure, storms, quakes, tides and more.</span></li>
+    <li><span class="gi" style="--lc:var(--k)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span><span><b>Sync:</b> Producer controls → MIDI → “Send MIDI clock” and your DAW follows the planet's tempo.</span></li>
+    <li><span class="gi" style="--lc:var(--s)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v2M12 7v2M12 11v2"/><rect x="10.5" y="14" width="3" height="4" rx="1"/></svg></span><span><b>No live MIDI?</b> Export the data pack and drag the .mid in. Each layer has its own channel and CC lanes.</span></li></ul></div>
+  <div style="--ac:var(--k)"><h4><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" class="f"/></svg></span>Accuracy</h4><div class="acc"><span style="--lc:var(--q)"><b>~1 min</b>new quakes, after USGS publishes</span><span style="--lc:var(--s)"><b>30–60 min</b>solar wind lead time, measured at L1</span><span style="--lc:var(--o)"><b>24 h</b>replayed in real order and spacing</span><span style="--lc:var(--k)"><b>0</b>values passed off as live when a feed fails</span></div><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div>
 </div>
 <details class="how" id="how">
   <summary><span class="hs-t">How it works</span><span class="hs-s">real sensors → the same rule every time → oscillators in your browser · AI helped build the site, it doesn't make the sound</span><span class="hs-c" aria-hidden="true"></span></summary>
@@ -580,10 +580,11 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <script src="js/visuals.js?v=20"></script>
 <script src="js/weather.js?v=18"></script>
 <script src="js/groove.js?v=1"></script>
+<script src="js/studio.js?v=1"></script>
 <script src="js/focus.js?v=19"></script>
 <script src="js/io.js?v=19"></script>
 <script src="js/god.js?v=4"></script>
-<script src="js/ui.js?v=19"></script>
+<script src="js/ui.js?v=20"></script>
 <script src="js/zones.js?v=3"></script>
 <script src="js/sheet.js?v=19"></script>
 <script src="js/title.js?v=2"></script>
