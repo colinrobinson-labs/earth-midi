@@ -91,21 +91,23 @@ function toggleRec(stems,opt){
   if(!A||!S.on){xs("Press PLAY first");return}
   if(REC){stopRec();return}
   opt=opt||{};
-  const keys=stems?PAN_KEYS.filter(k=>!muted(k)).concat(["fx"]):["mix"],nch=keys.length*2,merger=A.ctx.createChannelMerger(nch),srcs=[];
-  keys.forEach((k,i)=>{const node=k==="mix"?A.lim:k==="fx"?A.revG:A.buses[k],sp=A.ctx.createChannelSplitter(2);node.connect(sp);sp.connect(merger,0,i*2);sp.connect(merger,1,i*2+1);srcs.push([node,sp])});
+  const TM=window.EMTitle?EMTitle.mode:"off",keys=stems?PAN_KEYS.filter(k=>!muted(k)).concat(["fx"],TM==="off"?[]:["ttl"]):["mix"],nch=keys.length*2,merger=A.ctx.createChannelMerger(nch),srcs=[];
+  keys.forEach((k,i)=>{const node=k==="mix"?A.lim:k==="fx"?A.revG:k==="ttl"?EMTitle.node():A.buses[k],sp=A.ctx.createChannelSplitter(2);node.connect(sp);sp.connect(merger,0,i*2);sp.connect(merger,1,i*2+1);srcs.push([node,sp])});
   const proc=A.ctx.createScriptProcessor(4096,nch,2),data=keys.map(()=>[[],[]]),rate=A.ctx.sampleRate,max=rate*(opt.maxSec||60*(stems?3:20));let n=0;
   proc.onaudioprocess=e=>{const o=e.outputBuffer;o.getChannelData(0).fill(0);o.getChannelData(1).fill(0);if(n>=max){if(REC&&!REC.stopping){REC.stopping=1;setTimeout(stopRec,0)}return}
     for(let i=0;i<keys.length;i++){data[i][0].push(f2i(e.inputBuffer.getChannelData(i*2)));data[i][1].push(f2i(e.inputBuffer.getChannelData(i*2+1)))}n+=4096;
     if(!opt.onDone&&n%rate<4096){const s=Math.floor(n/rate),lbl=`■ ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}${stems?" / 3:00":""}`;if(REC)REC.btn.textContent=lbl;$("recDot")&&($("recDot").textContent=lbl)}};
   merger.connect(proc);proc.connect(A.ctx.destination);
   const btn=stems?$("bStems"):$("bRec");if(!opt.onDone){btn.classList.add("on");document.body.classList.add("recording")}
+  if(!stems&&!opt.onDone&&TM==="separate"){EMTitle.resetTold();EMTitle.capStart()}
   REC={proc,merger,srcs,data,keys,rate,stems,btn,label:btn.textContent,start:realNow(),onDone:opt.onDone};
 }
 async function stopRec(){const R=REC;if(!R)return;REC=null;R.proc.disconnect();R.srcs.forEach(([n,sp])=>{try{n.disconnect(sp)}catch(_){}});R.btn.classList.remove("on");R.btn.textContent=R.label;document.body.classList.remove("recording");
   const title=`Earth MIDI ${new Date(R.start).toISOString().slice(0,16)} UTC`,st=stamp();
-  if(!R.stems){const w=encodeWav(R.data[0][0],R.data[0][1],R.rate,title);if(R.onDone){R.onDone(w,`earth-midi_${st}.wav`);return}download(`earth-midi_${st}.wav`,w);xs(`Saved ${(w.size/1048576).toFixed(1)} MB WAV with credit metadata`);return}
+  if(!R.stems){const w=encodeWav(R.data[0][0],R.data[0][1],R.rate,title);if(R.onDone){R.onDone(w,`earth-midi_${st}.wav`);return}download(`earth-midi_${st}.wav`,w);
+    const tt=window.EMTitle&&EMTitle.capStop();if(tt&&tt.blob){setTimeout(()=>download(tt.name,tt.blob),400);xs("Saved the WAV, plus your title playing as its own WAV")}else xs(`Saved ${(w.size/1048576).toFixed(1)} MB WAV with credit metadata`);return}
   xs("Packing stems…");try{const JSZip=await zipLib(),z=new JSZip(),f=z.folder(`earth-midi-stems_${st}`);
-    R.keys.forEach((k,i)=>f.file(`${String(i+1).padStart(2,"0")}_${k==="fx"?"reverb-return":(LNAME[k]||k).toLowerCase().replace(/[^a-z0-9]+/g,"-")}.wav`,encodeWav(R.data[i][0],R.data[i][1],R.rate,`${title} · ${k==="fx"?"reverb return":LNAME[k]}`)));
+    R.keys.forEach((k,i)=>f.file(`${String(i+1).padStart(2,"0")}_${k==="fx"?"reverb-return":k==="ttl"?"title-playing":(LNAME[k]||k).toLowerCase().replace(/[^a-z0-9]+/g,"-")}.wav`,encodeWav(R.data[i][0],R.data[i][1],R.rate,`${title} · ${k==="fx"?"reverb return":k==="ttl"?"title playing":LNAME[k]}`)));
     f.file("CREDIT.txt",README_CREDIT+"\nStems are each layer's own bus before the master chain; the shared reverb is its own stem. Line them up at 0:00.\n");
     download(`earth-midi-stems_${st}.zip`,await z.generateAsync({type:"blob",compression:"STORE"}));xs(`Saved ${R.keys.length} stems`)}catch(e){xs("Stems failed: "+e.message)}}
 

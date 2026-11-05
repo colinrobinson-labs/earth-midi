@@ -10,7 +10,7 @@
 const CAP={kind:"video",shape:IS_MOBILE?"vertical":"square",afmt:"wav",len:30};
 try{Object.assign(CAP,JSON.parse(localStorage.getItem("em.cap")||"{}"))}catch(_){}
 const capSave=()=>{try{localStorage.setItem("em.cap",JSON.stringify(CAP))}catch(_){}};
-let CREC=null,LAST=null;
+let CREC=null,LAST=null,TPEND=null;
 const fmtT=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
 const isGod=()=>document.body.classList.contains("god")||!!(window.GOD&&window.GOD.on)||(typeof S!=="undefined"&&!!(S.god||S.sandbox));
 const SHAPES={vertical:{w:1080,h:1920,label:"Vertical",sub:"9:16 · Reels, TikTok, Stories"},square:{w:1080,h:1080,label:"Square",sub:"1:1 · feed posts"},wide:{w:1920,h:1080,label:"Wide",sub:"16:9 · YouTube, desktop"}};
@@ -40,6 +40,7 @@ function buildSheet(){
     <div class="rs-row" data-for="video"><span class="cap">Shape</span><div class="rs-chips" data-opt="shape">${Object.entries(SHAPES).map(([k,v])=>`<button data-v="${k}"><i class="sh sh-${k}"></i><b>${v.label}</b><small>${v.sub}</small></button>`).join("")}</div></div>
     <div class="rs-row" data-for="audio"><span class="cap">Format</span><div class="rs-chips" data-opt="afmt"><button data-v="wav"><b>WAV</b><small>lossless 16-bit · biggest</small></button><button data-v="small"><b id="rsSmallLbl">M4A</b><small>small · easy to send</small></button></div></div>
     <div class="rs-row"><span class="cap">Length</span><div class="rs-chips rs-len" data-opt="len"><button data-v="15"><b>15 s</b></button><button data-v="30"><b>30 s</b></button><button data-v="60"><b>60 s</b></button><button data-v="0"><b>Until I stop</b></button></div></div>
+    <div class="rs-row rs-ttl"><span class="cap">Playing the EARTH MIDI title</span><div class="rs-chips" data-opt="tmode"><button data-v="mix"><b>In the mix</b><small>recorded with everything</small></button><button data-v="separate"><b>Own file</b><small>a separate WAV</small></button><button data-v="off"><b>Not recorded</b><small>you hear it, files don't</small></button></div><p class="rs-tnote" id="rsTNote"></p></div>
     <button class="rs-go" id="rsGo"><i></i><span>Start recording</span></button>
     <p class="rs-note" id="rsNote"></p>
   </div>
@@ -52,28 +53,31 @@ function buildSheet(){
       <button id="rsCap">${ICON.copy}<span>Copy caption</span></button>
       <button id="rsLink">${ICON.link}<span>Copy link</span></button>
     </div>
+    <button class="rs-again rs-ttlsave" id="rsTitle2" hidden>${ICON.save}<span>Save title track (WAV)</span></button>
     <button class="rs-again" id="rsAgain">${ICON.again}<span>Record another</span></button>
     <p class="rs-note" id="rsNote2"></p>
   </div></div>`;
   document.body.appendChild(el);
   const pill=document.createElement("div");pill.id="recPill";pill.className="rpill";pill.hidden=true;pill.setAttribute("role","status");
-  pill.innerHTML=`<i class="rp-dot"></i><span class="rp-k" id="rpK">VIDEO</span><b id="rpT">0:00</b><span class="rp-of" id="rpOf"></span><button id="rpStop" aria-label="Stop recording"><i></i>Stop</button><span class="rp-bar"><span id="rpBar"></span></span>`;
+  pill.innerHTML=`<i class="rp-dot"></i><span class="rp-k" id="rpK">VIDEO</span><b id="rpT">0:00</b><span class="rp-of" id="rpOf"></span><span class="rp-tt" id="rpTT"></span><button id="rpStop" aria-label="Stop recording"><i></i>Stop</button><span class="rp-bar"><span id="rpBar"></span></span>`;
   document.body.appendChild(pill);
   el.addEventListener("click",e=>{if(e.target.closest("[data-close]"))closeSheet();
     const k=e.target.closest("[data-kind]");if(k){CAP.kind=k.dataset.kind;capSave();syncSheet()}
-    const c=e.target.closest(".rs-chips button");if(c){const o=c.parentNode.dataset.opt;CAP[o]=o==="len"?+c.dataset.v:c.dataset.v;capSave();syncSheet()}});
+    const c=e.target.closest(".rs-chips button");if(c){const o=c.parentNode.dataset.opt;if(o==="tmode"){window.EMTitle&&EMTitle.setMode(c.dataset.v);syncSheet();return}CAP[o]=o==="len"?+c.dataset.v:c.dataset.v;capSave();syncSheet()}});
   addEventListener("keydown",e=>{if(e.key==="Escape"&&!el.hidden)closeSheet()});
   $("rsGo").onclick=startCapture;$("rpStop").onclick=stopCapture;
   $("rsShare").onclick=shareLast;$("rsSave").onclick=()=>{if(LAST){download(LAST.name,LAST.blob);note2(`Saved ${LAST.name}`)}};
   $("rsCap").onclick=async()=>{try{await navigator.clipboard.writeText(caption());note2("Caption copied. Paste it with your post")}catch(_){prompt("Copy this caption",caption())}};
   $("rsLink").onclick=async()=>{const u=shareURL();try{await navigator.clipboard.writeText(u);note2("Link copied: opens Earth MIDI with your exact settings")}catch(_){prompt("Copy this link",u)}};
   $("rsAgain").onclick=()=>{showStep("setup")};
+  $("rsTitle2").onclick=()=>{if(LAST&&LAST.title){download(LAST.title.name,LAST.title.blob);note2(`Saved ${LAST.title.name}`)}};
 }
 function syncSheet(){const el=$("recSheet");if(!CAP.kind||(CAP.kind==="video"&&!canVideo()))CAP.kind=canVideo()?"video":"audio";
   if(CAP.afmt==="small"&&!canSmallAudio())CAP.afmt="wav";if(!SHAPES[CAP.shape])CAP.shape="square";
   el.querySelectorAll("[data-kind]").forEach(b=>{b.setAttribute("aria-checked",b.dataset.kind===CAP.kind);b.disabled=b.dataset.kind==="video"&&!canVideo()});
   el.querySelectorAll("[data-for]").forEach(r=>r.hidden=r.dataset.for!==CAP.kind);
-  el.querySelectorAll(".rs-chips").forEach(g=>{const o=g.dataset.opt;g.querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",String(b.dataset.v)===String(CAP[o]));if(o==="afmt"&&b.dataset.v==="small")b.disabled=!canSmallAudio()})});
+  const TM=window.EMTitle?EMTitle.mode:"off";el.querySelector(".rs-ttl").hidden=!window.EMTitle;if(window.EMTitle)$("rsTNote").textContent=EMTitle.rule();
+  el.querySelectorAll(".rs-chips").forEach(g=>{const o=g.dataset.opt;g.querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",String(b.dataset.v)===String(o==="tmode"?TM:CAP[o]));if(o==="afmt"&&b.dataset.v==="small")b.disabled=!canSmallAudio()})});
   const sm=pickMime(AUD_MIMES);$("rsSmallLbl").textContent=sm&&sm.includes("webm")?"WebM":"M4A";
   const vm=pickMime(VID_MIMES),god=isGod();
   $("rsNote").innerHTML=(CAP.kind==="video"?`Records the globe and everything you hear as ${vm&&vm.includes("mp4")?"MP4":"WebM"}${vm&&!vm.includes("mp4")?" (this browser can't write MP4; Chrome and Safari can)":""}. `:`Records the master output${CAP.afmt==="wav"?" as a lossless WAV with the credit in its metadata":""}. `)
@@ -86,7 +90,7 @@ const note2=m=>{const n=$("rsNote2");n.textContent=m;clearTimeout(note2.t);note2
 
 /* ---------------- recording UI state (pill, dock button, desktop button) ---------------- */
 function recUI(on,kind){document.body.classList.toggle("capturing",on);$("recPill").hidden=!on;
-  const m=$("mRec"),d=$("bRecord");if(on){$("rpK").textContent=kind==="video"?"VIDEO":"AUDIO";$("rpOf").textContent=CAP.len?"/ "+fmtT(CAP.len):"";$("rpBar").style.width="0%"}
+  const m=$("mRec"),d=$("bRecord");if(on){$("rpK").textContent=kind==="video"?"VIDEO":"AUDIO";const tm=window.EMTitle?EMTitle.mode:"off";$("rpTT").textContent=tm==="mix"?"title in mix":tm==="separate"?"title → own file":"title not recorded";$("rpOf").textContent=CAP.len?"/ "+fmtT(CAP.len):"";$("rpBar").style.width="0%"}
   if(m){m.classList.toggle("rec-on",on);m.setAttribute("aria-label",on?"Stop recording":"Record video or audio");m.innerHTML=on?`<b>■</b><span class="rk">${kind==="video"?"VID":"AUD"}</span><span class="rt">0:00</span>`:"<b>●</b>Record"}
   if(d){d.classList.toggle("rec-on",on);d.innerHTML=on?`<b>■</b> Stop <span class="rt">0:00</span>`:"<b>●</b> Record"}}
 function recTick(s){$("rpT").textContent=fmtT(s);if(CAP.len)$("rpBar").style.width=Math.min(100,s/CAP.len*100)+"%";document.querySelectorAll("#mRec .rt,#bRecord .rt").forEach(e=>e.textContent=fmtT(s))}
@@ -98,7 +102,8 @@ async function startCapture(){
   if(!S.on){try{await startStop()}catch(e){console.error(e)}}
   if(!A||!S.on){xs("Couldn't start the sound. Tap PLAY, then Record");return}
   closeSheet();
-  const god=isGod(),t0=performance.now(),meta={kind,shape,god,start:realNow(),startPerf:t0};
+  const god=isGod(),t0=performance.now(),meta={kind,shape,god,start:realNow(),startPerf:t0,tmode:window.EMTitle?EMTitle.mode:"off"};
+  TPEND=null;if(window.EMTitle){EMTitle.resetTold();if(meta.tmode==="separate")EMTitle.capStart()}
   const maxS=len||(kind==="video"?600:1200);
   if(kind==="audio"&&CAP.afmt==="wav"){
     toggleRec(false,{onDone:(blob,name)=>finish(blob,meta,"wav"),maxSec:maxS});if(!REC){xs("Couldn't start the recorder");return}
@@ -117,24 +122,28 @@ async function startCapture(){
   recUI(true,kind);
   CREC.iv=setInterval(()=>{if(!CREC)return;const s=(performance.now()-CREC.t0)/1000;recTick(s);if(s>=maxS)stopCapture()},250);
 }
-function stopCapture(){const R=CREC;if(!R)return;CREC=null;clearInterval(R.iv);recUI(false);xs("Finishing your recording…");R.stop()}
+function stopCapture(){const R=CREC;if(!R)return;CREC=null;if(window.EMTitle)TPEND=EMTitle.capStop();clearInterval(R.iv);recUI(false);xs("Finishing your recording…");R.stop()}
 function finish(blob,meta,ext){
   const dur=(performance.now()-meta.startPerf)/1000;
   if(!blob||!blob.size){xs("The recording came out empty. Try again, or pick WAV audio");return}
   const name=`earth-midi${meta.god?"-sandbox":""}_${meta.kind==="video"?meta.shape:"audio"}_${stamp()}.${ext}`;
   if(LAST&&LAST.url)URL.revokeObjectURL(LAST.url);
-  LAST={blob,name,ext,kind:meta.kind,shape:meta.shape,god:meta.god,dur,url:URL.createObjectURL(blob),start:meta.start};
+  const tt=TPEND&&TPEND.blob?TPEND:null;TPEND=null;
+  LAST={blob,name,ext,kind:meta.kind,shape:meta.shape,god:meta.god,dur,url:URL.createObjectURL(blob),start:meta.start,title:tt,tmode:meta.tmode};
+  $("rsTitle2").hidden=!tt;
   const media=$("rsMedia");media.className="rs-media "+(meta.kind==="video"?"is-"+meta.shape:"is-audio");
   media.innerHTML=meta.kind==="video"?`<video src="${LAST.url}" controls playsinline loop preload="metadata"></video>`:`<div class="rs-wave">${ICON.audio}<b>${ext.toUpperCase()} audio</b><span>${fmtT(dur)}</span></div><audio src="${LAST.url}" controls preload="metadata"></audio>`;
-  $("rsMeta").textContent=`${ext.toUpperCase()} · ${fmtT(dur)} · ${(blob.size/1048576).toFixed(1)} MB${meta.kind==="video"&&meta.w?` · ${meta.w}×${meta.h}`:""}${meta.god?" · sandbox":""}`;
+  $("rsMeta").textContent=`${ext.toUpperCase()} · ${fmtT(dur)} · ${(blob.size/1048576).toFixed(1)} MB${meta.kind==="video"&&meta.w?` · ${meta.w}×${meta.h}`:""}${meta.god?" · sandbox":""} · title ${meta.tmode==="mix"?"in the mix":meta.tmode==="separate"?(tt?"saved separately":"not played"):"not recorded"}`;
   const file=new File([blob],name,{type:blob.type});$("rsShare").hidden=!(navigator.canShare&&navigator.canShare({files:[file]}));
+  if(tt)note2("Your title playing is in its own WAV: tap “Save title track”");
   $("recSheet").dataset.step="review";showStep("review");$("recSheet").hidden=false;requestAnimationFrame(()=>$("recSheet").classList.add("open"));
   xs(`Recorded ${fmtT(dur)} of ${meta.kind}`)}
 function caption(){const top=[...PAN_KEYS].filter(k=>!muted(k)&&LNAME[k]&&k!=="r").slice(0,4).map(k=>LNAME[k].toLowerCase());
   const when=LAST?new Date(LAST.start).toISOString().slice(0,16).replace("T"," ")+" UTC":"";
   return (LAST&&LAST.god?"Sandbox mode, not real data: ":"Real planetary data, played as music: ")+top.join(", ")+(when?` · data from ${when}`:"")+`.\nMade with Earth MIDI by Colin Robinson · earthmidi.com`}
 async function shareLast(){if(!LAST)return;const file=new File([LAST.blob],LAST.name,{type:LAST.blob.type});
-  try{await navigator.share({files:[file],title:"Earth MIDI",text:caption()});note2("Shared")}
+  let files=[file];if(LAST.title){const tf=new File([LAST.title.blob],LAST.title.name,{type:"audio/wav"});if(navigator.canShare&&navigator.canShare({files:[file,tf]}))files=[file,tf]}
+  try{await navigator.share({files,title:"Earth MIDI",text:caption()});note2(files.length>1?"Shared, with the title track as a second file":"Shared")}
   catch(e){if(e&&e.name==="AbortError")return;download(LAST.name,LAST.blob);note2("Sharing isn't available here, so it was saved instead")}}
 
 /* ---------------- video compositor ---------------- */
@@ -219,5 +228,5 @@ const shortName=k=>REC_SHORT[k]||(LNAME[k]||k).slice(0,5).toUpperCase();
   new MutationObserver(()=>{if(!$("recSheet").hidden&&!$("recSheet").querySelector(".rs-setup").hidden)syncSheet()}).observe(document.body,{attributes:true,attributeFilter:["class"]});
   document.fonts&&document.fonts.load&&["800 40px Syne","500 20px 'IBM Plex Mono'","500 20px 'IBM Plex Sans'"].forEach(f=>document.fonts.load(f).catch(()=>{}));
 })();
-window.EMRec={open:openSheet,stop:stopCapture,get last(){return LAST},caption,isGod,VID_MIMES,AUD_MIMES};
+window.EMRec={open:openSheet,stop:stopCapture,get capturing(){return !!CREC},get last(){return LAST},caption,isGod,VID_MIMES,AUD_MIMES};
 }
