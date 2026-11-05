@@ -167,7 +167,7 @@ function endGesture(g){const t=now_();if(g.stop)g.stop();
 const chargeOf=g=>clamp(Math.max((now_()-g.t)/1800,g.pinch?(g.pd/g.pd0-1)/1.6:0),0,1);
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 wrap.addEventListener("pointerdown",e=>{if(!G.on||e.target!==cv)return;e.stopPropagation();e.preventDefault();ensureAudio();G.hintT=Math.min(G.hintT,now_()+3000);
-  try{cv.setPointerCapture(e.pointerId)}catch(_){}const pt=toPx(e);P.set(e.pointerId,pt);VIEW.lastInteract=now_();
+  try{cv.setPointerCapture(e.pointerId)}catch(_){}document.body.classList.add("god-drag");try{getSelection().removeAllRanges()}catch(_){}const pt=toPx(e);P.set(e.pointerId,pt);VIEW.lastInteract=now_();
   if(P.size===2){const [a,b]=[...P.values()],mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
     if(GS&&GS.kind==="flare"){GS.pinch=true;GS.pd0=Math.max(1,dist(a,b));GS.pd=GS.pd0;return}
     if(GS&&GS.kind==="storm")endGesture(GS);else if(GS&&GS.stop)GS.stop();
@@ -178,7 +178,7 @@ wrap.addEventListener("pointermove",e=>{if(!G.on||(e.target!==cv&&!P.has(e.point
   P.set(e.pointerId,pt);if(!GS)return;
   if(P.size===2){const [a,b]=[...P.values()],d=dist(a,b);if(GS.kind==="zoom"&&CFG.mapView!=="flat")VIEW.zoom=clamp(GS.z0*d/GS.d0,.7,3.2);else if(GS.kind==="flare")GS.pd=d;return}
   moveGesture(GS,pt)},{capture:true});
-const up=e=>{if(!P.has(e.pointerId))return;e.stopPropagation();P.delete(e.pointerId);if(!GS)return;
+const up=e=>{if(!P.has(e.pointerId))return;e.stopPropagation();P.delete(e.pointerId);if(!P.size)document.body.classList.remove("god-drag");if(!GS)return;
   if(e.type==="pointercancel"){if(GS.stop)GS.stop();if(GS.kind==="storm")endGesture(GS);GS=null;return}
   if(GS.kind==="zoom"){if(!P.size)GS=null;return}
   if(GS.pinch&&P.size)return;endGesture(GS);GS=null};
@@ -294,6 +294,7 @@ body.god #godTicker{opacity:1;transform:none}
 .hud2{transition:top .4s}
 body.god .hud2{top:34px}
 body.god .stage{border-color:#ffc83d;box-shadow:0 0 0 1px #ffc83d,0 0 50px rgba(255,190,40,.4)}
+body.god-drag{-webkit-user-select:none;user-select:none}
 body.god .mapwrap{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 body.god #map{cursor:crosshair}
 body.god .hud .hint2{display:none}
