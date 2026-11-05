@@ -41,7 +41,7 @@ function initAudio(){
   const out=ctx.createGain();out.gain.value=0;
   const an=ctx.createAnalyser();an.fftSize=2048;an.smoothingTimeConstant=.82;
   const spl=ctx.createChannelSplitter(2),anL=ctx.createAnalyser(),anR=ctx.createAnalyser();anL.fftSize=anR.fftSize=1024;
-  sum.connect(hp);hp.connect(ls);ls.connect(hs);hs.connect(pre);pre.connect(sh);sh.connect(post);post.connect(mlp);mlp.connect(comp);comp.connect(lim);
+  const mpan=ctx.createStereoPanner();sum.connect(mpan);mpan.connect(hp);hp.connect(ls);ls.connect(hs);hs.connect(pre);pre.connect(sh);sh.connect(post);post.connect(mlp);mlp.connect(comp);comp.connect(lim);
   lim.connect(an);lim.connect(spl);spl.connect(anL,0);spl.connect(anR,1);lim.connect(out);out.connect(ctx.destination);
   const recDest=ctx.createMediaStreamDestination?ctx.createMediaStreamDestination():null;if(recDest)lim.connect(recDest);
   // reverb
@@ -54,7 +54,7 @@ function initAudio(){
   const nb=ctx.createBuffer(1,ctx.sampleRate*4,ctx.sampleRate),nd=nb.getChannelData(0);let b0=0,b1=0,b2=0;for(let i=0;i<nd.length;i++){const w=Math.random()*2-1;b0=.99765*b0+w*.099;b1=.963*b1+w*.2965;b2=.57*b2+w*1.0526;nd[i]=(b0+b1+b2+w*.1848)*.18}
   // sidechain duck group (pads, drones, beds)
   const duck=ctx.createGain();duck.connect(sum);
-  A={ctx,sum,out,rev,revG,dly:dlg,an,anL,anR,nb,buses:{},sends:{},meters:{},mlp,hp,ls,hs,sh,pre,post,dl,dr,fb,lim,duck,recDest,curRev:CFG.revType,curDrive:CFG.drive};
+  A={ctx,sum,out,rev,revG,dly:dlg,an,anL,anR,nb,buses:{},sends:{},meters:{},mlp,hp,ls,hs,sh,pre,post,dl,dr,fb,lim,duck,recDest,mpan,curRev:CFG.revType,curDrive:CFG.drive};
   const DUCKED="sotwcaueg";
   PAN_KEYS.forEach(k=>{const g=ctx.createGain();g.connect(DUCKED.includes(k)?duck:sum);const sR=ctx.createGain();sR.gain.value=CFG.send[k];g.connect(sR);sR.connect(rev);
     const m=ctx.createAnalyser();m.fftSize=256;m.smoothingTimeConstant=.6;g.connect(m);A.buses[k]=g;A.sends[k]=sR;A.meters[k]=m});
@@ -120,9 +120,9 @@ function setPadType(){if(!A)return;A.pad.voices.forEach(v=>v.o.type=PADTYPE[CFG.
 /* ---------- ISS: beacon whose pitch follows latitude; plucks every 5° of ground track ---------- */
 function buildISS(){const {ctx}=A,o=ctx.createOscillator(),g=ctx.createGain(),p=ctx.createStereoPanner(),f=ctx.createBiquadFilter();o.type="sine";f.type="lowpass";f.frequency.value=2400;g.gain.value=0;o.connect(f);f.connect(g);g.connect(p);p.connect(A.buses.i);o.start();
   const t=ctx.createOscillator(),tg=ctx.createGain();t.frequency.value=5.5;tg.gain.value=6;t.connect(tg);tg.connect(o.detune);t.start();A.issV={o,g,p,f,lastArc:null}}
-function issPluck(n,vel,pan,land){if(!A||muted("i"))return;const {ctx}=A,c=ctx.currentTime+.01,f=mtof(n),o=ctx.createOscillator(),m=ctx.createOscillator(),mg=ctx.createGain(),g=ctx.createGain(),p=ctx.createStereoPanner();
+function issPluck(n,vel,pan,land,gm=1){if(!A||muted("i"))return;const {ctx}=A,c=ctx.currentTime+.01,f=mtof(n),o=ctx.createOscillator(),m=ctx.createOscillator(),mg=ctx.createGain(),g=ctx.createGain(),p=ctx.createStereoPanner();
   const inst=CFG.inst.i;o.type=inst==="square"?"square":"sine";m.frequency.value=f*(land?3:2);mg.gain.setValueAtTime(f*(inst==="pluck"?2.5:inst==="glass"?1.2:.4),c);mg.gain.exponentialRampToValueAtTime(f*.01,c+.25);
-  o.frequency.value=f;g.gain.setValueAtTime(0,c);g.gain.linearRampToValueAtTime(Math.pow(vel/127,1.4)*.16*(inst==="square"?.5:1),c+.004);g.gain.exponentialRampToValueAtTime(.0004,c+(inst==="glass"?2.4:.9));
+  o.frequency.value=f;g.gain.setValueAtTime(0,c);g.gain.linearRampToValueAtTime(Math.pow(vel/127,1.4)*.16*gm*(inst==="square"?.5:1),c+.004);g.gain.exponentialRampToValueAtTime(.0004,c+(inst==="glass"?2.4:.9));
   p.pan.value=W_(pan);m.connect(mg);mg.connect(o.frequency);o.connect(g);g.connect(p);p.connect(A.buses.i);p.connect(A.dly);o.start(c);m.start(c);o.stop(c+2.6);m.stop(c+2.6)}
 /* ---------- NASA EONET: wildfire crackle, volcano drones, storm swirl ---------- */
 function buildEvents(){const {ctx}=A,cr=ctx.createGain();cr.gain.value=1;const hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=1800;cr.connect(hp);hp.connect(A.buses.e);
@@ -149,13 +149,13 @@ function sunChime(city,rise){const sc=scaleFor(S.cur.kp||2),n=degree(sc,Math.rou
   if(A&&!muted("u")){const {ctx}=A,c=ctx.currentTime+.02,steps=rise?[0,4,7]:[7,4,0],inst=CFG.inst.u;
     steps.forEach((s,i)=>{const nn=n+(s===4?(sc.includes(4)?4:3):s),o=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain(),p=ctx.createStereoPanner();const tt=c+i*.11;
       o.type=inst==="warm"?"triangle":"sine";o.frequency.value=mtof(nn);o2.type="sine";o2.frequency.value=mtof(nn)*(inst==="chime"?2.76:2);const g2=ctx.createGain();g2.gain.value=inst==="soft"?0:.35;o2.connect(g2);g2.connect(g);
-      g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(Math.pow(vel/127,1.5)*.13,tt+.01);g.gain.exponentialRampToValueAtTime(.0004,tt+3.2);p.pan.value=W_(clamp(city[2]/180,-1,1)*.85);
+      g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(Math.pow(vel/127,1.5)*.13*FOCUS.gain(city[1],city[2]),tt+.01);g.gain.exponentialRampToValueAtTime(.0004,tt+3.2);p.pan.value=W_(FOCUS.pan(city[1],city[2],clamp(city[2]/180,-1,1)*.85));
       o.connect(g);g.connect(p);p.connect(A.buses.u);o.start(tt);o2.start(tt);o.stop(tt+3.4);o2.stop(tt+3.4)})}
   midiNote(CH("u"),n,vel,1500);pushNote(n,"u",vel,2.5);S.hit.u=1;return {n,vel}}
 
 /* ---------- per-tick engine update: every parameter is set from a measurement ---------- */
 function updateEngine(){
-  if(!A)return;const t=realNow(),c=A.ctx.currentTime;
+  if(!A)return;const t=realNow(),c=A.ctx.currentTime,FX=motionFX();S.viewFX=FX;
   const sp=at(S.sun.t,S.sun.speed,t),de=at(S.sun.t,S.sun.density,t),bz=at(S.sun.mt,S.sun.bz,t),bt=at(S.sun.mt,S.sun.bt,t),kp=kpAt(t);
   if(Number.isFinite(sp)){
     A.pad.flt.frequency.setTargetAtTime(map(sp,250,900,260,4200)*(bz<-5?.6:1),c,1.5);
@@ -170,34 +170,37 @@ function updateEngine(){
     midiCC(CH("s"),1,map(sp,250,900,0,127));midiCC(CH("s"),2,map(de,0,30,0,127));midiCC(CH("s"),3,map(bz,-20,20,0,127));midiCC(CH("s"),4,map(kp,0,9,0,127));
     const rn=degree(sc,ch[0],ROOT-12);if(A.pad.rootNote)midiOff(CH("s"),A.pad.rootNote);midiOn(CH("s"),rn,70);A.pad.rootNote=rn;pushNote(rn,"s",60,+CFG.chordEvery*.9);S.hit.s=.6;
   }
-  const oc=oceanAt(t),oh=oc.h,op=oc.p;
+  const oc=viewOcean(t),oh=oc.h,op=oc.p;
   A.surf.g.gain.setTargetAtTime(muted("o")?0:map(oh,0,6,.05,.42),c,1);A.surf.lfo.frequency.setTargetAtTime(1/Math.max(3,op),c,1);A.surf.bp.frequency.setTargetAtTime(map(op,4,16,1400,380),c,2);A.surf.pg.gain.setTargetAtTime(.6*CFG.width,c,.2);
   const xf=xrayAt(t),lx=Number.isFinite(xf)?Math.log10(xf):-8;
   A.shim.g.gain.setTargetAtTime(muted("x")?0:map(lx,-8,-4,.0,.16),c,1.2);A.shim.f.frequency.setTargetAtTime(map(lx,-8,-4,2000,9000),c,2);
-  PAN_KEYS.forEach(k=>A.buses[k].gain.setTargetAtTime(muted(k)?0:+CFG.vol[k],c,.08));
-  A.mlp.frequency.setTargetAtTime(+CFG.mlp,c,.1);A.dl.delayTime.setTargetAtTime(+CFG.dtime,c,.1);A.dr.delayTime.setTargetAtTime(+CFG.dtime,c,.1);A.fb.gain.setTargetAtTime(+CFG.dfb,c,.1);
-  const jv=jetAvg(t);if(Number.isFinite(jv)){A.wind.bp.frequency.setTargetAtTime(map(jv,60,320,280,1500),c,2);A.wind.bp2.frequency.setTargetAtTime(map(jv,60,320,600,2600),c,2);A.wind.g.gain.setTargetAtTime(muted("w")?0:map(jv,60,320,.08,.5),c,1.5);A.wind.lfo.frequency.setTargetAtTime(map(jv,60,320,.05,.3),c,2)}
+  PAN_KEYS.forEach(k=>A.buses[k].gain.setTargetAtTime(muted(k)?0:+CFG.vol[k]*focusBus(k,FX),c,.08));
+  A.mlp.frequency.setTargetAtTime(clamp(+CFG.mlp*FX.lpMul,60,20000),c,.06);A.hp.frequency.setTargetAtTime(Math.max(+CFG.hpf,FX.hp),c,.06);A.mpan.pan.setTargetAtTime(FX.pan,c,.12);
+  A.dl.delayTime.setTargetAtTime(+CFG.dtime,c,.1);A.dr.delayTime.setTargetAtTime(+CFG.dtime,c,.1);A.fb.gain.setTargetAtTime(clamp(+CFG.dfb+FX.fb,0,.82),c,.1);A.dly.gain.setTargetAtTime(.3+FX.dly,c,.08);
+  const jv=viewJet(t);if(Number.isFinite(jv)){A.wind.bp.frequency.setTargetAtTime(map(jv,60,320,280,1500),c,2);A.wind.bp2.frequency.setTargetAtTime(map(jv,60,320,600,2600),c,2);A.wind.g.gain.setTargetAtTime(muted("w")?0:map(jv,60,320,.08,.5),c,1.5);A.wind.lfo.frequency.setTargetAtTime(map(jv,60,320,.05,.3),c,2)}
   A.wind.pg.gain.setTargetAtTime(.8*CFG.width,c,.2);
-  const tn=S.tides.length?tideNorm(S.tides[0],t):0;A.tide.o.frequency.setTargetAtTime(mtof(ROOT-12),c,.5);A.tide.o2.frequency.setTargetAtTime(mtof(ROOT),c,.5);A.tide.o.detune.setTargetAtTime(tn*50,c,1);A.tide.o2.detune.setTargetAtTime(tn*50,c,1);A.tide.g.gain.setTargetAtTime(muted("t")?0:(S.style==="pulse"?.05:.11),c,1);
-  const mo=moon(t);A.revG.gain.setTargetAtTime(CFG.rev>=0?+CFG.rev:map(mo.illum,0,1,.38,.85),c,3);
+  const tSt=viewTide(),tn=tSt?tideNorm(tSt,t):0;A.tide.o.frequency.setTargetAtTime(mtof(ROOT-12),c,.5);A.tide.o2.frequency.setTargetAtTime(mtof(ROOT),c,.5);A.tide.o.detune.setTargetAtTime(tn*50,c,1);A.tide.o2.detune.setTargetAtTime(tn*50,c,1);A.tide.g.gain.setTargetAtTime(muted("t")?0:(S.style==="pulse"?.05:.11),c,1);
+  const mo=moon(t);A.revG.gain.setTargetAtTime((CFG.rev>=0?+CFG.rev:map(mo.illum,0,1,.38,.85))+FX.rev,c,FX.rev>.02?.3:3);
   // planet chord
   A.choir.out.gain.setTargetAtTime(muted("c")?0:.9,c,1.5);
+  A.choir.voices.forEach((v,i)=>{const C=CITIES[i];v.g.gain.setTargetAtTime(.022*FOCUS.gain(C[1],C[2]),c,.15);v.p.pan.setTargetAtTime(W_(FOCUS.pan(C[1],C[2],clamp(C[2]/180,-1,1)*.8)),c,.15)});
   if(c-A.choir.last>20&&S.temps.length){A.choir.last=c;const steps=sc.length*3;
     A.choir.voices.forEach((v,i)=>{const T=tsAt(S.temps[i],t);if(!Number.isFinite(T))return;const n=degree(sc,Math.round(map(T,-30,45,0,steps-1)),ROOT+12*CFG.coct);if(v.note)midiOff(CH("c"),v.note);v.o.frequency.setTargetAtTime(mtof(n),c,1.2);v.note=n;midiOn(CH("c"),n,60);pushNote(n,"c",50,6)});
     logEv("Planet chord: "+S.temps.map(x=>`${x.name} ${Math.round(tsAt(x,t))}°`).join(", "),"c",null,chordTrace(t));S.hit.c=.8}
   // air: PM2.5 → haze on the chord + breathy bed; UV → brightness
-  const air=airAt(t);if(Number.isFinite(air.pm)){const hz=map(air.pm,5,60,0,.85);if(Math.abs(hz-A.choir.hazeAmt)>.04){A.choir.haze.curve=driveCurve(hz);A.choir.hazeAmt=hz}
+  const air=viewAir(t);if(Number.isFinite(air.pm)){const hz=map(air.pm,5,60,0,.85);if(Math.abs(hz-A.choir.hazeAmt)>.04){A.choir.haze.curve=driveCurve(hz);A.choir.hazeAmt=hz}
     A.choir.hlp.frequency.setTargetAtTime(map(air.pm,5,80,12000,2600),c,2);A.air.g.gain.setTargetAtTime(muted("a")?0:map(air.pm,0,60,.02,.22),c,2);A.air.f.frequency.setTargetAtTime(map(air.uv,0,10,700,5200),c,2);
     midiCC(CH("a"),14,map(air.pm,0,100,0,127));midiCC(CH("a"),15,map(air.uv,0,11,0,127))}
   // ISS
   if(S.iss){const p=issAt(t);if(p){const sp2=sunPos(t),lit=sunElev(p.lat,p.lon,sp2)>-18;
-    A.issV.o.frequency.setTargetAtTime(mtof(degree(sc,Math.round(map(p.lat,-52,52,0,sc.length*2)),ROOT+12)),c,.4);A.issV.g.gain.setTargetAtTime(muted("i")?0:(lit?.035:.018),c,.5);A.issV.p.pan.setTargetAtTime(W_(clamp(p.lon/180,-1,1)*.85),c,.2);
+    A.issV.o.frequency.setTargetAtTime(mtof(degree(sc,Math.round(map(p.lat,-52,52,0,sc.length*2)),ROOT+12)),c,.4);A.issV.g.gain.setTargetAtTime(muted("i")?0:(lit?.035:.018)*FOCUS.gain(p.lat,p.lon),c,.3);A.issV.p.pan.setTargetAtTime(W_(FOCUS.pan(p.lat,p.lon,clamp(p.lon/180,-1,1)*.85)),c,.15);
     midiCC(CH("i"),16,map(p.lat,-52,52,0,127));midiCC(CH("i"),17,map(p.lon,-180,180,0,127));S.cur.iss=p;S.cur.issLit=lit}}
   // events: wildfire crackle density, volcano drones, storm swirl
-  const act=S.events.filter(e=>e.start<=t),fires=act.filter(e=>e.kind==="fire").length,vols=act.filter(e=>e.kind==="volcano").length,storms=act.filter(e=>e.kind==="storm").length;
-  A.ev.vo.forEach((v,i)=>{v.g.gain.setTargetAtTime(i<vols?.05:0,c,2);v.o.frequency.setTargetAtTime(mtof(ROOT-24+[0,7,12,-5,3,10][i]),c,1)});A.ev.vol.gain.setTargetAtTime(muted("e")?0:.9,c,1);
-  A.ev.sg.gain.setTargetAtTime(muted("e")?0:map(storms,0,8,0,.28),c,2);A.ev.sl.frequency.setTargetAtTime(map(storms,0,8,.05,.6),c,2);
-  if(!muted("e")&&fires){const rate=clamp(fires/12,.3,14);while(A.ev.nextCrackle<c+.15){A.ev.nextCrackle=Math.max(A.ev.nextCrackle,c)+(-Math.log(1-Math.random()))/rate;crackle(A.ev.nextCrackle,.25+Math.random()*.4)}}
+  const act=S.events.filter(e=>e.start<=t),fireL=act.filter(e=>e.kind==="fire"),volL=act.filter(e=>e.kind==="volcano"),stormL=act.filter(e=>e.kind==="storm"),fires=fireL.length,vols=volL.length,storms=stormL.length;
+  const fireV=viewCount(fireL),volV=viewCount(volL),stormV=viewCount(stormL); // what you hear leans toward the ones facing you; MIDI keeps the raw counts
+  A.ev.vo.forEach((v,i)=>{v.g.gain.setTargetAtTime(i<vols?.05*clamp(volV-i,0,1):0,c,2);v.o.frequency.setTargetAtTime(mtof(ROOT-24+[0,7,12,-5,3,10][i]),c,1)});A.ev.vol.gain.setTargetAtTime(muted("e")?0:.9,c,1);
+  A.ev.sg.gain.setTargetAtTime(muted("e")?0:map(stormV,0,8,0,.28),c,2);A.ev.sl.frequency.setTargetAtTime(map(stormV,0,8,.05,.6),c,2);
+  if(!muted("e")&&fires){const rate=clamp(fireV/12,.3,14);while(A.ev.nextCrackle<c+.15){A.ev.nextCrackle=Math.max(A.ev.nextCrackle,c)+(-Math.log(1-Math.random()))/rate;crackle(A.ev.nextCrackle,.25+Math.random()*.4)}}
   midiCC(CH("e"),20,map(fires,0,400,0,127));midiCC(CH("e"),21,map(vols,0,20,0,127));midiCC(CH("e"),22,map(storms,0,10,0,127));
   // magnetosphere
   const dst=dstAt(t),pf=protAt(t);A.mag.g.gain.setTargetAtTime(muted("g")?0:map(-(Number.isFinite(dst)?dst:0),-10,150,0,.2),c,2);A.mag.a.frequency.setTargetAtTime(mtof(ROOT),c,1);A.mag.b.frequency.setTargetAtTime(mtof(ROOT)*map(-(dst||0),0,200,1.414,2.618),c,2);
@@ -219,7 +222,7 @@ function drum(kind,time,vel=1){const {ctx}=A;
 function bassNote(n,time,len){const {ctx}=A,o=ctx.createOscillator(),o2=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o.type="sawtooth";o2.type="square";o2.detune.value=-1200;o.frequency.value=mtof(n);o2.frequency.value=mtof(n);const g2=ctx.createGain();g2.gain.value=.35;
   f.type="lowpass";f.Q.value=8;f.frequency.setValueAtTime(900,time);f.frequency.exponentialRampToValueAtTime(140,time+len);g.gain.setValueAtTime(.3,time);g.gain.exponentialRampToValueAtTime(.001,time+len);o.connect(f);o2.connect(g2);g2.connect(f);f.connect(g);g.connect(A.buses.r);o.start(time);o2.start(time);o.stop(time+len+.05);o2.stop(time+len+.05)}
 let seq={next:0,step:0,fill:false};
-function curBPM(){if(+CFG.bpmLock>0)return +CFG.bpmLock;const sp=S.cur&&Number.isFinite(S.cur.sp)?S.cur.sp:400;return map(sp,250,900,+CFG.bpmMin,+CFG.bpmMax)}
+function curBPM(){const k=1+(S.viewFX?S.viewFX.tempo:0);if(+CFG.bpmLock>0)return +CFG.bpmLock*k;const sp=S.cur&&Number.isFinite(S.cur.sp)?S.cur.sp:400;return map(sp,250,900,+CFG.bpmMin,+CFG.bpmMax)*k}
 function schedulePulse(){
   if(!A||S.style!=="pulse"||!S.on)return;const c=A.ctx.currentTime,t=realNow();
   const bpm=curBPM(),st=60/bpm/4,pat=PATTERNS[CFG.pattern]||PATTERNS.four;
@@ -246,21 +249,22 @@ function quakePan(q){return clamp(CFG.qpan==="lat"?q.lat/90:q.lon/180,-1,1)*.85}
 const QINST={bell:{r:2,r2:1.4,idx:[1.5,6],dec:1,p:4.007},marimba:{r:4,r2:4,idx:[2,4],dec:.35,p:10},glass:{r:3.5,r2:2.71,idx:[.6,2.5],dec:1.6,p:5.4},gong:{r:1.41,r2:1.18,idx:[2,7],dec:1.9,p:2.3},pluck:{r:1,r2:1,idx:[3,8],dec:.4,p:3}};
 function quakeVoice(q){
   const {ctx}=A,c=ctx.currentTime+.01,{note}=quakeNote(q),I=QINST[CFG.inst.q]||QINST.bell;
-  const vel=velOf(q.mag),amp=Math.pow(vel/127,1.6)*.55,dec=(1.2+q.mag*.9)*CFG.len*I.dec,f=mtof(note);
+  const vel=velOf(q.mag),fg=FOCUS.gain(q.lat,q.lon),amp=Math.pow(vel/127,1.6)*.55*fg,dec=(1.2+q.mag*.9)*CFG.len*I.dec,f=mtof(note);
   const car=ctx.createOscillator(),mod=ctx.createOscillator(),mg=ctx.createGain(),eg=ctx.createGain(),lp=ctx.createBiquadFilter(),pan=ctx.createStereoPanner();
   if(CFG.inst.q==="pluck")car.type="triangle";
   car.frequency.value=f;mod.frequency.value=f*(q.depth>70?I.r2:I.r);
   mg.gain.setValueAtTime(f*map(q.mag,1,7,I.idx[0],I.idx[1]),c);mg.gain.exponentialRampToValueAtTime(f*.02,c+dec*(CFG.inst.q==="pluck"?.15:.6));
   eg.gain.setValueAtTime(0,c);eg.gain.linearRampToValueAtTime(amp,c+.005);eg.gain.exponentialRampToValueAtTime(.0005,c+dec);
-  lp.type="lowpass";lp.frequency.value=map(vel,20,127,1800,9000);pan.pan.value=W_(quakePan(q));
+  lp.type="lowpass";lp.frequency.value=map(vel,20,127,1800,9000)*FOCUS.lpMul(q.lat,q.lon);pan.pan.value=W_(FOCUS.pan(q.lat,q.lon,quakePan(q)));
   mod.connect(mg);mg.connect(car.frequency);car.connect(eg);eg.connect(lp);lp.connect(pan);pan.connect(A.buses.q);pan.connect(A.dly);
+  const wet=FOCUS.wet(q.lat,q.lon);if(wet>.01){const wg=ctx.createGain();wg.gain.value=wet*1.6;pan.connect(wg);wg.connect(A.rev)} // far side sits further back in the room
   const p2=ctx.createOscillator(),p2g=ctx.createGain();p2.frequency.value=f*I.p;p2g.gain.setValueAtTime(amp*.12,c);p2g.gain.exponentialRampToValueAtTime(.0001,c+dec*.35);p2.connect(p2g);p2g.connect(pan);
   [car,mod,p2].forEach(o=>{o.start(c);o.stop(c+dec+.1)});
   if(q.mag>=4.5){
     const s=ctx.createOscillator(),sg=ctx.createGain();s.type="sine";s.frequency.setValueAtTime(mtof(ROOT-12)*2.2,c);s.frequency.exponentialRampToValueAtTime(mtof(ROOT-12),c+.35);
-    sg.gain.setValueAtTime(0,c);sg.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.24,.45),c+.01);sg.gain.exponentialRampToValueAtTime(.0005,c+1.5+q.mag*.4);s.connect(sg);sg.connect(A.buses.q);s.start(c);s.stop(c+4+q.mag);
+    sg.gain.setValueAtTime(0,c);sg.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.24,.45)*fg,c+.01);sg.gain.exponentialRampToValueAtTime(.0005,c+1.5+q.mag*.4);s.connect(sg);sg.connect(A.buses.q);s.start(c);s.stop(c+4+q.mag);
     const n=ctx.createBufferSource();n.buffer=A.nb;const nf=ctx.createBiquadFilter();nf.type="lowpass";nf.frequency.value=140;const ng=ctx.createGain();
-    ng.gain.setValueAtTime(0,c);ng.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.35,.75),c+.08);ng.gain.exponentialRampToValueAtTime(.0005,c+q.mag*.9);n.connect(nf);nf.connect(ng);ng.connect(A.buses.q);n.start(c);n.stop(c+q.mag);
+    ng.gain.setValueAtTime(0,c);ng.gain.linearRampToValueAtTime(map(q.mag,4.5,8,.35,.75)*fg,c+.08);ng.gain.exponentialRampToValueAtTime(.0005,c+q.mag*.9);n.connect(nf);nf.connect(ng);ng.connect(A.buses.q);n.start(c);n.stop(c+q.mag);
     if(CFG.fills)seq.fill=true;
   }
   return {note,vel,dur:dec};
