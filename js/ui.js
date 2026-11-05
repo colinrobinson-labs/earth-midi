@@ -167,7 +167,7 @@ async function startStop(){
     S.mode=+$("mode").value;S.played.clear();S.evPlayed.clear();S.sunState={};issStep=null;S.liveSince=0;S.replayStart=performance.now();S.endT=S.frozen?S.endT:Date.now();S.replayFrom=S.endT-864e5;if(S.frozen&&S.mode===0)S.mode=180;MREC.length=0;EVENTS.length=0;S.startPerf=performance.now();
     if(S.mode===0){S.quakes.forEach(q=>S.played.add(q.id));S.events.forEach(e=>S.evPlayed.add(e.id));S.liveSince=Date.now()}
     S.on=true;document.body.classList.add("playing");document.querySelectorAll(".go").forEach(b=>{b.classList.add("on");b.querySelector("span").textContent="STOP"});setMode();if(!S.frozen)refresh();initMIDI();
-  }else{S.on=false;if(UNLOCK)UNLOCK.pause();A.out.gain.setTargetAtTime(0,A.ctx.currentTime,.4);document.body.classList.remove("playing");document.querySelectorAll(".go").forEach(b=>{b.classList.remove("on");b.querySelector("span").textContent="PLAY"});setMode();$("prog").style.width="0";if(REC)stopRec();if(MR)MR.rec.stop()}
+  }else{S.on=false;if(UNLOCK)UNLOCK.pause();A.out.gain.setTargetAtTime(0,A.ctx.currentTime,.4);document.body.classList.remove("playing");document.querySelectorAll(".go").forEach(b=>{b.classList.remove("on");b.querySelector("span").textContent="PLAY"});setMode();$("prog").style.width="0";if(REC)stopRec();if(window.EMRec)EMRec.stop()}
 }
 
 /* ---------- boot ---------- */
