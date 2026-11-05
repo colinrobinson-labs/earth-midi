@@ -110,7 +110,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
 
 /* stage + side column */
 .main{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
-@media (min-width:1100px){.main{grid-template-columns:minmax(0,1fr) 330px;align-items:start}}
+@media (min-width:1100px){.main{grid-template-columns:minmax(0,1fr) 370px;align-items:start}}
 .stage{position:relative;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%,#0b1420 0%,#05070a 70%)}
 .mapwrap{position:relative;touch-action:none}
 #map{display:block;width:100%;aspect-ratio:16/9;cursor:grab}
@@ -137,7 +137,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .shint{font:11px var(--mono);color:var(--mute);margin-left:auto}
 .grip,.chev{display:none}
 #pads{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px 12px}
-.lrow{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 84px 28px 28px;gap:6px;align-items:center;padding:3px 4px 3px 0;border-radius:10px;
+.lrow{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 78px 48px 46px;gap:6px;align-items:center;padding:3px 4px 3px 0;border-radius:10px;
  background:linear-gradient(90deg,color-mix(in srgb,var(--c) calc(var(--hit,0)*28%),transparent),transparent 70%);transition:opacity .2s}
 .lname{display:flex;align-items:center;gap:9px;min-width:0;border:0;background:transparent;padding:7px 8px;font:600 12.5px var(--mono);text-align:left;user-select:none;-webkit-user-select:none;touch-action:manipulation;border-radius:8px}
 .lname:hover{background:#101820}
@@ -150,7 +150,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .lvl::-moz-range-track,.ctl-vol input::-moz-range-track,.dvol input::-moz-range-track{height:4px;border-radius:4px;background:color-mix(in srgb,var(--c2) 50%,#1b2631)}
 .lvl::-webkit-slider-thumb,.ctl-vol input::-webkit-slider-thumb,.dvol input::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:var(--fg);border:3px solid var(--c2);box-shadow:0 0 10px color-mix(in srgb,var(--c2) 60%,transparent)}
 .lvl::-moz-range-thumb,.ctl-vol input::-moz-range-thumb,.dvol input::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--fg);border:3px solid var(--c2)}
-.lm,.ls{height:28px;padding:0;font:700 11px var(--mono);border-radius:7px;color:var(--mute)}
+.lm,.ls{height:28px;padding:0;font:600 11px var(--mono);letter-spacing:.02em;border-radius:7px;color:var(--mute)}
 .lm[aria-pressed="true"]{background:#2a3440;color:var(--fg);border-color:#4a5866}
 .ls[aria-pressed="true"]{background:var(--c);color:#05070a;border-color:var(--c)}
 .lrow.off .lname,.lrow.off .lvl{opacity:.38}.lrow.off .lname i{box-shadow:none;background:transparent;border:1px solid var(--c)}
@@ -276,7 +276,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  .chev{display:block;margin-left:auto;width:10px;height:10px;border-left:2px solid var(--mute);border-top:2px solid var(--mute);transform:rotate(45deg) translateY(3px);transition:transform .3s}
  .side[data-state="1"] .chev,.side[data-state="2"] .chev{transform:rotate(225deg) translateY(3px)}
  #pads{flex:1;overflow:auto;overscroll-behavior:contain;grid-template-columns:1fr;gap:2px;padding:4px 12px 16px;-webkit-overflow-scrolling:touch}
- .lrow{grid-template-columns:minmax(0,1fr) minmax(80px,30%) 40px 40px;gap:6px;padding:2px 0}
+ .lrow{grid-template-columns:minmax(0,1fr) minmax(70px,26%) 52px 50px;gap:6px;padding:2px 0}
  .lname{padding:12px 8px;font-size:13px}
  .lvl{height:40px}
  .lvl::-webkit-slider-thumb,.dvol input::-webkit-slider-thumb{width:22px;height:22px;margin-top:-9px}
@@ -453,11 +453,11 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="js/core.js?v=9"></script>
-<script src="js/audio.js?v=9"></script>
-<script src="js/visuals.js?v=9"></script>
-<script src="js/io.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/sheet.js?v=9"></script>
+<script src="js/core.js?v=10"></script>
+<script src="js/audio.js?v=10"></script>
+<script src="js/visuals.js?v=10"></script>
+<script src="js/io.js?v=10"></script>
+<script src="js/ui.js?v=10"></script>
+<script src="js/sheet.js?v=10"></script>
 </body>
 </html>
