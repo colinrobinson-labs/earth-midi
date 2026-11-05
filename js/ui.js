@@ -3,7 +3,7 @@
 /* ---------- cards ---------- */
 const CARDS=[
  ["q","Earthquakes","notes","<b>magnitude → velocity</b> · <b>depth → pitch</b> (shallow is high) · <b>longitude → pan</b> · M4.5+ adds a sub hit and a drum fill"],
- ["s","Solar wind","CC 1–4 + root","<b>speed → filter + tempo</b> · <b>density → resonance</b> · <b>Bz south → darker</b> · <b>Kp → scale</b>"],
+ ["s","Solar wind","CC 1–4 + root","<b>speed → filter</b> (+ Pulse tempo by default) · <b>density → resonance</b> · <b>Bz south → darker</b> · <b>Kp → scale</b>"],
  ["o","Ocean swell","CC 5 + notes","<b>wave height → surf level</b> · <b>period → surf rhythm</b> (the real period, in seconds)"],
  ["x","Solar X-rays","CC 6 + notes","<b>X-ray flux → shimmer</b> · a C, M or X class flare rings a bell swell"],
  ["w","Jet stream","CC 7","<b>250 hPa wind (~10 km up) → wind roar + filter</b> · 6 points, both hemispheres"],
@@ -49,13 +49,14 @@ const TABS=[
   ["Earthquakes",[["mmin","Min magnitude","rng",0,6,.5],["region","Region","sel",[["world","Whole planet"],["ring","Pacific Ring of Fire"],["americas","Americas"],["asia","Asia-Pacific"],["japan","Japan"],["indo","Indonesia"],["andes","Andes"],["eurmed","Europe, Med & Middle East"],["alaska","Alaska"],["california","California"]]],["qpitch","Pitch from","sel",[["depth","Depth (shallow = high)"],["lat","Latitude (north = high)"],["mag","Magnitude (big = high)"]]],["qpan","Pan from","sel",[["lon","Longitude"],["lat","Latitude"]]],["vcurve","Velocity curve","sel",[["linear","Linear"],["soft","Soft"],["hard","Hard"]]],["velMin","Velocity floor","rng",1,100,1],["velMax","Velocity ceiling","rng",40,127,1],["len","Note length ×","rng",.25,4,.25],["dens","Max notes / sec","rng",1,30,1],["qoct","Quake octave","rng",-2,2,1]]]]],
  ["Mixer",null],
  ["Rhythm",[
-  ["Pulse groove",[["pattern","Pattern","sel",[["four","Four on the floor"],["break","Breakbeat"],["half","Half-time"],["dembow","Dembow"],["broken","Broken"],["minimal","Kick + hats only"]]],["bpmMin","Tempo at slow solar wind","rng",60,180,1],["bpmMax","Tempo at fast solar wind","rng",60,180,1],["bpmLock","Lock tempo (0 = follow the Sun)","rng",0,180,1]]],
-  ["Feel",[["swing","Swing","rng",0,.5,.02],["humanize","Humanize","rng",0,1,.05],["hats","Hi-hat density ×","rng",0,2,.1],["duck","Sidechain duck","rng",0,.9,.05],["fills","Big quakes trigger a kick fill","ck"],["quant","Quantize quakes to the beat","ck"]]]]],
+  ["Genre",[["genre","Genre + style","selg",[["custom","Your own (set it below)"]],GENRES],["tempoSrc","Tempo follows","sel",Object.entries(TSRC).map(([k,v])=>[k,v.n])],["tempoArea","Measured","sel",[["world","Across the whole planet"],["view","Where the globe is facing"]]],["note","tempoNow"]]],
+  ["Pulse groove",[["pattern","Groove","sel",Object.entries(GROOVES).map(([k,v])=>[k,v.n])],["bpmMin","Tempo when the data is calm","rng",60,180,1],["bpmMax","Tempo when the data is intense","rng",60,180,1],["bpmLock","Lock tempo (0 = follow the data)","rng",0,180,1]]],
+  ["Feel",[["swing","Swing","rng",0,.5,.02],["humanize","Humanize","rng",0,1,.05],["hats","Hi-hat density ×","rng",0,2,.1],["duck","Sidechain duck","rng",0,.9,.05],["wxFeel","Weather feel: rain adds a shaker, gusty wind adds swing","ck"],["fills","Big quakes trigger a kick fill","ck"],["quant","Quantize quakes to the beat","ck"]]]]],
  ["Master",[
   ["Space",[["revType","Reverb room","sel",[["hall","Hall"],["plate","Plate"],["room","Room"],["cathedral","Cathedral"],["cave","Cave"],["space","Deep space"]]],["rev","Reverb level (−1 = follow the moon)","rng",-1,1,.05],["dtime","Delay time","sel",[["0.25","1/8 at 120"],["0.375","dotted 1/8"],["0.5","1/4"],["0.75","dotted 1/4"]]],["dfb","Delay feedback","rng",0,.85,.01],["width","Stereo width","rng",0,1.5,.05]]],
   ["Tone",[["drive","Tape saturation","rng",0,1,.05],["lowEq","Low shelf (dB)","rng",-12,12,.5],["highEq","High shelf / air (dB)","rng",-12,12,.5],["hpf","High-pass (Hz)","rng",20,400,5],["mlp","Low-pass (Hz)","rng",300,20000,100]]]]],
  ["MIDI",[
-  ["Sync + input",[["clock","Send MIDI clock (DAW follows the Sun's tempo)","ck"],["playAlong","Play along: your keyboard snaps to the planet's scale","ck"]]],
+  ["Sync + input",[["clock","Send MIDI clock (DAW follows the planet's tempo)","ck"],["playAlong","Play along: your keyboard snaps to the planet's scale","ck"]]],
   ["Channels",[["ch.q","Earthquakes","rng",1,16,1],["ch.s","Solar CCs + root","rng",1,16,1],["ch.o","Ocean","rng",1,16,1],["ch.x","Flares","rng",1,16,1],["ch.w","Jet stream CC","rng",1,16,1],["ch.t","Tides CC + bend","rng",1,16,1],["ch.c","Planet chord","rng",1,16,1],["ch.m","Moon CC","rng",1,16,1]]],
   ["Channels 2",[["ch.i","Space station","rng",1,16,1],["ch.e","Natural events","rng",1,16,1],["ch.g","Magnetosphere","rng",1,16,1],["ch.a","Air","rng",1,16,1],["ch.u","Sunrise chorus","rng",1,16,1],["ch.b","Pulse bass","rng",1,16,1],["ch.d","Pulse drums","rng",1,16,1]]]]],
  ["Presets",null]];
@@ -74,6 +75,8 @@ const PRESETS={
  "Lo-fi Earth":{style:"pulse",pattern:"half",bpmLock:82,swing:.22,drive:.6,mlp:6500,highEq:-4,inst:{q:"marimba",s:"soft"},revType:"room"}
 };
 function ctl(k,label,type,o){const id="p_"+k.replace(".","_"),v=getP(CFG,k);
+  if(k==="note")return `<p class="xs tnow" id="${label}" aria-live="off"></p>`;
+  if(type==="selg"){const g=GENRE_BY[v];return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${a===v?"selected":""}>${b}</option>`).join("")}${o[1].map(([fam,L])=>`<optgroup label="${fam}">${L.map(([a,b,p])=>`<option value="${a}" ${a===v?"selected":""}>${b} · ${p.lo}–${p.hi}</option>`).join("")}</optgroup>`).join("")}</select>${g?`<small class="xs gtip">${g.tip}</small>`:""}</div>`}
   if(type==="rng")return `<div class="pc"><label for="${id}">${label}</label><output id="${id}_o">${v}</output><input type="range" id="${id}" data-k="${k}" data-t="rng" min="${o[0]}" max="${o[1]}" step="${o[2]}" value="${v}"></div>`;
   if(type==="sel")return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select></div>`;
   return `<div class="pc ck"><input type="checkbox" id="${id}" data-k="${k}" data-t="ck" ${v?"checked":""}><label for="${id}">${label}</label></div>`}
@@ -88,12 +91,13 @@ function buildPro(){
   else{g.className="pgrid";g.innerHTML=groups.map(([t,cs])=>`<div class="pgrp"><h5>${t}</h5>${cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join("")}</div>`).join("")}
   g.querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,ty=el.dataset.t;
     el.addEventListener("focus",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});el.addEventListener("pointerdown",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});
-    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;setP(CFG,k,val);const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)}})}
+    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)}})}
 function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
-  g.innerHTML=`<div class="pgrp wide"><h5>Factory</h5><div class="chips">${Object.keys(PRESETS).map(n=>`<button data-fp="${n}">${n}</button>`).join("")}<button data-reset>Reset all</button></div></div>
+  g.innerHTML=`<div class="pgrp wide"><h5>Genres (switches to Pulse)</h5>${GENRES.map(([fam,L])=>`<div class="chips gchips"><span class="xs">${fam}</span>${L.map(([id,n,p])=>`<button data-genre="${id}" aria-pressed="${CFG.genre===id&&S.style==="pulse"}" title="${p.lo}–${p.hi} BPM · ${p.tip}">${n}</button>`).join("")}</div>`).join("")}</div><div class="pgrp wide"><h5>Factory</h5><div class="chips">${Object.keys(PRESETS).map(n=>`<button data-fp="${n}">${n}</button>`).join("")}<button data-reset>Reset all</button></div></div>
    <div class="pgrp wide"><h5>Yours (saved in this browser)</h5><div class="chips">${Object.keys(UPRE).map(n=>`<span class="chip"><button data-up="${n}">${n.replace(/</g,"&lt;")}</button><button data-del="${n}" aria-label="delete">×</button></span>`).join("")||'<span class="xs">none yet</span>'}</div>
    <div class="chips" style="margin-top:8px"><button id="bUP">＋ Save current as preset</button><button id="bEP">⬇ Export preset file</button><label class="btnlike">📂 Import preset<input type="file" accept=".json" hidden id="fPre"></label><button id="bLearn" aria-pressed="${LEARN.on}">🎛 MIDI learn ${LEARN.on?"ON":"off"}</button></div>
    <p class="xs">MIDI learn: turn it on, touch any slider, then move a knob on your controller. Mapped: ${Object.keys(LEARN.map).length?Object.entries(LEARN.map).map(([c,k])=>`CC${c}→${k}`).join(", "):"nothing yet"}.</p></div>`;
+  g.querySelectorAll("[data-genre]").forEach(b=>b.onclick=()=>{if(S.style!=="pulse")setStyle("pulse");applyGenre(b.dataset.genre)});
   g.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>applyPreset(PRESETS[b.dataset.fp],b.dataset.fp));g.querySelector("[data-reset]").onclick=()=>{CFG=clone(DEF);afterCFG();xs("Settings reset")};
   g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`)});
   g.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteUserPreset(b.dataset.del));

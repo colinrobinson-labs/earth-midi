@@ -238,6 +238,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .pc label{color:var(--fg)}.pc output{color:var(--mute);text-align:right;min-width:40px}
 .pc input[type=range]{grid-column:1/-1;width:100%;height:22px}
 .pc select{grid-column:1/-1;font-size:12px;padding:7px 8px}
+.gchips{align-items:center;margin:4px 0 8px}.gchips .xs{flex-basis:100%;margin-top:4px}.gchips button[aria-pressed=true]{border-color:var(--fg)}
+.pc .gtip{grid-column:1/-1;color:var(--mute);margin-top:3px}.tnow{font:11px var(--mono);color:var(--mute);margin:6px 0 2px;min-height:2.6em;line-height:1.35}
 .pc.ck{grid-template-columns:auto 1fr}.pc.ck input{accent-color:var(--k);width:18px;height:18px}
 .mixer{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .strip{border:1px solid var(--line);border-top:2px solid var(--c);border-radius:12px;padding:8px 10px;background:#0a0f15}
@@ -513,7 +515,8 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
   <div><h4>Use it in your DAW</h4><ul>
     <li><b>Live MIDI on Mac:</b> Audio MIDI Setup → MIDI Studio → IAC Driver → “Device is online”. Pick it above, arm a MIDI track.</li>
     <li><b>Windows:</b> install loopMIDI, create a port, pick it above.</li>
-    <li><b>Sync:</b> Producer controls → MIDI → “Send MIDI clock” and your DAW follows the Sun's tempo.</li>
+    <li><b>Genres:</b> Producer controls → Rhythm → pick a genre and style. Each sets its own tempo range and groove, and you choose which real data moves the tempo: solar wind, wind, rain, air pressure, storms, quakes, tides and more.</li>
+    <li><b>Sync:</b> Producer controls → MIDI → “Send MIDI clock” and your DAW follows the planet's tempo.</li>
     <li><b>No live MIDI?</b> Export the data pack and drag the .mid in. Each layer has its own channel and CC lanes.</li></ul></div>
   <div><h4>Accuracy</h4><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div>
 </div>
@@ -535,7 +538,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
     <tr><td>Measuring</td><td class="ai0">No</td><td>Seismometers, satellites at L1 and GOES, tide gauges, ocean and weather models, NASA event tracking.</td></tr>
     <tr><td>Choosing notes</td><td class="ai0">No</td><td>Fixed formulas, written on each card. Same reading, same note, every time.</td></tr>
     <tr><td>Making the sound</td><td class="ai0">No</td><td>Oscillators, filters, noise and convolution reverb, built live in your browser. No samples.</td></tr>
-    <tr><td>Rhythm (Pulse)</td><td class="ai0">No</td><td>Tempo from solar wind speed, hats from the quake rate, ghost snares from Kp, fills from big quakes.</td></tr>
+    <tr><td>Rhythm (Pulse)</td><td class="ai0">No</td><td>Tempo from the measurement you pick (solar wind by default; wind, rain, pressure, storms, quakes, tides, Kp, jet stream or temperature), scaled into the genre's range by a fixed formula. Hats from the quake rate, shaker from rainfall, swing from wind, ghost snares from Kp, fills from big quakes.</td></tr>
     <tr><td>Exports</td><td class="ai0">No</td><td>WAV, stems, MIDI and data files are written byte by byte by this page's code.</td></tr>
     <tr><td>Writing the code</td><td>Yes</td><td>Claude helped write it, as a coding tool. That's the whole extent of it.</td></tr></table></div>
     <div><div class="onlyai"><h5>Where AI was used</h5><div><b>Before you got here, Claude (an AI coding assistant) helped Colin type this page's code</b>, the way spell-check helps a writer. It isn't running now, never picks a note and never makes a sound. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
@@ -569,18 +572,19 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="js/core.js?v=18"></script>
-<script src="js/audio.js?v=18"></script>
-<script src="js/visuals.js?v=18"></script>
-<script src="js/weather.js?v=17"></script>
-<script src="js/focus.js?v=18"></script>
-<script src="js/io.js?v=18"></script>
+<script src="js/core.js?v=19"></script>
+<script src="js/audio.js?v=19"></script>
+<script src="js/visuals.js?v=19"></script>
+<script src="js/weather.js?v=18"></script>
+<script src="js/groove.js?v=1"></script>
+<script src="js/focus.js?v=19"></script>
+<script src="js/io.js?v=19"></script>
 <script src="js/god.js?v=4"></script>
-<script src="js/ui.js?v=18"></script>
+<script src="js/ui.js?v=19"></script>
 <script src="js/zones.js?v=3"></script>
-<script src="js/sheet.js?v=18"></script>
+<script src="js/sheet.js?v=19"></script>
 <script src="js/title.js?v=2"></script>
 <script src="js/record.js?v=3"></script>
-<script src="js/welcome.js?v=1"></script>
+<script src="js/welcome.js?v=2"></script>
 </body>
 </html>

@@ -210,8 +210,7 @@ function updateEngine(){
   Object.assign(S.cur,{sp,de,bz,bt,kp,oh,op,xf,jv,tn,mo,air,dst,pf,fires,vols,storms,act:act.length});
 }
 
-/* ---------- Pulse: drums + bass; tempo from solar wind, hats from quake rate, ghosts from Kp ---------- */
-const PATTERNS={four:{k:"x...x...x...x...",s:"....x.......x..."},break:{k:"x.........x.x...",s:"....x.......x..x"},half:{k:"x.......x.......",s:"........x......."},dembow:{k:"x...x...x...x...",s:"...x..x....x..x."},minimal:{k:"x...x...x...x...",s:"................"},broken:{k:"x..x......x..x..",s:"....x.......x...."}};
+/* ---------- Pulse: drums + bass. Groove + tempo source come from the genre (js/groove.js); hats from quake rate, ghosts from Kp ---------- */
 function drum(kind,time,vel=1){const {ctx}=A;
   if(kind==="k"){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(155,time);o.frequency.exponentialRampToValueAtTime(42,time+.12);g.gain.setValueAtTime(.95*vel,time);g.gain.exponentialRampToValueAtTime(.001,time+.45);o.connect(g);g.connect(A.buses.r);o.start(time);o.stop(time+.5);
     const ck=ctx.createBufferSource();ck.buffer=A.nb;const cg=ctx.createGain(),cf=ctx.createBiquadFilter();cf.type="highpass";cf.frequency.value=3000;cg.gain.setValueAtTime(.25*vel,time);cg.gain.exponentialRampToValueAtTime(.001,time+.012);ck.connect(cf);cf.connect(cg);cg.connect(A.buses.r);ck.start(time,Math.random()*3);ck.stop(time+.02);
@@ -219,25 +218,30 @@ function drum(kind,time,vel=1){const {ctx}=A;
   else if(kind==="s"){const n=ctx.createBufferSource();n.buffer=A.nb;const bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=1900;bp.Q.value=.7;const g=ctx.createGain();g.gain.setValueAtTime(.55*vel,time);g.gain.exponentialRampToValueAtTime(.001,time+.19);n.connect(bp);bp.connect(g);g.connect(A.buses.r);n.start(time,Math.random()*3);n.stop(time+.22);
     const o=ctx.createOscillator(),og=ctx.createGain();o.type="triangle";o.frequency.setValueAtTime(210,time);o.frequency.exponentialRampToValueAtTime(140,time+.08);og.gain.setValueAtTime(.35*vel,time);og.gain.exponentialRampToValueAtTime(.001,time+.12);o.connect(og);og.connect(A.buses.r);o.start(time);o.stop(time+.14)}
   else{const n=ctx.createBufferSource();n.buffer=A.nb;const hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=7500;const g=ctx.createGain(),p=ctx.createStereoPanner();p.pan.value=W_(.25);g.gain.setValueAtTime(.35*vel,time);g.gain.exponentialRampToValueAtTime(.001,time+(kind==="o"?.18:.05));n.connect(hp);hp.connect(g);g.connect(p);p.connect(A.buses.r);n.start(time,Math.random()*3);n.stop(time+.2)}}
-function bassNote(n,time,len){const {ctx}=A,o=ctx.createOscillator(),o2=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o.type="sawtooth";o2.type="square";o2.detune.value=-1200;o.frequency.value=mtof(n);o2.frequency.value=mtof(n);const g2=ctx.createGain();g2.gain.value=.35;
-  f.type="lowpass";f.Q.value=8;f.frequency.setValueAtTime(900,time);f.frequency.exponentialRampToValueAtTime(140,time+len);g.gain.setValueAtTime(.3,time);g.gain.exponentialRampToValueAtTime(.001,time+len);o.connect(f);o2.connect(g2);g2.connect(f);f.connect(g);g.connect(A.buses.r);o.start(time);o2.start(time);o.stop(time+len+.05);o2.stop(time+len+.05)}
+function bassNote(n,time,len,lv=1){const {ctx}=A,o=ctx.createOscillator(),o2=ctx.createOscillator(),f=ctx.createBiquadFilter(),g=ctx.createGain();o.type="sawtooth";o2.type="square";o2.detune.value=-1200;o.frequency.value=mtof(n);o2.frequency.value=mtof(n);const g2=ctx.createGain();g2.gain.value=.35;
+  f.type="lowpass";f.Q.value=8;f.frequency.setValueAtTime(900,time);f.frequency.exponentialRampToValueAtTime(140,time+len);g.gain.setValueAtTime(.3*lv,time);g.gain.exponentialRampToValueAtTime(.001,time+len);o.connect(f);o2.connect(g2);g2.connect(f);f.connect(g);g.connect(A.buses.r);o.start(time);o2.start(time);o.stop(time+len+.05);o2.stop(time+len+.05)}
 let seq={next:0,step:0,fill:false};
-function curBPM(){const k=1+(S.viewFX?S.viewFX.tempo:0);if(+CFG.bpmLock>0)return +CFG.bpmLock*k;const sp=S.cur&&Number.isFinite(S.cur.sp)?S.cur.sp:400;return map(sp,250,900,+CFG.bpmMin,+CFG.bpmMax)*k}
+function curBPM(){const k=1+(S.viewFX?S.viewFX.tempo:0);if(+CFG.bpmLock>0)return +CFG.bpmLock*k;tempoTick();return (TEMPO.bpm||(+CFG.bpmMin+ +CFG.bpmMax)/2)*k}
 function schedulePulse(){
   if(!A||S.style!=="pulse"||!S.on)return;const c=A.ctx.currentTime,t=realNow();
-  const bpm=curBPM(),st=60/bpm/4,pat=PATTERNS[CFG.pattern]||PATTERNS.four;
-  const hourAgo=t-36e5,rate=S.quakes.filter(q=>q.time>hourAgo&&q.time<=t).length,hatP=clamp(map(rate,0,20,.2,.95)*CFG.hats,0,1);
+  const bpm=curBPM(),st=60/bpm/4,G=GROOVES[CFG.pattern]||GROOVES.four,TR=G.trim||1,fx=wxFeel(t),sw=clamp(+CFG.swing+fx.swing,0,.5);
+  const hourAgo=t-36e5,rate=S.quakes.filter(q=>q.time>hourAgo&&q.time<=t).length,hatP=clamp(map(rate,0,20,.55,1)*CFG.hats,0,1),extraP=clamp(map(rate,5,30,0,.35)*CFG.hats,0,.5);
   const tn=S.tides.length?tideNorm(S.tides[0],t):0,kp=S.cur.kp||2,sc=scaleFor(kp),ghost=kp>=4?.18:kp>=3?.08:0;
   if(seq.next<c)seq.next=c+.05;
-  while(seq.next<c+.15){const s16=seq.step%16,hum=CFG.humanize*(Math.random()-.5)*.02,tm=seq.next+(s16%2===1?CFG.swing*st:0)+hum;
-    const fillNow=seq.fill&&s16>=12;
-    if(pat.k[s16]==="x"||(fillNow&&s16%2===0)){drum("k",tm,fillNow?.8:1);midiNote(CH("d"),36,fillNow?90:110,80)}
-    if(pat.s[s16]==="x"){drum("s",tm);midiNote(CH("d"),38,100,80)}else if(ghost&&Math.random()<ghost){drum("s",tm,.25);midiNote(CH("d"),38,35,40)}
-    if(s16%2===1&&Math.random()<hatP){const op=s16%4===2;drum(op?"o":"h",tm,.6+Math.random()*.4);midiNote(CH("d"),op?46:42,70,40)}
-    if(s16%4===2){const bn=degree(sc,Math.round(map(tn,-1,1,0,4)),ROOT-24);bassNote(bn,tm,st*1.6);midiNote(CH("b"),bn,96,st*1500);pushNote(bn,"r",90,st*1.6)}
+  while(seq.next<c+.15){const s16=seq.step%16,hum=CFG.humanize*(Math.random()-.5)*.02,tm=seq.next+(s16%2===1?sw*st:0)+hum;
+    const fillNow=seq.fill&&s16>=12,K=G.k[s16],Sn=G.s[s16],H=G.h[s16],B=G.b[s16];
+    if(K==="x"||K==="g"||(fillNow&&s16%2===0)){const v=fillNow?.8:K==="g"?.5:1;drum("k",tm,v*TR);midiNote(CH("d"),36,Math.round(110*v),80)}
+    if(Sn==="x"){drum("s",tm,TR);midiNote(CH("d"),38,100,80)}else if(Sn==="r"){drum("s",tm,.32);midiNote(CH("d"),37,70,60)}else if(Sn==="g"||(ghost&&Math.random()<ghost)){drum("s",tm,.25);midiNote(CH("d"),38,35,40)}
+    // hats: the groove sets where, the last hour's quake count sets how many land; a busy hour adds extra 16ths
+    if(H&&H!=="."){if(Math.random()<hatP){const op=H==="o",v=(H==="-"?.35+Math.random()*.15:.6+Math.random()*.4)*(K==="x"?.6:1)*(op?.8:1);drum(op?"o":"h",tm,v*TR);midiNote(CH("d"),op?46:42,Math.round(v*90),40)}}
+    else if(extraP&&Math.random()<extraP){drum("h",tm,.3);midiNote(CH("d"),42,40,30)}
+    // rain: a shaker on the 16ths, density = how much of the planet (or this spot) is raining
+    if(fx.shake>0&&Math.random()<fx.shake*(s16%2?1:.55)){const v=.5+Math.random()*.5;shaker(tm,v);midiNote(CH("d"),82,Math.round(v*80),30)}
+    if(B&&B!=="."){const i0=Math.round(map(tn,-1,1,0,4)),bn=degree(sc,B==="f"?i0+2:i0,ROOT-24)+(B==="o"?12:0),len=st*(G.bl||1.6);bassNote(bn,tm,len,(K==="x"?.65:1)*TR);// bass under a kick is trimmed so the two never stack into the saturator
+      midiNote(CH("b"),bn,96,len*900);pushNote(bn,"r",90,len)}
     if(s16===15)seq.fill=false;
     seq.next+=st;seq.step++}
-  S.bpm=bpm;S.qrate=rate;
+  S.bpm=bpm;S.qrate=rate;S.feel=fx;
 }
 /* ---------- Quakes ---------- */
 function passQ(q){if(q.mag<CFG.mmin)return false;if(ZN.w("q",q.lat,q.lon)<.02)return false;const R_=REGIONS[CFG.region];if(!R_)return true;return R_.some(([a,b,c,d])=>q.lat>=a&&q.lat<=b&&q.lon>=c&&q.lon<=d)}

@@ -62,7 +62,7 @@
   <p class="wlc-live" id="wlcLive" aria-live="polite"></p>
   <div class="wlc-opts">
     <button class="wlc-o" data-c="ambient" style="--oc:var(--o)"><span class="wlc-g g-amb" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Ambient</b><small>Slow and spacious. Every event rings out on its own.</small></span><span class="go-ar" aria-hidden="true">→</span></button>
-    <button class="wlc-o" data-c="pulse" style="--oc:var(--q)"><span class="wlc-g g-pul" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span><b>Pulse</b><small>A beat clocked by the Sun. Solar wind sets the tempo.</small></span><span class="go-ar" aria-hidden="true">→</span></button>
+    <button class="wlc-o" data-c="pulse" style="--oc:var(--q)"><span class="wlc-g g-pul" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span><b>Pulse</b><small>A beat clocked by the planet. Solar wind sets the tempo, or pick a genre and let rain, wind or storms drive it.</small></span><span class="go-ar" aria-hidden="true">→</span></button>
     <button class="wlc-o" data-c="silent" style="--oc:var(--fg)"><span class="wlc-g g-sil" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg></span><span><b>Enter silently</b><small>Look around first, press Play when you're ready.</small></span><span class="go-ar" aria-hidden="true">→</span></button>
   </div>
   <div class="wlc-foot"><span>Switch Ambient / Pulse anytime.</span><span>By Colin Robinson · <a href="#how" data-c="how">How it works</a></span></div>
