@@ -217,8 +217,8 @@ function drawMeters(){if(!A)return;PAN_KEYS.forEach(k=>{const c=$("vu"+k);if(!c|
 const TL_LAYERS=["q","s","o","x","w","t","c","i","u"];
 function drawTitle(){document.querySelectorAll("#title .L").forEach((el,i)=>{const k=TL_LAYERS[i%TL_LAYERS.length];el.style.setProperty("--h",(S.hit[k]||0).toFixed(3))})}
 /* ---------- event log + trace ---------- */
-function chordTrace(t){return [["Sensor","Open-Meteo weather model, 2 m air temperature, 10 cities"],["Raw reading",S.temps.map(x=>`${x.name}: ${tsAt(x,t).toFixed(1)}°C`).join("\n")],["Formula","temperature −30…45 °C → scale step 0…"+(scaleFor(S.cur.kp||2).length*3-1)+"\n(cold low, hot high)"],["Sound + MIDI",`10 voices panned by longitude\nMIDI ch ${CH("c")}, one note per city`],["AI involved","none"]]}
-function showTrace(tr){$("trace").querySelector("ol").innerHTML=tr.map(([a])=>`<li><b${a==="AI involved"?' class="ai0"':""}>${a}</b><span${a==="AI involved"?' class="ai0"':""}></span></li>`).join("");[...$("trace").querySelectorAll("li span")].forEach((e,i)=>e.textContent=tr[i][1])}
+function chordTrace(t){return [["Sensor","Open-Meteo weather model, 2 m air temperature, 10 cities"],["Raw reading",S.temps.map(x=>`${x.name}: ${tsAt(x,t).toFixed(1)}°C`).join("\n")],["Formula","temperature −30…45 °C → scale step 0…"+(scaleFor(S.cur.kp||2).length*3-1)+"\n(cold low, hot high)"],["Sound + MIDI",`10 voices panned by longitude\nMIDI ch ${CH("c")}, one note per city`],["AI running","none"]]}
+function showTrace(tr){$("trace").querySelector("ol").innerHTML=tr.map(([a])=>`<li><b${a==="AI running"?' class="ai0"':""}>${a}</b><span${a==="AI running"?' class="ai0"':""}></span></li>`).join("");[...$("trace").querySelectorAll("li span")].forEach((e,i)=>e.textContent=tr[i][1])}
 const EVENTS=[];
 function logEv(txt,k,q,tr){const real=q?q.time:realNow();if(S.on&&EVENTS.length<60000)EVENTS.push({real:new Date(real).toISOString(),layer:k,text:txt,trace:tr||[]});
   const li=document.createElement("li");if(tr){li.onclick=()=>{showTrace(tr);if(q)auditionQuake(q,true)};if(!S.traced){S.traced=1;showTrace(tr)}}

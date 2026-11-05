@@ -275,7 +275,7 @@ function quakeVoice(q){
 }
 function flareBell(cls,f){if(A&&!muted("x")){const {ctx}=A,c=ctx.currentTime;[0,7,12,19].forEach((d,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type="triangle";o.frequency.value=mtof(ROOT+24+d);g.gain.setValueAtTime(0,c+i*.12);g.gain.linearRampToValueAtTime(.08,c+i*.12+.02);g.gain.exponentialRampToValueAtTime(.0003,c+i*.12+5);o.connect(g);g.connect(A.buses.x);o.start(c+i*.12);o.stop(c+6)})}
   pushNote(ROOT+24,"x",100,3);midiNote(CH("x"),ROOT+24,100,1500);S.hit.x=1;
-  logEv(`Flare ${cls}`,"x",null,[["Sensor","GOES-East/West X-ray sensor, 0.1–0.8 nm"],["Raw reading",`flux ${(f||0).toExponential(2)} W/m²`],["Formula",`flux crosses into class ${cls[0]} → bell swell\nlog10(flux) −8…−4 → shimmer level`],["Sound + MIDI",`4 triangle bells, root +24\nMIDI ch ${CH("x")} note ${ROOT+24}`],["AI involved","none"]])}
+  logEv(`Flare ${cls}`,"x",null,[["Sensor","GOES-East/West X-ray sensor, 0.1–0.8 nm"],["Raw reading",`flux ${(f||0).toExponential(2)} W/m²`],["Formula",`flux crosses into class ${cls[0]} → bell swell\nlog10(flux) −8…−4 → shimmer level`],["Sound + MIDI",`4 triangle bells, root +24\nMIDI ch ${CH("x")} note ${ROOT+24}`],["AI running","none"]])}
 
 /* ================= MIDI out / in ================= */
 let midi=null,out=null;

@@ -523,7 +523,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
   <div class="panel"><h3>MIDI monitor <small>every note, as it's sent</small></h3><canvas id="roll"></canvas></div>
   <div class="panel"><h3>Event log <small>real events only · tap to trace</small></h3><ul id="log"></ul></div>
 </div>
-<div class="panel" id="trace"><h3>Trace a sound <small>sensor → formula → sound, no AI step</small></h3><ol><li><b>Tap a line in the event log</b><span>and its full chain appears here.</span></li></ol></div>
+<div class="panel" id="trace"><h3>Trace a sound <small>sensor → rule → sound, no AI running</small></h3><ol><li><b>Tap a line in the event log</b><span>and its full chain appears here.</span></li></ol></div>
 <div class="panel" style="margin-top:12px"><h3>Output <small>spectrum · waveform · stereo field</small></h3><canvas id="scope"></canvas></div>
 
 <div class="info">
@@ -536,7 +536,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
   <div style="--ac:var(--k)"><h4><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" class="f"/></svg></span>Accuracy</h4><div class="acc"><span style="--lc:var(--q)"><b>~1 min</b>new quakes, after USGS publishes</span><span style="--lc:var(--s)"><b>30–60 min</b>solar wind lead time, measured at L1</span><span style="--lc:var(--o)"><b>24 h</b>replayed in real order and spacing</span><span style="--lc:var(--k)"><b>0</b>values passed off as live when a feed fails</span></div><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div>
 </div>
 <details class="how" id="how">
-  <summary><span class="hs-t">How it works</span><span class="hs-s">real sensors → the same rule every time → oscillators in your browser · AI helped build the site, it doesn't make the sound</span><span class="hs-c" aria-hidden="true"></span></summary>
+  <summary><span class="hs-t">How it works</span><span class="hs-s">real sensors → the same rule every time → oscillators in your browser · no active AI</span><span class="hs-c" aria-hidden="true"></span></summary>
   <div class="how-in">
   <ol class="pipe">
     <li><b>Instruments measure</b><span>seismometers, satellites, tide gauges, weather balloons</span></li>
@@ -558,14 +558,14 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
   <div class="hstats"><span><b id="feedCount">14</b> live feeds</span><span><b>0</b> samples or loops</span><span><b>0</b> AI models on this page</span><span><b id="aiHits">0</b> requests to AI services</span></div>
   <div class="howgrid">
     <div class="howt"><table>
-    <tr><th>Step</th><th>AI?</th><th>What actually happens</th></tr>
+    <tr><th>Step</th><th>AI running?</th><th>What actually happens</th></tr>
     <tr><td>Measuring</td><td class="ai0">No</td><td>Seismometers, satellites at L1 and GOES, tide gauges, ocean and weather models, NASA event tracking.</td></tr>
     <tr><td>Choosing notes</td><td class="ai0">No</td><td>One rule per layer, written on each card. Same reading, same note, every time.</td></tr>
     <tr><td>Making the sound</td><td class="ai0">No</td><td>Oscillators, filters, noise and convolution reverb, built live in your browser. No samples.</td></tr>
     <tr><td>Rhythm (Pulse)</td><td class="ai0">No</td><td>Tempo from the measurement you pick (solar wind by default; wind, rain, pressure, storms, quakes, tides, Kp, jet stream or temperature), scaled into the genre's range by the same formula every time. Hats from the quake rate, shaker from rainfall, swing from wind, ghost snares from Kp, fills from big quakes.</td></tr>
     <tr><td>Exports</td><td class="ai0">No</td><td>WAV, stems, MIDI and data files are written byte by byte by this page's code.</td></tr>
-    <tr><td>Writing the code</td><td>Yes</td><td>Claude helped write it, as a coding tool. That's the whole extent of it.</td></tr></table></div>
-    <div><div class="onlyai"><h5>Where AI was used (and where it wasn't)</h5><div><b>Before you got here, Claude (an AI coding assistant) helped Colin type this page's code</b>, the way spell-check helps a writer. It isn't running now, never picks a note and never makes a sound. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
+    <tr><td>Building the site</td><td>Before, not now</td><td>Claude (an AI) helped design and write the code, including the rules that map each sensor to pitch, filters and rhythm. Once written, the rules don't change.</td></tr></table></div>
+    <div><div class="onlyai"><h5>Where AI was used: building, not playing</h5><div><b>Claude (an AI) helped Colin design and build this site, including the rules that turn each reading into sound.</b> That all happened before you got here. No AI runs while you listen: no model picks a note, makes a sound or changes a rule. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
     <details class="led"><summary>Live network ledger · <span id="reqs">0</span> requests to <span id="hosts">0</span> servers · AI services: <b class="ai0" id="aiHits2">0</b></summary><ul id="ledger"></ul></details></div>
   </div>
   </div>
@@ -597,20 +597,20 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="js/core.js?v=19"></script>
-<script src="js/audio.js?v=20"></script>
-<script src="js/visuals.js?v=20"></script>
-<script src="js/weather.js?v=18"></script>
+<script src="js/audio.js?v=21"></script>
+<script src="js/visuals.js?v=21"></script>
+<script src="js/weather.js?v=19"></script>
 <script src="js/groove.js?v=1"></script>
 <script src="js/studio.js?v=1"></script>
 <script src="js/focus.js?v=19"></script>
-<script src="js/io.js?v=19"></script>
+<script src="js/io.js?v=20"></script>
 <script src="js/god.js?v=4"></script>
-<script src="js/ui.js?v=20"></script>
+<script src="js/ui.js?v=21"></script>
 <script src="js/zones.js?v=3"></script>
 <script src="js/sheet.js?v=19"></script>
 <script src="js/title.js?v=2"></script>
-<script src="js/record.js?v=3"></script>
-<script src="js/welcome.js?v=4"></script>
+<script src="js/record.js?v=4"></script>
+<script src="js/welcome.js?v=5"></script>
 <script src="js/procta.js?v=1"></script>
 <script src="js/beat.js?v=1"></script>
 <script src="js/home.js?v=1"></script>

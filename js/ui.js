@@ -126,7 +126,7 @@ function playQuake(q){
     ["Formula: pan",`${CFG.qpan==="lat"?"latitude ÷ 90":"longitude ÷ 180"} × 0.85 = ${quakePan(q).toFixed(2)}`],
     ...(FOCUS.on()?[["Camera focus",`${FOCUS.mode()} mode · facing ${FOCUS.near(q.lat,q.lon).toFixed(2)}\nlevel ×${FOCUS.gain(q.lat,q.lon).toFixed(2)} · screen pan ${FOCUS.pan(q.lat,q.lon,0).toFixed(2)}\nMIDI note + velocity unchanged`]]:[]),
     ["Sound + MIDI",`${CFG.inst.q} voice, ${r.dur.toFixed(1)} s decay${q.mag>=4.5?"\n+ sub-bass hit (M4.5+)":""}\nMIDI ch ${CH("q")} note ${r.note} vel ${r.vel}`],
-    ["AI involved","none"]]);
+    ["AI running","none"]]);
   const v=$("vq");if(v)v.innerHTML=`M${q.mag.toFixed(1)}<small>${Math.round(q.depth)} km</small>`;const s=$("sq");if(s)s.textContent=q.place;
 }
 function auditionQuake(q,quiet){if(!A){initAudio();A.ctx.resume();A.out.gain.setTargetAtTime(+$("vol").value,A.ctx.currentTime,.1)}A.ctx.resume();const was=S.played.has(q.id);const r=quakeVoice(q);pushNote(r.note,"q",r.vel,r.dur);S.rings.push({lat:q.lat,lon:q.lon,mag:q.mag,t:performance.now()});S.hit.q=1;if(!quiet)xs(`M${q.mag.toFixed(1)} ${q.place} → ${noteName(r.note)}`)}
@@ -148,11 +148,11 @@ function tick(){
       issPluck(n,vel,FOCUS.pan(p.lat,p.lon,clamp(p.lon/180,-1,1)*.85),land,FOCUS.gain(p.lat,p.lon));midiNote(CH("i"),n,vel,300);pushNote(n,"i",vel,.6);S.hit.i=.9}issStep=st}
   // sunrise / sunset over each city
   const sp=sunPos(t);for(const cc of SUN_CITIES){const up=sunElev(cc[1],cc[2],sp)>-.833,prev=S.sunState[cc[0]];if(prev!==undefined&&up!==prev&&ZN.w("u",cc[1],cc[2])>.02){const r=sunChime(cc,up);S.flashes.push({lat:cc[1],lon:cc[2],name:cc[0],rise:up,t:performance.now()});S.lastSun=`${up?"sunrise":"sunset"} in ${cc[0]}`;
-      logEv(`${up?"Sunrise":"Sunset"} · ${cc[0]}`,"u",null,[["Source","Computed solar position (NOAA formula), not fetched"],["Raw reading",`${cc[0]} ${cc[1].toFixed(2)}°, ${cc[2].toFixed(2)}°\nsun crosses −0.833° (${up?"rising":"setting"}) at ${new Date(t).toISOString().slice(11,16)} UTC`],["Formula",`latitude → scale step\npopulation ${cc[3]} M → velocity ${r.vel}`],["Sound + MIDI",`3-note ${up?"rising":"falling"} chime\nMIDI ch ${CH("u")} note ${r.n}`],["AI involved","none"]])}S.sunState[cc[0]]=up}
+      logEv(`${up?"Sunrise":"Sunset"} · ${cc[0]}`,"u",null,[["Source","Computed solar position (NOAA formula), not fetched"],["Raw reading",`${cc[0]} ${cc[1].toFixed(2)}°, ${cc[2].toFixed(2)}°\nsun crosses −0.833° (${up?"rising":"setting"}) at ${new Date(t).toISOString().slice(11,16)} UTC`],["Formula",`latitude → scale step\npopulation ${cc[3]} M → velocity ${r.vel}`],["Sound + MIDI",`3-note ${up?"rising":"falling"} chime\nMIDI ch ${CH("u")} note ${r.n}`],["AI running","none"]])}S.sunState[cc[0]]=up}
   // newly reported natural events
   for(const e of S.events){if(S.evPlayed.has(e.id)||e.start>t)continue;S.evPlayed.add(e.id);if(ZN.w("e",e.lat,e.lon)<.02)continue;if(t-e.start>864e5*1.02&&S.mode>0&&!S.liveSince)continue;if(S.liveSince&&e.start<S.liveSince-36e5)continue;
     const n={fire:72,storm:67,volcano:48,ice:84}[e.kind]||60;midiNote(CH("e"),n,90,800);pushNote(n,"e",90,1.5);S.hit.e=1;S.rings.push({lat:e.lat,lon:e.lon,mag:2,t:performance.now()});
-    logEv(`NASA: ${e.title}`,"e",null,[["Source","NASA EONET (Earth Observatory Natural Event Tracker)"],["Raw reading",`${e.kind}: ${e.title}\nfirst reported ${new Date(e.start).toISOString().slice(0,16)} UTC\n${e.lat.toFixed(2)}°, ${e.lon.toFixed(2)}°`],["Formula",`event type → note (fire C5, storm G4, volcano C3, ice C6)`],["Sound + MIDI",`MIDI ch ${CH("e")} note ${n}`],["AI involved","none"]])}
+    logEv(`NASA: ${e.title}`,"e",null,[["Source","NASA EONET (Earth Observatory Natural Event Tracker)"],["Raw reading",`${e.kind}: ${e.title}\nfirst reported ${new Date(e.start).toISOString().slice(0,16)} UTC\n${e.lat.toFixed(2)}°, ${e.lon.toFixed(2)}°`],["Formula",`event type → note (fire C5, storm G4, volcano C3, ice C6)`],["Sound + MIDI",`MIDI ch ${CH("e")} note ${n}`],["AI running","none"]])}
   focusTick();updateEngine();schedulePulse();midiClock();
   $("prog").style.width=(S.mode>0&&!S.liveSince?(t-S.replayFrom)/((S.endT||Date.now())-S.replayFrom)*100:100)+"%";
 }
