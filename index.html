@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Earth MIDI · the planet as a live instrument</title>
-<meta name="description" content="The planet as an instrument. 14 live feeds (earthquakes, solar wind, flares, ocean swell, tides, jet stream, city temperatures, the ISS, NASA fires and storms, the magnetosphere, air quality, sunrise over 42 cities) played as sound and sent as MIDI. Raw data plus fixed formulas, synthesized live in your browser.">
+<meta name="description" content="The planet as an instrument. 14 live feeds (earthquakes, solar wind, flares, ocean swell, tides, jet stream, city temperatures, the ISS, NASA fires and storms, the magnetosphere, air quality, sunrise over 42 cities) played as sound and sent as MIDI. Raw data run through the same rule every time, synthesized live in your browser.">
 <meta name="theme-color" content="#05070a">
 <meta property="og:title" content="Earth MIDI · the planet as an instrument">
-<meta property="og:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, fixed formulas, synthesized live.">
+<meta property="og:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, same rule every time, synthesized live.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://earthmidi.com/">
 <meta property="og:site_name" content="Earth MIDI">
@@ -16,7 +16,7 @@
 <meta property="og:image:alt" content="Earth MIDI: the planet as a live instrument">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Earth MIDI · the planet as an instrument">
-<meta name="twitter:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, fixed formulas, synthesized live.">
+<meta name="twitter:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, same rule every time, synthesized live.">
 <meta name="twitter:image" content="https://earthmidi.com/og.png?v=2">
 <meta name="author" content="Colin Robinson">
 <link rel="canonical" href="https://earthmidi.com/">
@@ -429,7 +429,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <header>
   <h1 id="title" aria-label="Earth MIDI">EARTH MIDI</h1>
   <div>
-    <div class="badges"><span class="b raw">Live sensor data</span><span class="b alg">Fixed formulas</span><span class="b syn">Synthesized live</span><a class="b more" href="#how">How it works</a></div>
+    <div class="badges"><span class="b raw">Live sensor data</span><span class="b alg">Same reading, same note</span><span class="b syn">Synthesized live</span><a class="b more" href="#how">How it works</a></div>
   </div>
   <p class="tag">The planet is the instrument. <b>Every note is a real event</b>: an earthquake, a solar flare, the sun rising over Lagos, the space station crossing a coastline. Every filter sweep is the actual solar wind, the surf is real ocean swell, the drone bends with real tides. Hear it, play it, or take the raw data into your DAW.</p>
 </header>
@@ -521,13 +521,13 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
   <div><h4>Accuracy</h4><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div>
 </div>
 <details class="how" id="how">
-  <summary><span class="hs-t">How it works</span><span class="hs-s">real sensors → fixed formulas → oscillators in your browser · no samples, no AI in the sound</span><span class="hs-c" aria-hidden="true"></span></summary>
+  <summary><span class="hs-t">How it works</span><span class="hs-s">real sensors → the same rule every time → oscillators in your browser · AI helped build the site, it doesn't make the sound</span><span class="hs-c" aria-hidden="true"></span></summary>
   <div class="how-in">
   <ol class="pipe">
     <li><b>Instruments measure</b><span>seismometers, satellites, tide gauges, weather balloons</span></li>
     <li><b>Agencies publish</b><span>USGS, NOAA, NASA, Open-Meteo</span></li>
     <li><b>Your browser fetches</b><span>as published, no edits</span></li>
-    <li><b>Fixed formulas map</b><span>printed on every card, same reading = same note</span></li>
+    <li><b>One rule per sound</b><span>printed on every card, same reading = same note</span></li>
     <li><b>Oscillators play</b><span>Web Audio synthesis, built live</span></li>
     <li><b>You produce</b><span>listen, record, or export the data</span></li>
   </ol>
@@ -536,12 +536,12 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
     <div class="howt"><table>
     <tr><th>Step</th><th>AI?</th><th>What actually happens</th></tr>
     <tr><td>Measuring</td><td class="ai0">No</td><td>Seismometers, satellites at L1 and GOES, tide gauges, ocean and weather models, NASA event tracking.</td></tr>
-    <tr><td>Choosing notes</td><td class="ai0">No</td><td>Fixed formulas, written on each card. Same reading, same note, every time.</td></tr>
+    <tr><td>Choosing notes</td><td class="ai0">No</td><td>One rule per layer, written on each card. Same reading, same note, every time.</td></tr>
     <tr><td>Making the sound</td><td class="ai0">No</td><td>Oscillators, filters, noise and convolution reverb, built live in your browser. No samples.</td></tr>
-    <tr><td>Rhythm (Pulse)</td><td class="ai0">No</td><td>Tempo from the measurement you pick (solar wind by default; wind, rain, pressure, storms, quakes, tides, Kp, jet stream or temperature), scaled into the genre's range by a fixed formula. Hats from the quake rate, shaker from rainfall, swing from wind, ghost snares from Kp, fills from big quakes.</td></tr>
+    <tr><td>Rhythm (Pulse)</td><td class="ai0">No</td><td>Tempo from the measurement you pick (solar wind by default; wind, rain, pressure, storms, quakes, tides, Kp, jet stream or temperature), scaled into the genre's range by the same formula every time. Hats from the quake rate, shaker from rainfall, swing from wind, ghost snares from Kp, fills from big quakes.</td></tr>
     <tr><td>Exports</td><td class="ai0">No</td><td>WAV, stems, MIDI and data files are written byte by byte by this page's code.</td></tr>
     <tr><td>Writing the code</td><td>Yes</td><td>Claude helped write it, as a coding tool. That's the whole extent of it.</td></tr></table></div>
-    <div><div class="onlyai"><h5>Where AI was used</h5><div><b>Before you got here, Claude (an AI coding assistant) helped Colin type this page's code</b>, the way spell-check helps a writer. It isn't running now, never picks a note and never makes a sound. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
+    <div><div class="onlyai"><h5>Where AI was used (and where it wasn't)</h5><div><b>Before you got here, Claude (an AI coding assistant) helped Colin type this page's code</b>, the way spell-check helps a writer. It isn't running now, never picks a note and never makes a sound. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
     <details class="led"><summary>Live network ledger · <span id="reqs">0</span> requests to <span id="hosts">0</span> servers · AI services: <b class="ai0" id="aiHits2">0</b></summary><ul id="ledger"></ul></details></div>
   </div>
   </div>
