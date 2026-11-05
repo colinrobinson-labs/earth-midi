@@ -1,4 +1,4 @@
-/* Earth MIDI v0.5 · visuals. Every mark is placed from a measurement or computed astronomy. */
+/* Earth MIDI v0.6 · visuals. Every mark is placed from a measurement or computed astronomy. */
 "use strict";
 const cv=$("map"),cx=cv.getContext("2d");
 const VIEW={lon:-110,lat:18,zoom:1,drag:null,lastInteract:0};
@@ -128,14 +128,18 @@ cv.addEventListener("wheel",e=>{if(CFG.mapView==="flat")return;e.preventDefault(
 const tl=$("tl");
 function drawTimeline(){const w=tl.clientWidth*DPR,h=tl.clientHeight*DPR;if(tl.width!==w||tl.height!==h){tl.width=w;tl.height=h}const g=tl.getContext("2d");g.clearRect(0,0,w,h);
   const t1=S.on&&S.mode>0&&!S.liveSince?(S.endT||Date.now()):(S.frozen?S.endT:Date.now()),t0=t1-864e5,X=t=>(t-t0)/864e5*w;
-  S.xray.forEach((x,i)=>{if(i%3)return;const cl=x.v>=1e-5?.5:x.v>=1e-6?.22:0;if(cl){g.fillStyle=`rgba(199,125,255,${cl})`;g.fillRect(X(x.t),0,Math.max(1,w/288*3),h)}});
-  for(let hh=0;hh<=24;hh+=3){const x=X(t0+hh*36e5);g.fillStyle="rgba(125,139,153,.35)";g.fillRect(x,h-4*DPR,1,4*DPR);if(hh%6===0&&hh<24){g.fillStyle="rgba(125,139,153,.8)";g.font=`${9*DPR}px "IBM Plex Mono",monospace`;g.fillText(new Date(t0+hh*36e5).toISOString().slice(11,16),x+2*DPR,h-6*DPR)}}
-  S.quakes.forEach(q=>{if(q.time<t0)return;const x=X(q.time),hh=map(q.mag,0,7,2,h*.85);g.fillStyle=S.played.has(q.id)||!S.on?`rgba(255,90,60,${map(q.mag,0,6,.35,1)})`:"rgba(255,90,60,.18)";g.fillRect(x,h-hh-12*DPR+12*DPR*(1-0),Math.max(1,DPR),hh*.85)});
+  S.xray.forEach((x,i)=>{if(i%3)return;const cl=x.v>=1e-5?.5:x.v>=1e-6?.22:0;if(cl){g.fillStyle=`rgba(199,125,255,${cl})`;g.fillRect(X(x.t),0,Math.max(1,w/288*3),h-14*DPR)}});
+  // bottom strip is reserved for the hour labels so bars never sit on top of the text
+  const lab=14*DPR,ph=h-lab;g.fillStyle="rgba(5,7,10,.55)";g.fillRect(0,ph,w,lab);g.fillStyle="rgba(125,139,153,.25)";g.fillRect(0,ph,w,1);
+  g.font=`${9.5*DPR}px "IBM Plex Mono",monospace`;g.textBaseline="middle";
+  for(let hh=0;hh<=24;hh+=3){const x=X(t0+hh*36e5);g.fillStyle="rgba(125,139,153,.45)";g.fillRect(x,ph,1,4*DPR);if(hh%6===0&&hh>0&&hh<24){const tx=new Date(t0+hh*36e5).toISOString().slice(11,16);g.fillStyle="rgba(150,164,178,.9)";g.textAlign="center";g.fillText(tx,x,ph+lab/2+1*DPR)}}
+  g.textAlign="left";g.textBaseline="alphabetic";
+  S.quakes.forEach(q=>{if(q.time<t0)return;const x=X(q.time),hh=map(q.mag,0,7,2*DPR,ph*.9);g.fillStyle=S.played.has(q.id)||!S.on?`rgba(255,90,60,${map(q.mag,0,6,.35,1)})`:"rgba(255,90,60,.18)";g.fillRect(x,ph-hh,Math.max(1,DPR),hh)});
   const pt=realNow();if(S.on){const x=X(pt);g.fillStyle="#fff";g.shadowColor="#fff";g.shadowBlur=10*DPR;g.fillRect(x-1,0,2*DPR,h);g.shadowBlur=0}
   if(TLH!=null){g.fillStyle="rgba(255,255,255,.25)";g.fillRect(TLH-1,0,1,h);g.fillStyle="#e6edf3";g.font=`${10*DPR}px "IBM Plex Mono",monospace`;g.fillText(new Date(t0+TLH/w*864e5).toISOString().slice(11,16)+" UTC",Math.min(TLH+4*DPR,w-70*DPR),11*DPR)}}
 let TLH=null;
 tl.addEventListener("pointermove",e=>{const r=tl.getBoundingClientRect();TLH=(e.clientX-r.left)*DPR});tl.addEventListener("pointerleave",()=>TLH=null);
-tl.addEventListener("pointerdown",e=>{const r=tl.getBoundingClientRect(),f=(e.clientX-r.left)/r.width;if(!S.on){$("go").click();setTimeout(()=>seekTo(f),60)}else seekTo(f);xs(`Jumped to ${new Date(Date.now()-864e5*(1-f)).toISOString().slice(11,16)} UTC`)});
+tl.addEventListener("pointerdown",e=>{const r=tl.getBoundingClientRect(),f=(e.clientX-r.left)/r.width;if(!S.on){startStop().then(()=>seekTo(f))}else seekTo(f);xs(`Jumped to ${new Date(Date.now()-864e5*(1-f)).toISOString().slice(11,16)} UTC`)});
 
 /* ---------- sparklines with glowing playhead ---------- */
 function spark(id,ts,vs,col,t,lo,hi){const c=$(id);if(!c||!c.offsetParent)return;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);if(!vs.length)return;

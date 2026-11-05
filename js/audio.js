@@ -1,4 +1,4 @@
-/* Earth MIDI v0.5 · sound engine + MIDI.
+/* Earth MIDI v0.6 · sound engine + MIDI.
    Pure Web Audio: oscillators, filters, noise and convolution, built live.
    No samples, no neural nets, no generated audio. */
 "use strict";
@@ -21,11 +21,11 @@ function genIR(ctx,type){const r=ROOMS[type]||ROOMS.hall,sr=ctx.sampleRate,len=M
     for(let i=pre;i<len;i++){const t=(i-pre)/(len-pre),n=Math.random()*2-1,k=r.bright*(1-r.damp*t);lp+=(n-lp)*clamp(k,.03,1);d[i]=lp*Math.pow(1-t,2.4)*(i-pre<sr*.01?(i-pre)/(sr*.01):1)}
     for(let e=0;e<r.er;e++){const at=pre+Math.floor(sr*(.008+Math.random()*.09*(1+e/4))),g=(Math.random()*.6+.2)*(1-e/(r.er+2))*(c?-1:1)*(Math.random()<.5?-1:1);if(at<len)d[at]+=g}}
   return ir}
-function driveCurve(amt){const n=2048,c=new Float32Array(n),k=1+amt*14;for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/Math.tanh(k)}return c}
+function driveCurve(amt){const n=2048,c=new Float32Array(n),k=1+amt*6;for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.tanh(k*x)/Math.tanh(k)}return c}
 
 function initAudio(){
   const ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:"playback"});
-  const sum=ctx.createGain();
+  const sum=ctx.createGain();sum.gain.value=.72; // headroom: 13 layers sum hot, keep the mix out of the saturator's knee
   const hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=20;hp.Q.value=.5;
   const ls=ctx.createBiquadFilter();ls.type="lowshelf";ls.frequency.value=160;
   const hs=ctx.createBiquadFilter();hs.type="highshelf";hs.frequency.value=7000;
@@ -96,8 +96,11 @@ function buildWind(){const {ctx}=A,src=ctx.createBufferSource();src.buffer=A.nb;
   const g=ctx.createGain();g.gain.value=0;const pan=ctx.createStereoPanner();const pl=ctx.createOscillator();pl.frequency.value=.05;const pg=ctx.createGain();pg.gain.value=.8;pl.connect(pg);pg.connect(pan.pan);pl.start();
   src.connect(bp);src.connect(bp2);bp.connect(g);bp2.connect(g);g.connect(pan);pan.connect(A.buses.w);src.start();A.wind={bp,bp2,g,lfo,pg}}
 /* ---------- Tides: sub drone bent by measured water level ---------- */
-function buildTide(){const {ctx}=A,o=ctx.createOscillator(),o2=ctx.createOscillator(),lp=ctx.createBiquadFilter(),g=ctx.createGain();o.type="triangle";o2.type="sine";
-  o.frequency.value=mtof(ROOT-12);o2.frequency.value=mtof(ROOT-24);lp.type="lowpass";lp.frequency.value=260;g.gain.value=0;const g2=ctx.createGain();g2.gain.value=.8;
+/* Was a 37 Hz sine + 73 Hz triangle at the hottest level in the mix: inaudible as pitch on phones and laptops,
+   it ate the headroom and got squared off by the saturator (the "blown out" sound). Now a sine at 73 Hz plus a
+   quiet octave above, so the tidal bend is audible on small speakers at a fraction of the energy. */
+function buildTide(){const {ctx}=A,o=ctx.createOscillator(),o2=ctx.createOscillator(),lp=ctx.createBiquadFilter(),g=ctx.createGain();o.type="sine";o2.type="sine";
+  o.frequency.value=mtof(ROOT-12);o2.frequency.value=mtof(ROOT);lp.type="lowpass";lp.frequency.value=420;lp.Q.value=.5;g.gain.value=0;const g2=ctx.createGain();g2.gain.value=.35;
   o.connect(lp);o2.connect(g2);g2.connect(lp);lp.connect(g);g.connect(A.buses.t);o.start();o2.start();A.tide={o,o2,g}}
 /* ---------- Planet chord: one voice per city, pitch = live temperature; air pollution adds haze ---------- */
 const CHORDTYPE={voices:["sawtooth",1],strings:["sawtooth",0],glass:["sine",0],reed:["square",.6]};
@@ -170,7 +173,7 @@ function updateEngine(){
   A.mlp.frequency.setTargetAtTime(+CFG.mlp,c,.1);A.dl.delayTime.setTargetAtTime(+CFG.dtime,c,.1);A.dr.delayTime.setTargetAtTime(+CFG.dtime,c,.1);A.fb.gain.setTargetAtTime(+CFG.dfb,c,.1);
   const jv=jetAvg(t);if(Number.isFinite(jv)){A.wind.bp.frequency.setTargetAtTime(map(jv,60,320,280,1500),c,2);A.wind.bp2.frequency.setTargetAtTime(map(jv,60,320,600,2600),c,2);A.wind.g.gain.setTargetAtTime(muted("w")?0:map(jv,60,320,.08,.5),c,1.5);A.wind.lfo.frequency.setTargetAtTime(map(jv,60,320,.05,.3),c,2)}
   A.wind.pg.gain.setTargetAtTime(.8*CFG.width,c,.2);
-  const tn=S.tides.length?tideNorm(S.tides[0],t):0;A.tide.o.frequency.setTargetAtTime(mtof(ROOT-12),c,.5);A.tide.o2.frequency.setTargetAtTime(mtof(ROOT-24),c,.5);A.tide.o.detune.setTargetAtTime(tn*50,c,1);A.tide.o2.detune.setTargetAtTime(tn*50,c,1);A.tide.g.gain.setTargetAtTime(muted("t")?0:(S.style==="pulse"?.12:.28),c,1);
+  const tn=S.tides.length?tideNorm(S.tides[0],t):0;A.tide.o.frequency.setTargetAtTime(mtof(ROOT-12),c,.5);A.tide.o2.frequency.setTargetAtTime(mtof(ROOT),c,.5);A.tide.o.detune.setTargetAtTime(tn*50,c,1);A.tide.o2.detune.setTargetAtTime(tn*50,c,1);A.tide.g.gain.setTargetAtTime(muted("t")?0:(S.style==="pulse"?.05:.11),c,1);
   const mo=moon(t);A.revG.gain.setTargetAtTime(CFG.rev>=0?+CFG.rev:map(mo.illum,0,1,.38,.85),c,3);
   // planet chord
   A.choir.out.gain.setTargetAtTime(muted("c")?0:.9,c,1.5);
@@ -268,7 +271,7 @@ async function initMIDI(){
   if(!navigator.requestMIDIAccess){$("midiState").textContent=IS_MOBILE?"":(!window.isSecureContext?"MIDI out needs the https:// address":"MIDI out needs Chrome or Edge (Safari has no Web MIDI). Use Export → MIDI instead");return}
   try{midi=await navigator.requestMIDIAccess();fillPorts();midi.onstatechange=fillPorts}catch(e){$("midiState").textContent="MIDI permission denied"}
 }
-function fillPorts(){const s=$("midiOut"),v=s.value;s.innerHTML='<option value="">MIDI out: off</option>';midi.outputs.forEach(o=>{const op=document.createElement("option");op.value=o.id;op.textContent="MIDI → "+o.name;s.appendChild(op)});s.value=v;
+function fillPorts(){const s=$("midiOut"),v=s.value;s.innerHTML='<option value="">Off</option>';midi.outputs.forEach(o=>{const op=document.createElement("option");op.value=o.id;op.textContent=o.name;s.appendChild(op)});s.value=v;
   if(!midi.outputs.size)$("midiState").textContent="no MIDI ports (see “Use it in your DAW”)";
   midi.inputs.forEach(i=>i.onmidimessage=onMidiIn)}
 function tx(b,when){if(out)try{out.send(b,when)}catch(_){}if(S.on&&MREC.length<400000&&b[0]<0xF0)MREC.push([when||performance.now(),b])}

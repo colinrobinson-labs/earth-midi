@@ -1,4 +1,4 @@
-/* Earth MIDI v0.5 · UI, transport, playback loop, boot */
+/* Earth MIDI v0.6 · UI, transport, playback loop, boot */
 "use strict";
 /* ---------- cards ---------- */
 const CARDS=[
@@ -94,7 +94,7 @@ function applyPreset(p,n){CFG=clone(DEF);Object.entries(p).forEach(([k,v])=>{if(
 function afterCFG(soft){setRoot();if(+CFG.bpmMax<+CFG.bpmMin)CFG.bpmMax=CFG.bpmMin;if(A){A.pad.lastChord=0;A.choir.last=-99;setPadType();setChoirType();applyMaster()}
   try{localStorage.setItem("em5.cfg",JSON.stringify(CFG))}catch(_){}
   if(!soft){buildPro();buildCards();syncMS()}document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===CFG.mapView));document.body.classList.toggle("flat",CFG.mapView==="flat")}
-function setStyle(v){S.style=v;$("style").value=v;document.querySelectorAll("[data-style]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.style===v));seq={next:0,step:0,fill:false}}
+function setStyle(v){S.style=v;document.querySelectorAll("[data-style]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.style===v));seq={next:0,step:0,fill:false}}
 
 /* ---------- playback loop ---------- */
 function playQuake(q){
@@ -165,19 +165,24 @@ function boot(){
   const fromHash=readHash();setRoot();buildCards();buildPads();buildPro();syncMS();setStyle(S.style);
   $("title").innerHTML="EARTH MIDI".split("").map((ch,i)=>ch===" "?'<span class="sp"> </span>':`<span class="L" style="--c:${COLS[TL_LAYERS[(i>5?i-1:i)%TL_LAYERS.length]]};--i:${i}">${ch}</span>`).join("");
   document.querySelectorAll(".go").forEach(b=>b.onclick=startStop);
-  $("style").onchange=e=>setStyle(e.target.value);document.querySelectorAll("[data-style]").forEach(b=>b.onclick=()=>setStyle(b.dataset.style));
-  $("vol").oninput=e=>A&&A.out.gain.setTargetAtTime(+e.target.value,A.ctx.currentTime,.05);
+  document.querySelectorAll("[data-style]").forEach(b=>b.onclick=()=>setStyle(b.dataset.style));
+  // one volume, two sliders (bar on desktop, dock on phones), remembered per browser
+  const setVol=(v,src)=>{v=clamp(+v,0,1);["vol","mVol"].forEach(id=>{const el=$(id);if(el&&el!==src)el.value=v});if(A)A.out.gain.setTargetAtTime(v,A.ctx.currentTime,.05);try{localStorage.setItem("em5.vol",v)}catch(_){}};
+  try{const sv=localStorage.getItem("em5.vol");if(sv!=null&&isFinite(+sv))setVol(sv)}catch(_){}
+  ["vol","mVol"].forEach(id=>{const el=$(id);if(el)el.oninput=e=>setVol(e.target.value,e.target)});
+  // Web MIDI: Chrome/Edge/Firefox. Safari (Mac + iPhone) has none, so say so instead of offering a dead menu
+  if(!navigator.requestMIDIAccess){const m=$("midiOut");m.disabled=true;m.options[0].textContent="Needs Chrome or Edge";m.title="Safari has no Web MIDI. Use Export → Data pack to get the MIDI instead";if(IS_MOBILE)$("midiCtl").hidden=true}
   $("midiOut").onchange=e=>{out=midi&&e.target.value?midi.outputs.get(e.target.value):null;$("midiState").textContent=out?"sending MIDI":"";clk.on=false};
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{CFG.mapView=b.dataset.view;afterCFG(true);sizeMap()});
-  $("bPro").onclick=()=>{const p=$("pro");p.hidden=!p.hidden;$("bPro").setAttribute("aria-expanded",!p.hidden);if(!p.hidden)p.scrollIntoView({behavior:"smooth",block:"nearest"})};
-  $("bExp").onclick=()=>{const p=$("exp");p.hidden=!p.hidden;$("bExp").setAttribute("aria-expanded",!p.hidden);if(!p.hidden)p.scrollIntoView({behavior:"smooth",block:"nearest"})};
+  const panel=(id,btn)=>()=>{const p=$(id);p.hidden=!p.hidden;$(btn).setAttribute("aria-expanded",!p.hidden);if(!p.hidden)p.scrollIntoView({behavior:"smooth",block:"nearest"})};
+  $("bPro").onclick=panel("pro","bPro");$("bExp").onclick=panel("exp","bExp");
   $("bRec").onclick=()=>toggleRec(false);$("bStems").onclick=()=>toggleRec(true);$("bAac").onclick=()=>toggleMR(false);$("bVid").onclick=()=>toggleMR(true);
   $("bMid").onclick=exportPerfMidi;$("bCsv").onclick=exportEventsCsv;$("bSave").onclick=saveSession;$("fLoad").onchange=e=>{e.target.files[0]&&loadFile(e.target.files[0]);e.target.value=""};
   $("bShare").onclick=shareLink;$("bCredit").onclick=copyCredit;$("bPack").onclick=exportDataPack;$("bPackMid").onclick=exportDataMidOnly;
-  document.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>{const t=$(b.dataset.jump);if(t.hidden){t.hidden=false}t.scrollIntoView({behavior:"smooth",block:"start"})});
+  document.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>{const t=$(b.dataset.jump);if(t.hidden){t.hidden=false;const x=$(t.id==="pro"?"bPro":"bExp");x&&x.setAttribute("aria-expanded","true")}t.scrollIntoView({behavior:"smooth",block:"start"})});
   $("mRec").onclick=()=>toggleRec(false);
   addEventListener("keydown",e=>{if(e.target.matches("input,select,textarea"))return;if(e.code==="Space"){e.preventDefault();startStop()}else if(e.key==="g")document.querySelector('[data-view="globe"]').click();else if(e.key==="f")document.querySelector('[data-view="flat"]').click();else if(e.key==="p")setStyle(S.style==="pulse"?"ambient":"pulse")});
-  if(fromHash){$("pro").hidden=false}
+  if(fromHash){$("pro").hidden=false;$("bPro").setAttribute("aria-expanded","true")}
   if(IS_MOBILE){VIEW.zoom=.98}
   sizeMap();afterCFG(true);loadLand();refresh(true);requestAnimationFrame(frame);
   // live "AI" counters animate in
