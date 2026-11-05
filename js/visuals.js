@@ -141,6 +141,7 @@ function drawTimeline(){const w=tl.clientWidth*DPR,h=tl.clientHeight*DPR;if(tl.w
   if(TLH!=null){g.fillStyle="rgba(255,255,255,.25)";g.fillRect(TLH-1,0,1,h);g.fillStyle="#e6edf3";g.font=`${10*DPR}px "IBM Plex Mono",monospace`;g.fillText(new Date(t0+TLH/w*864e5).toISOString().slice(11,16)+" UTC",Math.min(TLH+4*DPR,w-70*DPR),11*DPR)}}
 let TLH=null;
 tl.addEventListener("pointermove",e=>{const r=tl.getBoundingClientRect();TLH=(e.clientX-r.left)*DPR});tl.addEventListener("pointerleave",()=>TLH=null);
+(()=>{const b=$("liveBtn");if(b){b.addEventListener("click",e=>{e.stopPropagation();if(b.dataset.st!=="live")goLive()});liveSync()}})();
 tl.addEventListener("pointerdown",e=>{const r=tl.getBoundingClientRect(),f=(e.clientX-r.left)/r.width;if(!S.on){startStop().then(()=>seekTo(f))}else seekTo(f);xs(`Jumped to ${new Date(Date.now()-864e5*(1-f)).toISOString().slice(11,16)} UTC`)});
 
 /* ---------- sparklines with glowing playhead ---------- */
