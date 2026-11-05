@@ -227,7 +227,7 @@ function logEv(txt,k,q,tr){const real=q?q.time:realNow();if(S.on&&EVENTS.length<
 
 let lastFrame=0;
 function frame(now){
-  try{drawMap(now);if(window.drawFocus)drawFocus(now);drawTimeline();if(now-lastFrame>(IS_MOBILE?120:60)){drawSparks();lastFrame=now}drawRoll(now);const rms=drawScope();S.rms=rms||0;drawMeters();drawTitle();
+  try{drawMap(now);if(window.drawFocus)drawFocus(now);if(window.drawZones)drawZones(now);drawTimeline();if(now-lastFrame>(IS_MOBILE?120:60)){drawSparks();lastFrame=now}drawRoll(now);const rms=drawScope();S.rms=rms||0;drawMeters();drawTitle();
   const glow=clamp((rms||0)*6+S.hit.q*.6,0,1);document.documentElement.style.setProperty("--glow",glow.toFixed(3));
   [...PAN_KEYS,"m"].forEach(k=>{S.hit[k]*=.93;const el=$("c"+k);if(el)el.style.setProperty("--hit",S.hit[k].toFixed(3))});
   if($("mini"))$("mini").style.setProperty("--lvl",clamp((rms||0)*5,0,1).toFixed(3))}catch(err){console.error(err)}
