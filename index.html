@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Earth MIDI · the planet as a live instrument</title>
-<meta name="description" content="The planet as an instrument. 14 live feeds (earthquakes, solar wind, flares, ocean swell, tides, jet stream, city temperatures, the ISS, NASA fires and storms, the magnetosphere, air quality, sunrise over 42 cities) played as sound and sent as MIDI. Raw data plus fixed formulas. 0% AI in the sound.">
+<meta name="description" content="The planet as an instrument. 14 live feeds (earthquakes, solar wind, flares, ocean swell, tides, jet stream, city temperatures, the ISS, NASA fires and storms, the magnetosphere, air quality, sunrise over 42 cities) played as sound and sent as MIDI. Raw data plus fixed formulas, synthesized live in your browser.">
 <meta name="theme-color" content="#05070a">
 <meta property="og:title" content="Earth MIDI · the planet as an instrument">
-<meta property="og:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, fixed formulas, 0% AI audio.">
+<meta property="og:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, fixed formulas, synthesized live.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://earthmidi.com/">
 <meta property="og:site_name" content="Earth MIDI">
-<meta property="og:image" content="https://earthmidi.com/og.png">
+<meta property="og:image" content="https://earthmidi.com/og.png?v=2">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Earth MIDI: the planet as a live instrument">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Earth MIDI · the planet as an instrument">
-<meta name="twitter:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, fixed formulas, 0% AI audio.">
-<meta name="twitter:image" content="https://earthmidi.com/og.png">
+<meta name="twitter:description" content="Live earthquakes, solar wind, ocean swell, the ISS and more, turned into music and MIDI. Real data, fixed formulas, synthesized live.">
+<meta name="twitter:image" content="https://earthmidi.com/og.png?v=2">
 <meta name="author" content="Colin Robinson">
 <link rel="canonical" href="https://earthmidi.com/">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -49,29 +49,27 @@ h1 .sp{display:inline-block;width:.24em}
 .b{font:600 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;border-radius:999px;padding:3px 9px}
 .b.raw{color:var(--k)}.b.alg{color:var(--s)}.b.ai{color:var(--mute);text-decoration:line-through}
 
-/* zero-AI */
-.zero{margin:18px 0 12px;border:1px solid var(--line);border-radius:18px;padding:16px;background:linear-gradient(115deg,rgba(124,255,158,.07),rgba(124,255,158,0) 45%),var(--panel);position:relative;overflow:hidden}
-.zhead{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.z0{font:800 clamp(64px,11vw,128px)/.8 var(--disp);color:var(--k);letter-spacing:-.05em;text-shadow:0 0 30px rgba(124,255,158,.35)}
-.zq{font:700 clamp(18px,2.4vw,28px)/1.1 var(--disp);max-width:460px}
-.zq small{display:block;font:500 12.5px/1.5 var(--body);color:var(--mute);margin-top:6px}
-.zstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
-.zstats div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(5,7,10,.5)}
-.zstats b{display:block;font:700 30px/1 var(--mono);color:var(--k)}
-.zstats b.n{color:var(--fg)}
-.zstats span{font:11px/1.35 var(--mono);color:var(--mute);display:block;margin-top:5px}
+/* how it works (quiet, expandable) */
+.b.syn{color:var(--o)}.b.more{color:var(--mute);text-decoration:none;border-style:dashed}.b.more:hover{color:var(--fg)}
+.how{margin-top:26px;border:1px solid var(--line);border-radius:14px;background:var(--panel);scroll-margin-top:120px}
+.how summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px}
+.how summary::-webkit-details-marker{display:none}
+.hs-t{font:700 18px var(--disp)}.hs-s{font:12px var(--mono);color:var(--mute);flex:1 1 300px}
+.hs-c{width:9px;height:9px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .25s;align-self:center}
+.how[open] .hs-c{transform:rotate(225deg)}
+.how-in{padding:0 16px 16px}
 .pipe{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;counter-reset:p}
-.pipe li{position:relative;border:1px solid var(--line2);border-radius:12px;padding:9px 10px 26px;font:12px/1.35 var(--body);background:#0a0f15;counter-increment:p}
+.pipe li{border:1px solid var(--line2);border-radius:12px;padding:9px 10px;font:12px/1.35 var(--body);background:#0a0f15;counter-increment:p}
 .pipe li b{display:block;font:600 12.5px var(--body);margin-bottom:2px}
 .pipe li::before{content:counter(p);font:600 10px var(--mono);color:var(--mute);display:block;margin-bottom:3px}
-.pipe li::after{content:"AI: none";position:absolute;left:10px;bottom:8px;font:600 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--k)}
 .pipe li span{color:var(--mute)}
-.onlyai{margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:12px;border:1px dashed var(--line2);border-radius:12px;font-size:13px;color:var(--mute)}
-.onlyai i{justify-self:start;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--s);border:1px solid var(--s);border-radius:999px;padding:3px 8px;font-style:normal;white-space:nowrap}
-.onlyai b{color:var(--fg);font-weight:500}
+.hstats{display:flex;flex-wrap:wrap;gap:6px 18px;margin:12px 0;font:12px var(--mono);color:var(--mute)}.hstats b{color:var(--fg);font-weight:600}
+.howgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px}
+.howgrid h5,.onlyai h5{margin:0 0 6px;font:700 12px var(--disp);text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+.onlyai{font-size:13px;color:var(--mute)}.onlyai b{color:var(--fg);font-weight:500}
 .led{margin-top:10px;font:12px var(--mono);color:var(--mute)}
 .led summary{cursor:pointer;padding:4px 0}
-#ledger{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 14px}
+#ledger{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:1fr;gap:4px 14px}
 #ledger li{display:grid;grid-template-columns:1fr auto auto;gap:2px 8px;border-bottom:1px solid var(--line);padding:4px 0;animation:li .5s}
 #ledger li b{color:var(--fg);font-weight:500}#ledger li span{grid-column:1;grid-row:2;font-size:10.5px}
 #ledger li em{font-style:normal}#ledger li i{font-style:normal;font-size:10px;letter-spacing:.05em;text-transform:uppercase}#ledger .ok{color:var(--k)}#ledger .bad{color:var(--q)}
@@ -242,16 +240,14 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
 /* mobile dock */
 .dock{display:none}
 @media (max-width:1099px){.bar .status{order:9}}
-@media (max-width:860px){.row2{grid-template-columns:minmax(0,1fr)}.zstats{grid-template-columns:repeat(2,1fr)}.pipe{grid-template-columns:repeat(3,1fr)}.exp .pgrp.hero{grid-column:auto}
+@media (max-width:860px){.row2{grid-template-columns:minmax(0,1fr)}.howgrid{grid-template-columns:1fr}.pipe{grid-template-columns:repeat(3,1fr)}.exp .pgrp.hero{grid-column:auto}
  .tools{margin-left:0}.ctl-mode{flex:1 1 260px}.ctl-mode select{min-width:0;width:100%}}
 @media (max-width:700px){
  :root{--dock:calc(128px + env(safe-area-inset-bottom,0px))}
  header{grid-template-columns:1fr}
  h1{font-size:calc((100vw - 32px)/9.9)}
  .tag{justify-self:start;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px}
- .zero{padding:14px 12px}.zhead{gap:12px}.zq{font-size:18px}
- .zstats b{font-size:24px}.pipe{grid-template-columns:1fr 1fr}.pipe li{padding:8px 9px 24px;font-size:11.5px}
- .onlyai{grid-template-columns:1fr}
+ .pipe{grid-template-columns:1fr 1fr}.pipe li{font-size:11.5px}
  .badges{gap:4px;margin-top:8px}.b{font-size:9px;padding:2px 7px}
  .bar{position:static;padding:10px;gap:10px;box-shadow:none}
  .bar>.go,.bar .ctl-style,.bar .ctl-vol{display:none}
@@ -310,7 +306,7 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
 <header>
   <h1 id="title" aria-label="Earth MIDI">EARTH MIDI</h1>
   <div>
-    <div class="badges"><span class="b raw">Raw sensor data</span><span class="b alg">Fixed formulas</span><span class="b ai">AI audio</span><span class="b raw">0% AI in the sound</span></div>
+    <div class="badges"><span class="b raw">Live sensor data</span><span class="b alg">Fixed formulas</span><span class="b syn">Synthesized live</span><a class="b more" href="#how">How it works</a></div>
   </div>
   <p class="tag">The planet is the instrument. <b>Every note is a real event</b>: an earthquake, a solar flare, the sun rising over Lagos, the space station crossing a coastline. Every filter sweep is the actual solar wind, the surf is real ocean swell, the drone bends with real tides. Hear it, play it, or take the raw data into your DAW.</p>
 </header>
@@ -379,26 +375,6 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
 </aside>
 </div>
 
-<section class="zero" aria-labelledby="zq">
-  <div class="zhead"><b class="z0">0%</b><div class="zq" id="zq">AI in the data, the notes and the sound.<small>Not "AI-assisted music". Not "AI-generated". Measured by instruments, mapped by formulas you can read, played by oscillators in your browser.</small></div></div>
-  <div class="zstats">
-    <div><b>0</b><span>AI models running on this page</span></div>
-    <div><b id="aiHits">0</b><span>requests to AI services, counted live below</span></div>
-    <div><b>0</b><span>samples, loops or generated audio</span></div>
-    <div><b class="n" id="feedCount">14</b><span>live sensor feeds playing</span></div>
-  </div>
-  <ol class="pipe">
-    <li><b>Instruments measure</b><span>seismometers, satellites, tide gauges, weather balloons</span></li>
-    <li><b>Agencies publish</b><span>USGS, NOAA, NASA, Open-Meteo</span></li>
-    <li><b>Your browser fetches</b><span>as published, no edits</span></li>
-    <li><b>Fixed formulas map</b><span>printed on every card, same reading = same note</span></li>
-    <li><b>Oscillators play</b><span>Web Audio synthesis, built live</span></li>
-    <li><b>You produce</b><span>listen, record, or export the data</span></li>
-  </ol>
-  <div class="onlyai"><i>Only AI</i><div><b>Before you got here, Claude (an AI coding assistant) helped Colin type this page's code</b>, the way spell-check helps a writer. It isn't running now, never picks a note and never makes a sound. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
-  <details class="led"><summary>Live network ledger · <span id="reqs">0</span> requests to <span id="hosts">0</span> servers · AI services: <b class="ai0" id="aiHits2">0</b></summary><ul id="ledger"></ul></details>
-</section>
-
 <div class="grid" id="grid"></div>
 
 <div class="row2">
@@ -409,14 +385,6 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
 <div class="panel" style="margin-top:12px"><h3>Output <small>spectrum · waveform · stereo field</small></h3><canvas id="scope"></canvas></div>
 
 <div class="info">
-  <div><h4>Exactly where AI is</h4><table>
-    <tr><th>Step</th><th>AI?</th><th>What actually happens</th></tr>
-    <tr><td>Measuring</td><td class="ai0">No</td><td>Seismometers, satellites at L1 and GOES, tide gauges, ocean and weather models, NASA event tracking.</td></tr>
-    <tr><td>Choosing notes</td><td class="ai0">No</td><td>Fixed formulas, written on each card. Same reading, same note, every time.</td></tr>
-    <tr><td>Making the sound</td><td class="ai0">No</td><td>Oscillators, filters, noise and convolution reverb, built live in your browser. No samples.</td></tr>
-    <tr><td>Rhythm (Pulse)</td><td class="ai0">No</td><td>Tempo from solar wind speed, hats from the quake rate, ghost snares from Kp, fills from big quakes.</td></tr>
-    <tr><td>Exports</td><td class="ai0">No</td><td>WAV, stems, MIDI and data files are written byte by byte by this page's code.</td></tr>
-    <tr><td>Writing the code</td><td>Yes</td><td>Claude helped write it, as a coding tool. That's the whole extent of it.</td></tr></table></div>
   <div><h4>Use it in your DAW</h4><ul>
     <li><b>Live MIDI on Mac:</b> Audio MIDI Setup → MIDI Studio → IAC Driver → “Device is online”. Pick it above, arm a MIDI track.</li>
     <li><b>Windows:</b> install loopMIDI, create a port, pick it above.</li>
@@ -424,6 +392,32 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
     <li><b>No live MIDI?</b> Export the data pack and drag the .mid in. Each layer has its own channel and CC lanes.</li></ul></div>
   <div><h4>Accuracy</h4><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div>
 </div>
+<details class="how" id="how">
+  <summary><span class="hs-t">How it works</span><span class="hs-s">real sensors → fixed formulas → oscillators in your browser · no samples, no AI in the sound</span><span class="hs-c" aria-hidden="true"></span></summary>
+  <div class="how-in">
+  <ol class="pipe">
+    <li><b>Instruments measure</b><span>seismometers, satellites, tide gauges, weather balloons</span></li>
+    <li><b>Agencies publish</b><span>USGS, NOAA, NASA, Open-Meteo</span></li>
+    <li><b>Your browser fetches</b><span>as published, no edits</span></li>
+    <li><b>Fixed formulas map</b><span>printed on every card, same reading = same note</span></li>
+    <li><b>Oscillators play</b><span>Web Audio synthesis, built live</span></li>
+    <li><b>You produce</b><span>listen, record, or export the data</span></li>
+  </ol>
+  <div class="hstats"><span><b id="feedCount">14</b> live feeds</span><span><b>0</b> samples or loops</span><span><b>0</b> AI models on this page</span><span><b id="aiHits">0</b> requests to AI services</span></div>
+  <div class="howgrid">
+    <div class="howt"><table>
+    <tr><th>Step</th><th>AI?</th><th>What actually happens</th></tr>
+    <tr><td>Measuring</td><td class="ai0">No</td><td>Seismometers, satellites at L1 and GOES, tide gauges, ocean and weather models, NASA event tracking.</td></tr>
+    <tr><td>Choosing notes</td><td class="ai0">No</td><td>Fixed formulas, written on each card. Same reading, same note, every time.</td></tr>
+    <tr><td>Making the sound</td><td class="ai0">No</td><td>Oscillators, filters, noise and convolution reverb, built live in your browser. No samples.</td></tr>
+    <tr><td>Rhythm (Pulse)</td><td class="ai0">No</td><td>Tempo from solar wind speed, hats from the quake rate, ghost snares from Kp, fills from big quakes.</td></tr>
+    <tr><td>Exports</td><td class="ai0">No</td><td>WAV, stems, MIDI and data files are written byte by byte by this page's code.</td></tr>
+    <tr><td>Writing the code</td><td>Yes</td><td>Claude helped write it, as a coding tool. That's the whole extent of it.</td></tr></table></div>
+    <div><div class="onlyai"><h5>Where AI was used</h5><div><b>Before you got here, Claude (an AI coding assistant) helped Colin type this page's code</b>, the way spell-check helps a writer. It isn't running now, never picks a note and never makes a sound. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
+    <details class="led"><summary>Live network ledger · <span id="reqs">0</span> requests to <span id="hosts">0</span> servers · AI services: <b class="ai0" id="aiHits2">0</b></summary><ul id="ledger"></ul></details></div>
+  </div>
+  </div>
+</details>
 <div class="lic" id="license">
   <h4>Free to use in your music. Credit required.</h4>
   <p>Use anything you record or export from Earth MIDI, including audio, stems, MIDI and data, in released, commercial or live work, free of charge. The one condition is a credit wherever you credit samples or collaborators (liner notes, streaming credits, video descriptions):</p>
@@ -453,11 +447,11 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="js/core.js?v=10"></script>
-<script src="js/audio.js?v=10"></script>
-<script src="js/visuals.js?v=10"></script>
-<script src="js/io.js?v=10"></script>
-<script src="js/ui.js?v=10"></script>
-<script src="js/sheet.js?v=10"></script>
+<script src="js/core.js?v=11"></script>
+<script src="js/audio.js?v=11"></script>
+<script src="js/visuals.js?v=11"></script>
+<script src="js/io.js?v=11"></script>
+<script src="js/ui.js?v=11"></script>
+<script src="js/sheet.js?v=11"></script>
 </body>
 </html>
