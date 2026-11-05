@@ -66,6 +66,8 @@ const css=`
 .segc button:hover{color:var(--fg);border-color:color-mix(in srgb,var(--ac) 55%,var(--line2))}
 .segc button[aria-pressed="true"]{color:#05070a;background:var(--ac);border-color:var(--ac);box-shadow:0 0 14px color-mix(in srgb,var(--ac) 40%,transparent)}
 .pc.has-seg select{display:none}
+.pgrp.lyr>h5 .lch{margin-left:auto;font:600 10px var(--mono);letter-spacing:.04em;color:var(--ac);opacity:.8}
+.linfo{margin:2px 0 4px;font:12px/1.5 var(--body)!important;color:var(--mute)}
 .pc .ld{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--lc);box-shadow:0 0 8px var(--lc);vertical-align:0}
 /* piano key picker + scale map */
 .piano{grid-column:1/-1;position:relative;display:grid;grid-template-columns:repeat(7,1fr);height:58px;margin-top:4px;user-select:none}
@@ -115,7 +117,7 @@ const css=`
 .ghost{display:inline-flex;align-items:center;gap:6px;font:600 11px var(--mono);padding:6px 10px;border-radius:9px;background:transparent;color:var(--mute)}
 .ghost:hover{color:var(--fg)}.ghost .sic{width:14px;height:14px}
 .fams{display:grid;grid-template-columns:1fr;gap:8px}
-.pro .pgrid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.pro .pgrid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-items:start}
 @media (min-width:900px){.fam{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;align-items:center}.fam header{margin:0;flex-direction:column;align-items:flex-start;gap:8px}.gts{grid-template-columns:repeat(5,minmax(0,1fr))}}
 .fam{--fc:#fff;position:relative;border-radius:13px;padding:10px;background:linear-gradient(160deg,color-mix(in srgb,var(--fc) 13%,#0b1118),#080c11 65%);border:1px solid color-mix(in srgb,var(--fc) 26%,var(--line));overflow:hidden}
 .fam::after{content:"";position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--fc) 22%,transparent),transparent 70%);pointer-events:none;animation:famGlow 6s ease-in-out infinite;animation-delay:calc(var(--i,0)*-.9s)}
@@ -304,8 +306,9 @@ const SCALE_N={auto:"Auto",majpent:"Major pent",minpent:"Minor pent",ionian:"Maj
 const ROOM_N={hall:"Hall",plate:"Plate",room:"Room",cathedral:"Cathedral",cave:"Cave",space:"Deep space"};
 
 /* tabs + groups */
-const TAB={Sound:{c:"var(--c)",i:"sound",s:"key · voices"},Mixer:{c:"var(--o)",i:"mixer",s:"13 layers"},Rhythm:{c:"var(--q)",i:"rhythm",s:"genre · groove"},Master:{c:"var(--s)",i:"master",s:"space · tone"},MIDI:{c:"var(--k)",i:"midi",s:"sync · channels"},Presets:{c:"var(--x)",i:"presets",s:"genres · yours"}};
+const TAB={Sound:{c:"var(--c)",i:"sound",s:"key · 13 layers"},Mixer:{c:"var(--o)",i:"mixer",s:"13 layers"},Rhythm:{c:"var(--q)",i:"rhythm",s:"genre · groove"},Master:{c:"var(--s)",i:"master",s:"space · tone"},MIDI:{c:"var(--k)",i:"midi",s:"sync · channels"},Presets:{c:"var(--x)",i:"presets",s:"genres · yours"}};
 const GRP={"Key + scale":["var(--c)","note"],"Harmony":["var(--x)","harmony"],"Instruments":["var(--o)","inst"],"Earthquakes":["var(--q)","quake"],"Genre":["var(--q)","genre"],"Pulse groove":["var(--s)","groove"],"Feel":["var(--k)","feel"],"Space":["var(--o)","space"],"Tone":["var(--s)","tone"],"Sync + input":["var(--k)","sync"],"Channels":["#9ad1ff","chan"],"Channels 2":["#9ad1ff","chan"]};
+const LIC={q:IC.quake,s:SRC_IC.sun,o:SRC_IC.tides,x:p("M13 2L5 13h6l-1 9 8-11h-6z"),w:SRC_IC.jet,t:p("M12 3v13M8 12l4 4 4-4M3 20c3-2 6-2 9 0s6 2 9 0"),c:IC.harmony,i:IC.sat,e:PRE["Burning world"].i,g:SRC_IC.kp,a:SRC_IC.wind,u:PRE["Dawn chorus"].i,r:IC.groove,m:p("M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z")};
 const GROW={K:"#ff5a3c",S:"#ffc53d",H:"#3cc8ff",B:"#7cff9e"};
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 
@@ -317,7 +320,8 @@ function grid(gk,big){const G=GROOVES[gk]||GROOVES.four,rows=[["K",G.k],["S",G.s
   return `<svg class="sg" viewBox="0 0 64 16" preserveAspectRatio="none"${big?' style="aspect-ratio:64/16"':""} aria-hidden="true">${r}<rect class="ph" x="0" y="0" width="4" height="16"/></svg>`}
 
 function tabs(T,cur){return T.map(([n],i)=>{const m=TAB[n]||{};return `<button role="tab" aria-selected="${i===cur}" data-i="${i}" style="--tc:${m.c}">${ic(m.i)}<span>${n}<small>${m.s||""}</small></span></button>`}).join("")}
-function group(t,inner,i){const [col,icn]=GRP[t]||["var(--fg)","sound"];return `<div class="pgrp" style="--ac:${col};--i:${i}"><h5><span class="gi">${ic(icn)}</span>${t}</h5>${inner}</div>`}
+function group(t,inner,i,lk){if(lk){const col=COLS[lk]||"#d9dce6";return `<div class="pgrp lyr" data-l="${lk}" style="--ac:${col};--i:${i}"><h5><span class="gi">${svg(LIC[lk]||"")}</span>${t}<small class="lch">ch ${CH(lk==="r"?"d":lk)}</small></h5>${inner}</div>`}
+  const [col,icn]=GRP[t]||["var(--fg)","sound"];return `<div class="pgrp" style="--ac:${col};--i:${i}"><h5><span class="gi">${ic(icn)}</span>${t}</h5>${inner}</div>`}
 function mixer(){return PAN_KEYS.map((k,i)=>`<div class="strip" data-k="${k}" style="--c:${COLS[k]};--i:${i}"><b><i></i>${LNAME[k]}</b><span class="mtr">${"<i></i>".repeat(12)}</span>${ctl("vol."+k,"Level","rng",[0,1.5,.05])}${ctl("send."+k,"Reverb send","rng",[0,1,.05])}
   <div class="ms"><button data-m="${k}" aria-pressed="false">Mute</button><button data-s="${k}" aria-pressed="false">Solo</button></div></div>`).join("")}
 
@@ -358,7 +362,6 @@ function enhance(g){
   // short menus become chips (the select stays underneath and receives the change)
   g.querySelectorAll('.pc select[data-t="sel"]').forEach(sel=>{const o=[...sel.options],len=o.reduce((a,x)=>a+x.text.length,0),k=sel.dataset.k;
     if(k==="key"||o.length>6||len>64)return;const pc=sel.closest(".pc");pc.classList.add("has-seg");
-    const lk=INST_L[k];if(lk){pc.style.setProperty("--ac",COLS[lk]);pc.querySelector("label").insertAdjacentHTML("afterbegin",`<i class="ld" style="--lc:${COLS[lk]}"></i>`)}
     const w=document.createElement("div");w.className="segc";w.setAttribute("role","group");w.setAttribute("aria-label",pc.querySelector("label").textContent);
     w.innerHTML=o.map(x=>`<button type="button" data-v="${esc(x.value)}" aria-pressed="${x.value===sel.value}">${esc(x.text)}</button>`).join("");pc.appendChild(w);
     w.onclick=e=>{const b=e.target.closest("button");if(!b)return;sel.value=b.dataset.v;sel.dispatchEvent(new Event("change"));w.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b))}});

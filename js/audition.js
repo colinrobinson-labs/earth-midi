@@ -54,7 +54,7 @@ function drum(P,k,t,v){const {ctx,to}=P;
 /* one preview per kind of pick */
 function pick(k){const now=performance.now();if(k===lastK&&now-lastT<200)return;lastK=k;lastT=now;
   const r=root(),s=sc(),d=i=>{const o=Math.floor(i/s.length);return r+12*o+s[((i%s.length)+s.length)%s.length]};
-  if(S.on&&!/^(inst\.|key$|scale$|oct$|tune$|revType$|prog$|coct$|qoct$)/.test(k))return;
+  if(S.on&&!/^(inst\.|snd\.|key$|scale$|oct$|tune$|revType$|prog$|coct$|qoct$)/.test(k))return;
   const P=start(k),t=P.c;
   switch(k){
    case "inst.q":case "qoct":[0,2,4].forEach((i,j)=>fm(P,d(i+s.length)+12*CFG.qoct,t+j*.28,.2));break;
@@ -72,6 +72,28 @@ function pick(k){const now=performance.now();if(k===lastK&&now-lastT<200)return;
        if(G.b[i]&&G.b[i]!=="."){const bn=d(G.b[i]==="f"?2:0)-12+(G.b[i]==="o"?12:0),o=osc(P.ctx,"sawtooth",mtof(bn),tt,st*(G.bl||1.6)),lp=P.ctx.createBiquadFilter(),bg=P.ctx.createGain();lp.type="lowpass";lp.frequency.setValueAtTime(900,tt);lp.frequency.exponentialRampToValueAtTime(160,tt+st*(G.bl||1.6));env(P.ctx,bg,tt,.18,.004,st*(G.bl||1.6));o.connect(lp);lp.connect(bg);bg.connect(P.to)}}
      break}
    case "preset":[0,2,4,7,4].forEach((i,j)=>fm(P,d(i+s.length),t+j*.2,.17));pad(P,[0,2,4].map(i=>d(i)-12),t,1.4,.12);break;
+   case "snd.oTone":case "snd.oQ":noise(P,t,1.8,"bandpass",900*SN2("oTone"),+SN("oQ"),.5,.6,.1);break;
+   case "snd.xBell":case "snd.xOct":[0,7,12,19].forEach((dd,j)=>{const o=osc(P.ctx,SN("xBell"),mtof(r+24+dd),t+j*.12,2),g=P.ctx.createGain();env(P.ctx,g,t+j*.12,.07,.02,1.8);o.connect(g);g.connect(P.to)});
+     [74,81,86,93].forEach((m,j)=>{const o=osc(P.ctx,"sine",mtof(m+12*SN("xOct")),t+.6,1.6),g=P.ctx.createGain();g.gain.setValueAtTime(0,t+.6);g.gain.linearRampToValueAtTime(.025,t+1);g.gain.exponentialRampToValueAtTime(.0003,t+2.2);o.connect(g);g.connect(P.to)});break;
+   case "snd.wTone":case "snd.wQ":noise(P,t,1.8,"bandpass",700*SN2("wTone"),5*SN("wQ"),.9,.7,.5);noise(P,t,1.8,"bandpass",1400*SN2("wTone"),9*SN("wQ"),.9,.7,.5);break;
+   case "snd.tWave":case "snd.tOct":case "snd.tLp":{const {ctx,to}=P,lp=ctx.createBiquadFilter(),g=ctx.createGain(),w=SN("tWave"),k2=({triangle:.85,square:.5,sawtooth:.55}[w]||1);lp.type="lowpass";lp.frequency.value=+SN("tLp");lp.Q.value=.5;
+     [r-12+12*SN("tOct"),r+12*SN("tOct")].forEach((n,j)=>{const o=osc(ctx,w,mtof(n),t,2),og=ctx.createGain();og.gain.value=j?.35:1;o.detune.setValueAtTime(-30,t);o.detune.linearRampToValueAtTime(30,t+1.8);o.connect(og);og.connect(lp)});
+     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32*k2,t+.3);g.gain.setValueAtTime(.32*k2,t+1.5);g.gain.exponentialRampToValueAtTime(.0003,t+2.1);lp.connect(g);g.connect(to);break}
+   case "snd.eHp":case "snd.eOct":{const {ctx,to}=P,hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=+SN("eHp");hp.connect(to);
+     for(let j=0;j<26;j++){const tt=t+Math.random()*1.6,n=ctx.createBufferSource();n.buffer=A.nb;const g=ctx.createGain(),dd=.004+Math.random()*.02;g.gain.setValueAtTime(.25+Math.random()*.35,tt);g.gain.exponentialRampToValueAtTime(.0005,tt+dd);n.connect(g);g.connect(hp);n.start(tt,Math.random()*3);n.stop(tt+dd+.01)}
+     const lp=ctx.createBiquadFilter(),vg=ctx.createGain();lp.type="lowpass";lp.frequency.value=180;lp.Q.value=4;env(ctx,vg,t,.22,.4,1.6);lp.connect(vg);vg.connect(to);[0,7,12].forEach(dd=>{const o=osc(ctx,"sawtooth",mtof(r-24+12*SN("eOct")+dd),t,2.1),og=ctx.createGain();og.gain.value=.3;o.connect(og);og.connect(lp)});break}
+   case "snd.gMode":case "snd.gOct":{const {ctx,to}=P,a=osc(ctx,"sine",mtof(r),t,2),b=osc(ctx,"sine",mtof(r)*(SN("gMode")==="fifth"?1.5:SN("gMode")==="octave"?2:1.414),t,2),rm=ctx.createGain(),f=ctx.createBiquadFilter(),g=ctx.createGain();
+     rm.gain.value=0;b.connect(rm.gain);a.connect(rm);f.type="bandpass";f.frequency.value=900;f.Q.value=1.5;rm.connect(f);f.connect(g);env(ctx,g,t,.5,.3,1.6);g.connect(to);
+     for(let j=0;j<8;j++){const tt=t+.2+j*.17,o=osc(ctx,"sine",mtof(d(8+Math.floor(Math.random()*6))+12+12*SN("gOct")),tt,.2),gg=ctx.createGain();env(ctx,gg,tt,.05,.002,.18);o.connect(gg);gg.connect(to)}break}
+   case "snd.aTone":noise(P,t,1.8,"bandpass",2000*SN2("aTone"),.8,.45,.6,.3);break;
+   case "snd.rKick":case "snd.rDec":case "snd.rBass":case "snd.rTone":{const bpm=120,st=60/bpm/4,{ctx,to}=P,kt=Math.pow(2,+SN("rKick")/12),kd=.45*SN("rDec");
+     [0,4,8,12].forEach(i=>{const tt=t+i*st,o=osc(ctx,"sine",155*kt,tt,kd),g=ctx.createGain();o.frequency.setValueAtTime(155*kt,tt);o.frequency.exponentialRampToValueAtTime(42*kt,tt+.12);env(ctx,g,tt,.5,.002,kd);o.connect(g);g.connect(to)});
+     [2,6,10,14].forEach(i=>{const tt=t+i*st,len=st*1.6,bn=d(0)-24,o=osc(ctx,SN("rBass"),mtof(bn),tt,len),lp=ctx.createBiquadFilter(),bg=ctx.createGain();lp.type="lowpass";lp.Q.value=8;lp.frequency.setValueAtTime(900*SN2("rTone"),tt);lp.frequency.exponentialRampToValueAtTime(140*SN2("rTone"),tt+len);env(ctx,bg,tt,.22*(SN("rBass")==="sine"?1.4:1),.004,len);o.connect(lp);lp.connect(bg);bg.connect(to)});break}
    default:return}}
+const SN2=k=>Math.pow(2,+SN(k));
+function noise(P,t,len,type,f,q,amp,att,lfo){const {ctx,to}=P,n=ctx.createBufferSource();n.buffer=A.nb;n.loop=true;const fl=ctx.createBiquadFilter(),g=ctx.createGain();fl.type=type;fl.frequency.value=f;fl.Q.value=q;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+att);g.gain.setValueAtTime(amp,t+len-.4);g.gain.exponentialRampToValueAtTime(.0003,t+len+.3);
+  if(lfo){const l=osc(ctx,"sine",.9,t,len+.3),lg=ctx.createGain();lg.gain.value=f*.25*lfo;l.connect(lg);lg.connect(fl.frequency)}
+  n.connect(fl);fl.connect(g);g.connect(to);n.start(t,Math.random()*2);n.stop(t+len+.35)}
 return {pick,_bus:()=>pv};
 })();
