@@ -90,15 +90,16 @@ function buildPro(){
   else{g.className="pgrid";g.innerHTML=groups.map(([t,cs],i)=>STUDIO.group(t,cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join(""),i)).join("")}
   g.querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,ty=el.dataset.t;if(!ty)return;
     el.addEventListener("focus",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});el.addEventListener("pointerdown",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});
-    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)}});
+    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)};
+    if(ty==="sel"||(ty==="rng"&&/^(oct|tune|coct|qoct)$/.test(k)))el.addEventListener("change",()=>AUD.pick(k))});
   if(name!=="Presets")STUDIO.enhance(g);
   g.classList.toggle("enter",TABIN);TABIN=false}
 function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
   g.innerHTML=STUDIO.presets();
-  g.querySelectorAll("[data-genre]").forEach(b=>b.onclick=()=>{if(S.style!=="pulse")setStyle("pulse");STUDIO.setLast(null);applyGenre(b.dataset.genre)});
-  g.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>{STUDIO.setLast(b.dataset.fp);applyPreset(PRESETS[b.dataset.fp],b.dataset.fp);const n=$("pgrid").querySelector(`[data-fp="${CSS.escape(b.dataset.fp)}"]`);n&&n.classList.add("flash")});
+  g.querySelectorAll("[data-genre]").forEach(b=>b.onclick=()=>{if(S.style!=="pulse")setStyle("pulse");STUDIO.setLast(null);applyGenre(b.dataset.genre);AUD.pick("genre")});
+  g.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>{STUDIO.setLast(b.dataset.fp);applyPreset(PRESETS[b.dataset.fp],b.dataset.fp);AUD.pick("preset");const n=$("pgrid").querySelector(`[data-fp="${CSS.escape(b.dataset.fp)}"]`);n&&n.classList.add("flash")});
   g.querySelector("[data-reset]").onclick=()=>{STUDIO.setLast(null);CFG=clone(DEF);afterCFG();xs("Settings reset")};
-  g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];STUDIO.setLast(b.dataset.up);CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`)});
+  g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];STUDIO.setLast(b.dataset.up);CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`);AUD.pick("preset")});
   g.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteUserPreset(b.dataset.del));
   $("bUP").onclick=saveUserPreset;$("bEP").onclick=exportPreset;$("fPre").onchange=e=>{e.target.files[0]&&loadFile(e.target.files[0]);e.target.value=""};
   $("bLearn").onclick=()=>{LEARN.on=!LEARN.on;if(LEARN.on&&!midi)initMIDI();renderPresets();xs(LEARN.on?"MIDI learn on: touch a slider, then move a knob":"MIDI learn off")};
