@@ -184,7 +184,7 @@ function drawSparks(){
   Tt("sg",Number.isFinite(c.dst)?(c.dst<-100?"intense geomagnetic storm":c.dst<-50?"moderate storm":c.dst<-30?"weak storm":"quiet ring current")+(c.pf>=10?" · solar radiation storm":""):"");
   if(c.air&&Number.isFinite(c.air.pm)){T("va",`${c.air.pm.toFixed(0)}<small>µg/m³ PM2.5 · UV ${c.air.uv.toFixed(1)}</small>`);Tt("sa",c.air.worst&&c.air.worst[0]?`haziest: ${c.air.worst[0]} ${Math.round(c.air.worst[1])} µg/m³`:"")}
   {const sp=sunPos(t),up=SUN_CITIES.filter(cc=>sunElev(cc[1],cc[2],sp)>0);T("vu",`${up.length}<small>of ${SUN_CITIES.length} cities in daylight</small>`);Tt("su",`${Math.round(up.reduce((a,cc)=>a+cc[3],0))} M people under the sun${S.lastSun?` · last: ${S.lastSun}`:""}`)}
-  if(S.style==="pulse"&&S.bpm)Tt("bpmLbl",`♩ ${Math.round(S.bpm)} bpm`);else Tt("bpmLbl","");
+  if(S.style==="pulse"&&S.bpm)Tt("bpmLbl",`♩ ${Math.round(S.bpm)} bpm${typeof tempoWord==="function"&&tempoWord()?" · "+tempoWord():""}`);else Tt("bpmLbl","");
   if(!S.on){if(S.quakes.length){T("vq",`${S.quakes.length}<small>quakes in 24h</small>`);Tt("sq",`largest M${Math.max(...S.quakes.map(q=>q.mag)).toFixed(1)}`)}}
 }
 /* ---------- piano roll with a lit keyboard ---------- */

@@ -1,13 +1,13 @@
 /* Earth MIDI · live weather on the globe and the flat map.
    Source: Open-Meteo forecast model (CC BY 4.0), a 15° × 10° global grid of 408 points, hourly,
-   from 24 h ago to the end of today (UTC). Wind at 10 m, cloud cover, precipitation and air temperature.
+   from 24 h ago to the end of today (UTC). Wind at 10 m, cloud cover, precipitation, air temperature and sea-level pressure.
    Values are interpolated in space (bilinear) and time (linear), so the weather follows the replay clock.
    Wind particles are pushed by the measured wind field. Cloud and rain shading come from the measured
    fractions; the fine cloud texture is a fixed pattern that gives the 15° cells some grain, nothing more.
    Tap anywhere on the map: the exact point is fetched from the same model and played on the Jet stream bus. */
 "use strict";
 const WX_LON=[...Array(24)].map((_,i)=>-180+i*15),WX_LAT=[...Array(17)].map((_,j)=>80-j*10),WX_N=408;
-const WX={t:[],u:null,v:null,c:null,p:null,T:null,f:{u:new Float32Array(WX_N),v:new Float32Array(WX_N),c:new Float32Array(WX_N),p:new Float32Array(WX_N),T:new Float32Array(WX_N)},
+const WX={t:[],u:null,v:null,c:null,p:null,T:null,f:{u:new Float32Array(WX_N),v:new Float32Array(WX_N),c:new Float32Array(WX_N),p:new Float32Array(WX_N),T:new Float32Array(WX_N),P:new Float32Array(WX_N)},
   ok:false,err:"",loading:false,at:0,fT:NaN,texT:NaN,texC:new Float32Array(64800),texR:new Float32Array(64800),parts:[],pins:[],
   g:null,gLat:NaN,gSize:0,gc:null,fc:null,fT2:0,lastNow:0,hoverAt:0};
 (function noise(){// fixed value-noise texture, 360 × 180, wraps east-west
@@ -20,16 +20,16 @@ const WX={t:[],u:null,v:null,c:null,p:null,T:null,f:{u:new Float32Array(WX_N),v:
 async function loadWX(force){
   if(WX.loading)return;if(!force&&WX.ok&&Date.now()-WX.at<90*6e4)return;WX.loading=true;
   try{let d=null;
-    if(!force)try{const c=JSON.parse(localStorage.getItem("em.wx")||"null");if(c&&c.v===1&&Date.now()-c.at<90*6e4)d=c}catch(_){}
+    if(!force)try{const c=JSON.parse(localStorage.getItem("em.wx")||"null");if(c&&c.v===2&&Date.now()-c.at<90*6e4)d=c}catch(_){}
     if(!d){const pts=[];WX_LAT.forEach(la=>WX_LON.forEach(lo=>pts.push([la,lo])));
-      const url=g=>`https://api.open-meteo.com/v1/forecast?latitude=${g.map(p=>p[0])}&longitude=${g.map(p=>p[1])}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m&past_days=1&forecast_days=1&timezone=GMT`;
+      const url=g=>`https://api.open-meteo.com/v1/forecast?latitude=${g.map(p=>p[0])}&longitude=${g.map(p=>p[1])}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,pressure_msl&past_days=1&forecast_days=1&timezone=GMT`;
       const res=(await Promise.all([pts.slice(0,204),pts.slice(204)].map(g=>getJSON(url(g),30000)))).flatMap(arr);
       if(res.length!==WX_N||!res[0].hourly)throw new Error("grid");
       const R=a=>a.map(v=>v==null?null:Math.round(v*10)/10);
-      d={v:1,at:Date.now(),time:res[0].hourly.time,T:res.map(x=>R(x.hourly.temperature_2m)),p:res.map(x=>R(x.hourly.precipitation)),c:res.map(x=>x.hourly.cloud_cover),s:res.map(x=>R(x.hourly.wind_speed_10m)),d:res.map(x=>x.hourly.wind_direction_10m)};
+      d={v:2,at:Date.now(),P:res.map(x=>R(x.hourly.pressure_msl)),time:res[0].hourly.time,T:res.map(x=>R(x.hourly.temperature_2m)),p:res.map(x=>R(x.hourly.precipitation)),c:res.map(x=>x.hourly.cloud_cover),s:res.map(x=>R(x.hourly.wind_speed_10m)),d:res.map(x=>x.hourly.wind_direction_10m)};
       try{localStorage.setItem("em.wx",JSON.stringify(d))}catch(_){}}
     const nT=d.time.length,P=(src,fn)=>{const o=new Float32Array(nT*WX_N);for(let k=0;k<WX_N;k++)for(let i=0;i<nT;i++){const v=fn?fn(k,i):src[k][i];o[i*WX_N+k]=v==null?NaN:v}return o};
-    WX.t=omTimes(d.time);WX.T=P(d.T);WX.p=P(d.p);WX.c=P(d.c);
+    WX.t=omTimes(d.time);WX.T=P(d.T);WX.p=P(d.p);WX.c=P(d.c);WX.P=P(d.P);
     // meteorological direction is where the wind comes FROM: u east, v north
     WX.u=P(0,(k,i)=>d.s[k][i]==null?null:-d.s[k][i]*Math.sin(d.d[k][i]*D2R));WX.v=P(0,(k,i)=>d.s[k][i]==null?null:-d.s[k][i]*Math.cos(d.d[k][i]*D2R));
     WX.ok=true;WX.err="";WX.at=d.at;WX.fT=NaN;WX.texT=NaN;
@@ -38,7 +38,7 @@ async function loadWX(force){
 }
 function wxField(t){if(!WX.ok)return false;if(Math.abs(t-WX.fT)<3e4)return true;const ts=WX.t,n=ts.length;let i=0;while(i<n-2&&ts[i+1]<=t)i++;
   const a=clamp((t-ts[i])/((ts[i+1]-ts[i])||1),0,1),o0=i*WX_N,o1=(i+1)*WX_N,f=WX.f;
-  for(const key of ["u","v","c","p","T"]){const s=WX[key],d=f[key];for(let k=0;k<WX_N;k++){const x=s[o0+k],y=s[o1+k];d[k]=Number.isFinite(x)?(Number.isFinite(y)?x+(y-x)*a:x):(Number.isFinite(y)?y:0)}}
+  for(const key of ["u","v","c","p","T","P"]){const s=WX[key],d=f[key];for(let k=0;k<WX_N;k++){const x=s[o0+k],y=s[o1+k];d[k]=Number.isFinite(x)?(Number.isFinite(y)?x+(y-x)*a:x):(Number.isFinite(y)?y:0)}}
   WX.fT=t;return true}
 // bilinear sample of the current field
 function wxS(arr,lon,lat){const fx=(((lon+180)%360)+360)%360/15,i0=Math.floor(fx)%24,i1=(i0+1)%24,tx=fx-Math.floor(fx);
