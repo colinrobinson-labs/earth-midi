@@ -87,44 +87,31 @@ function encodeWav(chunksL,chunksR,rate,title){
   return new Blob([buf],{type:"audio/wav"})}
 const f2i=a=>{const o=new Int16Array(a.length);for(let i=0;i<a.length;i++)o[i]=clamp(a[i],-1,1)*32767;return o};
 let REC=null;
-function toggleRec(stems){
+function toggleRec(stems,opt){
   if(!A||!S.on){xs("Press PLAY first");return}
   if(REC){stopRec();return}
+  opt=opt||{};
   const keys=stems?PAN_KEYS.filter(k=>!muted(k)).concat(["fx"]):["mix"],nch=keys.length*2,merger=A.ctx.createChannelMerger(nch),srcs=[];
   keys.forEach((k,i)=>{const node=k==="mix"?A.lim:k==="fx"?A.revG:A.buses[k],sp=A.ctx.createChannelSplitter(2);node.connect(sp);sp.connect(merger,0,i*2);sp.connect(merger,1,i*2+1);srcs.push([node,sp])});
-  const proc=A.ctx.createScriptProcessor(4096,nch,2),data=keys.map(()=>[[],[]]),rate=A.ctx.sampleRate,max=rate*60*(stems?3:20);let n=0;
+  const proc=A.ctx.createScriptProcessor(4096,nch,2),data=keys.map(()=>[[],[]]),rate=A.ctx.sampleRate,max=rate*(opt.maxSec||60*(stems?3:20));let n=0;
   proc.onaudioprocess=e=>{const o=e.outputBuffer;o.getChannelData(0).fill(0);o.getChannelData(1).fill(0);if(n>=max){if(REC&&!REC.stopping){REC.stopping=1;setTimeout(stopRec,0)}return}
     for(let i=0;i<keys.length;i++){data[i][0].push(f2i(e.inputBuffer.getChannelData(i*2)));data[i][1].push(f2i(e.inputBuffer.getChannelData(i*2+1)))}n+=4096;
-    if(n%rate<4096){const s=Math.floor(n/rate),lbl=`■ ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}${stems?" / 3:00":""}`;if(REC)REC.btn.textContent=lbl;$("recDot")&&($("recDot").textContent=lbl)}};
+    if(!opt.onDone&&n%rate<4096){const s=Math.floor(n/rate),lbl=`■ ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}${stems?" / 3:00":""}`;if(REC)REC.btn.textContent=lbl;$("recDot")&&($("recDot").textContent=lbl)}};
   merger.connect(proc);proc.connect(A.ctx.destination);
-  const btn=stems?$("bStems"):$("bRec");btn.classList.add("on");document.body.classList.add("recording");
-  REC={proc,merger,srcs,data,keys,rate,stems,btn,label:btn.textContent,start:realNow()};
+  const btn=stems?$("bStems"):$("bRec");if(!opt.onDone){btn.classList.add("on");document.body.classList.add("recording")}
+  REC={proc,merger,srcs,data,keys,rate,stems,btn,label:btn.textContent,start:realNow(),onDone:opt.onDone};
 }
 async function stopRec(){const R=REC;if(!R)return;REC=null;R.proc.disconnect();R.srcs.forEach(([n,sp])=>{try{n.disconnect(sp)}catch(_){}});R.btn.classList.remove("on");R.btn.textContent=R.label;document.body.classList.remove("recording");
   const title=`Earth MIDI ${new Date(R.start).toISOString().slice(0,16)} UTC`,st=stamp();
-  if(!R.stems){const w=encodeWav(R.data[0][0],R.data[0][1],R.rate,title);download(`earth-midi_${st}.wav`,w);xs(`Saved ${(w.size/1048576).toFixed(1)} MB WAV with credit metadata`);return}
+  if(!R.stems){const w=encodeWav(R.data[0][0],R.data[0][1],R.rate,title);if(R.onDone){R.onDone(w,`earth-midi_${st}.wav`);return}download(`earth-midi_${st}.wav`,w);xs(`Saved ${(w.size/1048576).toFixed(1)} MB WAV with credit metadata`);return}
   xs("Packing stems…");try{const JSZip=await zipLib(),z=new JSZip(),f=z.folder(`earth-midi-stems_${st}`);
     R.keys.forEach((k,i)=>f.file(`${String(i+1).padStart(2,"0")}_${k==="fx"?"reverb-return":(LNAME[k]||k).toLowerCase().replace(/[^a-z0-9]+/g,"-")}.wav`,encodeWav(R.data[i][0],R.data[i][1],R.rate,`${title} · ${k==="fx"?"reverb return":LNAME[k]}`)));
     f.file("CREDIT.txt",README_CREDIT+"\nStems are each layer's own bus before the master chain; the shared reverb is its own stem. Line them up at 0:00.\n");
     download(`earth-midi-stems_${st}.zip`,await z.generateAsync({type:"blob",compression:"STORE"}));xs(`Saved ${R.keys.length} stems`)}catch(e){xs("Stems failed: "+e.message)}}
 
 /* ================= compressed audio + video clip (MediaRecorder) ================= */
-let MR=null;
-function pickMime(list){if(!window.MediaRecorder)return null;return list.find(m=>MediaRecorder.isTypeSupported(m))||null}
-function toggleMR(video){
-  if(MR){MR.rec.stop();return}
-  if(!A||!S.on||!A.recDest){xs("Press PLAY first");return}
-  const mime=video?pickMime(["video/mp4;codecs=avc1,mp4a.40.2","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"]):pickMime(["audio/mp4;codecs=mp4a.40.2","audio/mp4","audio/webm;codecs=opus","audio/webm"]);
-  if(!mime){xs("This browser can't record that format");return}
-  let stream=A.recDest.stream;if(video){const vs=cv.captureStream(30);stream=new MediaStream([...vs.getVideoTracks(),...A.recDest.stream.getAudioTracks()])}
-  const rec=new MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:256000,videoBitsPerSecond:8e6}),parts=[],btn=video?$("bVid"):$("bAac"),label=btn.textContent,t0=performance.now();
-  rec.ondataavailable=e=>e.data.size&&parts.push(e.data);
-  rec.onstop=()=>{clearInterval(MR.iv);btn.classList.remove("on");btn.textContent=label;S.recVideo=false;document.body.classList.remove("recording");const ext=mime.includes("mp4")?(video?"mp4":"m4a"):(video?"webm":"webm");
-    const b=new Blob(parts,{type:mime.split(";")[0]});download(`earth-midi${video?"-clip":""}_${stamp()}.${ext}`,b);xs(`Saved ${(b.size/1048576).toFixed(1)} MB ${ext.toUpperCase()}${video?" with credit burned in":""}`);MR=null};
-  rec.start(1000);S.recVideo=video;btn.classList.add("on");document.body.classList.add("recording");
-  MR={rec,iv:setInterval(()=>{const s=Math.floor((performance.now()-t0)/1000);btn.textContent=`■ ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;if(video&&s>=180)rec.stop()},500)}}
-// credit burned into video frames
-const _drawMap=drawMap;drawMap=function(now){_drawMap(now);if(!S.recVideo)return;const W=cv.width,H=cv.height;cx.fillStyle="rgba(5,7,10,.6)";cx.fillRect(0,H-28*DPR,W,28*DPR);cx.fillStyle="#e6edf3";cx.font=`600 ${12*DPR}px "IBM Plex Mono",monospace`;cx.fillText("EARTH MIDI · real planetary data, 0% AI audio · earthmidi.com",12*DPR,H-10*DPR);cx.textAlign="right";cx.fillText($("clock").textContent,W-12*DPR,H-10*DPR);cx.textAlign="left"};
+function pickMime(list){if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return null;return list.find(m=>{try{return MediaRecorder.isTypeSupported(m)}catch(_){return false}})||null}
+// compressed audio + video clips live in record.js
 
 /* ================= event CSV, sessions, presets, share ================= */
 function exportEventsCsv(){if(!EVENTS.length){xs("Nothing yet: press PLAY and let it play");return}

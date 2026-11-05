@@ -299,6 +299,77 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
 @media (max-width:370px){.dock .go{flex-basis:100px}.dock .db{flex-basis:56px}}
 body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-index:60;font:700 11px var(--mono);color:#fff;background:#ff2d55;border-radius:999px;padding:4px 10px;animation:bl 1s infinite}
 @media (prefers-reduced-motion:reduce){h1 .L,.dot{animation:none}}
+/* ===== record + share (js/record.js) ===== */
+.rec-btn b,#mRec b{color:#ff2d55}
+.tools .rec-btn{border-color:rgba(255,45,85,.45)}
+.tools .rec-btn:hover{border-color:#ff2d55;background:rgba(255,45,85,.08)}
+.rec-btn.rec-on,#mRec.rec-on{background:#ff2d55!important;border-color:#ff2d55!important;color:#fff!important}
+.rec-btn.rec-on b,#mRec.rec-on b{color:#fff}
+.rec-btn .rt{font-variant-numeric:tabular-nums;opacity:.9}
+#mRec.rec-on{gap:0}#mRec.rec-on .rk{font:700 9px var(--mono);letter-spacing:.08em}#mRec.rec-on .rt{font:600 10px var(--mono);font-variant-numeric:tabular-nums}
+.rec-canvas{position:fixed;left:-20000px;top:0;width:10px;height:10px;pointer-events:none}
+.rsheet{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px}
+.rsheet[hidden]{display:none}
+.rs-back{position:absolute;inset:0;background:rgba(2,3,5,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;transition:opacity .25s}
+.rs-card{position:relative;width:min(560px,100%);max-height:calc(100dvh - 40px);overflow:auto;background:linear-gradient(180deg,#0e151d,#0a0f15);border:1px solid var(--line2);border-radius:20px;padding:18px 20px 20px;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.02) inset;transform:translateY(14px) scale(.98);opacity:0;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.rsheet.open .rs-back{opacity:1}.rsheet.open .rs-card{transform:none;opacity:1}
+.rs-grab{display:none}
+.rs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.rs-head h3{margin:0;font:700 22px var(--disp);letter-spacing:-.01em}
+.rs-x{width:36px;height:36px;padding:0;border-radius:50%;display:grid;place-items:center;font-size:14px;color:var(--mute)}
+.rs-kinds{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.rs-kinds button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;gap:2px 12px;align-items:center;text-align:left;padding:14px;border-radius:14px;background:#0b1016;font-family:var(--body)}
+.rs-kinds svg{grid-row:1/3;width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;color:var(--mute);transition:color .15s}
+.rs-kinds b{font:700 16px var(--disp)}.rs-kinds span{font:12px/1.3 var(--body);color:var(--mute)}
+.rs-kinds button[aria-checked="true"]{border-color:#ff2d55;background:linear-gradient(135deg,rgba(255,45,85,.14),rgba(255,45,85,.02));box-shadow:0 0 0 1px #ff2d55 inset}
+.rs-kinds button[aria-checked="true"] svg{color:#ff2d55}
+.rs-kinds button:disabled{opacity:.4;cursor:not-allowed}
+.rs-row{margin-bottom:14px}.rs-row[hidden]{display:none}.rs-row .cap{display:block;margin-bottom:7px}
+.rs-chips{display:flex;gap:8px;flex-wrap:wrap}
+.rs-chips button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;border-radius:12px;background:#0b1016;text-align:left}
+.rs-chips button b{font:600 13px var(--mono)}.rs-chips button small{font:11px/1.3 var(--body);color:var(--mute)}
+.rs-chips button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}.rs-chips button[aria-pressed="true"] small{color:#3b4652}
+.rs-chips button:disabled{opacity:.4;cursor:not-allowed}
+.rs-len button{align-items:center;padding:10px 6px}
+.sh{display:block;border:1.5px solid currentColor;border-radius:3px;margin-bottom:5px;opacity:.8}.sh-vertical{width:11px;height:19px}.sh-square{width:16px;height:16px;margin-top:3px}.sh-wide{width:22px;height:12px;margin-top:7px}
+.rs-go{width:100%;height:56px;margin-top:4px;border-radius:14px;background:#ff2d55;border-color:#ff2d55;color:#fff;font:700 15px var(--mono);letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 10px 30px rgba(255,45,85,.3)}
+.rs-go:hover{border-color:#ff5c7c;background:#ff3d62}
+.rs-go i{width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.25)}
+.rs-note{margin:12px 0 0;font:12px/1.5 var(--body);color:var(--mute);min-height:18px}.rs-note .gold{color:#ffcf4a;font-weight:600}
+.rs-media{border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--line);display:flex;justify-content:center}
+.rs-media video{display:block;max-width:100%;max-height:min(56dvh,520px);background:#000}
+.rs-media.is-audio{flex-direction:column;background:linear-gradient(135deg,rgba(255,45,85,.1),transparent 60%),#0b1016;padding:16px;gap:12px}
+.rs-wave{display:flex;align-items:center;gap:12px}.rs-wave svg{width:36px;height:36px;fill:none;stroke:#ff2d55;stroke-width:1.7;stroke-linecap:round}.rs-wave b{font:700 16px var(--disp)}.rs-wave span{margin-left:auto;font:13px var(--mono);color:var(--mute)}
+.rs-media audio{width:100%}
+.rs-meta{font:12px var(--mono);color:var(--mute);margin:10px 2px 14px}
+.rs-acts{display:flex;gap:8px}
+.rs-acts button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;font:600 11.5px var(--mono)}
+.rs-acts button[hidden]{display:none}
+.rs-acts svg,.rs-again svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rs-acts .rs-pri{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.rs-again{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;height:44px;color:var(--mute)}
+.rs-again svg{width:18px;height:18px}
+.rpill{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:75;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 14px;border-radius:999px;background:rgba(14,10,12,.92);border:1px solid rgba(255,45,85,.55);box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 24px rgba(255,45,85,.25);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);font:12px var(--mono);color:var(--fg);overflow:hidden;white-space:nowrap;animation:rpin .3s cubic-bezier(.2,.8,.2,1)}
+.rpill[hidden]{display:none}
+@keyframes rpin{from{transform:translate(-50%,-16px);opacity:0}}
+.rp-dot{width:10px;height:10px;border-radius:50%;background:#ff2d55;box-shadow:0 0 10px #ff2d55;animation:bl 1s infinite}
+.rp-k{font:700 11px var(--mono);letter-spacing:.1em;color:#ff6b86}
+.rpill b{font:600 15px var(--mono);font-variant-numeric:tabular-nums}.rp-of{color:var(--mute)}
+.rpill button{height:32px;padding:0 14px;border-radius:999px;background:#ff2d55;border-color:#ff2d55;color:#fff;font:700 12px var(--mono);display:flex;align-items:center;gap:7px}
+.rpill button i{width:9px;height:9px;background:#fff;border-radius:2px}
+.rp-bar{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,45,85,.15)}.rp-bar span{display:block;height:100%;width:0;background:#ff2d55;transition:width .25s linear}
+body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
+@media (max-width:700px){
+ .rsheet{align-items:flex-end;padding:0}
+ .rs-card{width:100%;border-radius:22px 22px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:92dvh;transform:translateY(100%);opacity:1;border-bottom:0}
+ .rs-grab{display:block;width:40px;height:5px;border-radius:3px;background:var(--line2);margin:4px auto 10px}
+ .rs-kinds button{grid-template-columns:1fr;grid-template-rows:auto;justify-items:start;padding:12px}.rs-kinds svg{grid-row:auto;width:26px;height:26px;margin-bottom:4px}
+ .rs-chips button{padding:9px 10px}.rs-chips button small{display:none}
+ .rs-acts button{padding:10px 4px;font-size:10.5px}
+ .rpill{gap:8px;padding-left:12px}
+ .tools #bRecord{display:none}
+}
+@media (prefers-reduced-motion:reduce){.rs-card,.rs-back{transition:none}.rp-dot{animation:none}}
 </style>
 </head>
 <body>
@@ -345,7 +416,7 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
       <div class="row"><select id="dpBpm" aria-label="Tempo"><option>90</option><option>100</option><option selected>120</option><option>124</option><option>128</option><option>140</option><option>170</option></select>
       <select id="dpBars" aria-label="Length"><option value="32">24h → 32 bars</option><option value="64" selected>24h → 64 bars</option><option value="128">24h → 128 bars</option><option value="256">24h → 256 bars</option><option value="1440">24h → 1440 bars</option></select>
       <button class="primary" id="bPack">⬇ Data pack (.zip)</button><button id="bPackMid">⬇ .mid only</button></div></div>
-    <div class="pgrp"><h5>Record the sound</h5><p>Starts when you press it, stops when you press again.</p><div class="row"><button id="bRec">● WAV master</button><button id="bStems">● Stems (WAV, 3 min)</button><button id="bAac">● Compressed audio</button><button id="bVid">● Video clip</button></div></div>
+    <div class="pgrp"><h5>Record</h5><p>WAV and stems start on press and stop on the next press. Video and compressed audio open the recorder, with sharing built in.</p><div class="row"><button id="bRec">● WAV master</button><button id="bStems">● Stems (WAV, 3 min)</button><button id="bAac">● Small audio (M4A)</button><button id="bVid">● Video for socials</button></div></div>
     <div class="pgrp"><h5>MIDI + data from your session</h5><p>Everything that played since you hit PLAY.</p><div class="row"><button id="bMid">⬇ Performance MIDI</button><button id="bCsv">⬇ Event log CSV</button></div></div>
     <div class="pgrp"><h5>Save + import</h5><p>A session freezes the exact data so it replays identically, anywhere.</p><div class="row"><button id="bSave">💾 Save session</button><label class="btnlike">📂 Import session or preset<input type="file" id="fLoad" accept=".json,application/json" hidden></label></div></div>
     <div class="pgrp"><h5>Credit</h5><p>Free to use, commercial included. Credit required.</p><div class="row"><button id="bCredit">Copy credit line</button></div></div>
@@ -440,18 +511,19 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
   </div>
   <div class="drow">
     <label class="dvol"><span aria-hidden="true">VOL</span><input type="range" id="mVol" min="0" max="1" step=".01" value=".8" aria-label="Volume"></label>
-    <button class="db" id="mRec" aria-label="Record WAV"><b>●</b>Rec</button>
+    <button class="db" id="mRec" aria-label="Record video or audio"><b>●</b>Record</button>
     <button class="db" data-jump="exp" aria-label="Export"><b>⬇</b>Export</button>
     <button class="db" data-jump="pro" aria-label="Producer controls"><b>🎛</b>Producer</button>
   </div>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="js/core.js?v=11"></script>
-<script src="js/audio.js?v=11"></script>
-<script src="js/visuals.js?v=11"></script>
-<script src="js/io.js?v=11"></script>
-<script src="js/ui.js?v=11"></script>
-<script src="js/sheet.js?v=11"></script>
+<script src="js/core.js?v=12"></script>
+<script src="js/audio.js?v=12"></script>
+<script src="js/visuals.js?v=12"></script>
+<script src="js/io.js?v=12"></script>
+<script src="js/ui.js?v=12"></script>
+<script src="js/sheet.js?v=12"></script>
+<script src="js/record.js?v=1"></script>
 </body>
 </html>

@@ -186,11 +186,10 @@ function boot(){
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{CFG.mapView=b.dataset.view;afterCFG(true);sizeMap()});
   const panel=(id,btn)=>()=>{const p=$(id);p.hidden=!p.hidden;$(btn).setAttribute("aria-expanded",!p.hidden);if(!p.hidden)p.scrollIntoView({behavior:"smooth",block:"nearest"})};
   $("bPro").onclick=panel("pro","bPro");$("bExp").onclick=panel("exp","bExp");
-  $("bRec").onclick=()=>toggleRec(false);$("bStems").onclick=()=>toggleRec(true);$("bAac").onclick=()=>toggleMR(false);$("bVid").onclick=()=>toggleMR(true);
+  $("bRec").onclick=()=>toggleRec(false);$("bStems").onclick=()=>toggleRec(true);
   $("bMid").onclick=exportPerfMidi;$("bCsv").onclick=exportEventsCsv;$("bSave").onclick=saveSession;$("fLoad").onchange=e=>{e.target.files[0]&&loadFile(e.target.files[0]);e.target.value=""};
   $("bShare").onclick=shareLink;$("bCredit").onclick=copyCredit;$("bPack").onclick=exportDataPack;$("bPackMid").onclick=exportDataMidOnly;
   document.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>{const t=$(b.dataset.jump);if(t.hidden){t.hidden=false;const x=$(t.id==="pro"?"bPro":"bExp");x&&x.setAttribute("aria-expanded","true")}t.scrollIntoView({behavior:"smooth",block:"start"})});
-  $("mRec").onclick=()=>toggleRec(false);
   document.querySelectorAll('a[href="#how"]').forEach(l=>l.addEventListener("click",()=>{$("how").open=true}));if(location.hash==="#how")$("how").open=true;
   addEventListener("keydown",e=>{if(e.target.matches("input,select,textarea"))return;if(e.code==="Space"){e.preventDefault();startStop()}else if(e.key==="g")document.querySelector('[data-view="globe"]').click();else if(e.key==="f")document.querySelector('[data-view="flat"]').click();else if(e.key==="p")setStyle(S.style==="pulse"?"ambient":"pulse")});
   if(fromHash){$("pro").hidden=false;$("bPro").setAttribute("aria-expanded","true")}
