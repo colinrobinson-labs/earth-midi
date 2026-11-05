@@ -52,6 +52,8 @@ function drawMap(now){
     cx.lineTo(W,sp.lat>0?H:0);cx.lineTo(0,sp.lat>0?H:0);cx.closePath();cx.fill();
     const[sx,sy]=proj(sp.lon,sp.lat);const sg=cx.createRadialGradient(sx,sy,0,sx,sy,W*.12);sg.addColorStop(0,"rgba(255,200,80,.18)");sg.addColorStop(1,"rgba(255,200,80,0)");cx.fillStyle=sg;cx.fillRect(0,0,W,H);
   }
+  // live weather: clouds, rain, wind particles, storm vortices (js/weather.js)
+  if(window.WXdraw)WXdraw(now,t,globe);
   // aurora ovals around the geomagnetic poles; size and brightness from Kp
   const kp=c.kp||2,edge=67-2*kp,al=map(kp,0,9,.15,.7)*(0.75+.25*Math.sin(now/600));
   [[80.7,-72.7],[-80.7,107.3]].forEach(([pl,plo])=>{for(let k=0;k<3;k++){cx.strokeStyle=`rgba(${k?199:124},${k?125:255},${k?255:158},${al*(1-k*.3)})`;cx.lineWidth=(6-k*2)*DPR*(globe?VIEW.zoom:1);const wob=Math.sin(now/800+k)*1.2;strokePath(smallCircle(pl,plo,90-edge+k*1.6+wob,96))}});
@@ -117,11 +119,11 @@ cv.addEventListener("pointermove",e=>{const r=cv.getBoundingClientRect();
   const b=pickAt((e.clientX-r.left)*DPR,(e.clientY-r.top)*DPR);HOVER=b;const tip=$("tip");if(!b){tip.style.display="none";return}
   tip.innerHTML=tipHTML(b);tip.style.display="block";tip.style.left=Math.min(e.clientX-r.left+12,r.width-230)+"px";tip.style.top=(e.clientY-r.top+12)+"px"});
 cv.addEventListener("pointerup",e=>{const r=cv.getBoundingClientRect(),wasDrag=VIEW.drag&&VIEW.drag.moved>6;ptr.delete(e.pointerId);if(ptr.size<2)pinch0=0;VIEW.drag=null;if(wasDrag)return;
-  const b=pickAt((e.clientX-r.left)*DPR,(e.clientY-r.top)*DPR),tip=$("tip");if(!b){tip.style.display="none";return}
+  const b=pickAt((e.clientX-r.left)*DPR,(e.clientY-r.top)*DPR),tip=$("tip");if(!b){if(window.wxTap&&wxTap(e,r))return;tip.style.display="none";return}
   tip.innerHTML=tipHTML(b);tip.style.display="block";tip.style.left=Math.min(Math.max(4,e.clientX-r.left-100),r.width-230)+"px";tip.style.top=Math.max(4,e.clientY-r.top-80)+"px";
   if(b.type==="q")auditionQuake(b.o)});
 cv.addEventListener("pointercancel",e=>{ptr.delete(e.pointerId);VIEW.drag=null});
-cv.addEventListener("mouseleave",()=>$("tip").style.display="none");
+cv.addEventListener("pointerleave",e=>{if(e.pointerType!=="touch")$("tip").style.display="none"});
 cv.addEventListener("wheel",e=>{if(CFG.mapView==="flat")return;e.preventDefault();VIEW.zoom=clamp(VIEW.zoom*Math.exp(-e.deltaY*.0012),.7,3.2);VIEW.lastInteract=performance.now()},{passive:false});
 
 /* ---------- 24h timeline: quake ticks, flare classes, sunrise marks; click to jump ---------- */
