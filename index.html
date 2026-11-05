@@ -45,7 +45,8 @@ h1 .L{display:inline-block;background:linear-gradient(100deg,var(--q),var(--s) 2
  animation:hue 16s linear infinite;transform:translateY(calc(var(--h,0)*-10px)) scale(calc(1 + var(--h,0)*.06));transition:transform .08s;
  filter:drop-shadow(0 0 calc(4px + var(--glow)*26px) rgba(255,140,90,calc(.2 + var(--glow)*.6))) drop-shadow(0 0 calc(var(--h,0)*34px) var(--c))}
 h1 .sp{display:inline-block;width:.24em}
-#title .L{cursor:pointer;-webkit-tap-highlight-color:transparent}
+#title .L{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .08s,rotate .22s cubic-bezier(.2,.9,.3,1.3),scale .25s}
+#title .L.held{scale:1.06;transition:transform .08s,rotate .06s,scale .12s}
 #title .L.tap{animation:hue 16s linear infinite,pop .5s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{0%{translate:0 0;scale:1}30%{translate:0 -.09em;scale:1.12}100%{translate:0 0;scale:1}}
 #title.shake{animation:shake .6s cubic-bezier(.36,.07,.19,.97)}
@@ -381,6 +382,9 @@ body.recording::after{content:"● REC";position:fixed;top:10px;right:10px;z-ind
 .rs-go{width:100%;height:56px;margin-top:4px;border-radius:14px;background:#ff2d55;border-color:#ff2d55;color:#fff;font:700 15px var(--mono);letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 10px 30px rgba(255,45,85,.3)}
 .rs-go:hover{border-color:#ff5c7c;background:#ff3d62}
 .rs-go i{width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.25)}
+.rs-tnote{margin:7px 2px 0;font:12px/1.45 var(--body);color:var(--mute)}
+.rp-tt{color:var(--mute);font-size:11px}
+.rs-ttlsave{margin-top:8px}
 .rs-note{margin:12px 0 0;font:12px/1.5 var(--body);color:var(--mute);min-height:18px}.rs-note .gold{color:#ffcf4a;font-weight:600}
 .rs-media{border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--line);display:flex;justify-content:center}
 .rs-media video{display:block;max-width:100%;max-height:min(56dvh,520px);background:#000}
@@ -412,7 +416,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
  .rs-kinds button{grid-template-columns:1fr;grid-template-rows:auto;justify-items:start;padding:12px}.rs-kinds svg{grid-row:auto;width:26px;height:26px;margin-bottom:4px}
  .rs-chips button{padding:9px 10px}.rs-chips button small{display:none}
  .rs-acts button{padding:10px 4px;font-size:10.5px}
- .rpill{gap:8px;padding-left:12px}
+ .rpill{gap:8px;padding-left:12px}.rp-tt{display:none}
  .tools #bRecord{display:none}
 }
 @media (prefers-reduced-motion:reduce){.rs-card,.rs-back{transition:none}.rp-dot{animation:none}}
@@ -462,7 +466,7 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
       <div class="row"><select id="dpBpm" aria-label="Tempo"><option>90</option><option>100</option><option selected>120</option><option>124</option><option>128</option><option>140</option><option>170</option></select>
       <select id="dpBars" aria-label="Length"><option value="32">24h → 32 bars</option><option value="64" selected>24h → 64 bars</option><option value="128">24h → 128 bars</option><option value="256">24h → 256 bars</option><option value="1440">24h → 1440 bars</option></select>
       <button class="primary" id="bPack">⬇ Data pack (.zip)</button><button id="bPackMid">⬇ .mid only</button></div></div>
-    <div class="pgrp"><h5>Record</h5><p>WAV and stems start on press and stop on the next press. Video and compressed audio open the recorder, with sharing built in.</p><div class="row"><button id="bRec">● WAV master</button><button id="bStems">● Stems (WAV, 3 min)</button><button id="bAac">● Small audio (M4A)</button><button id="bVid">● Video for socials</button></div></div>
+    <div class="pgrp"><h5>Record</h5><p>WAV and stems start on press and stop on the next press. Video and compressed audio open the recorder, with sharing built in. Playing the EARTH MIDI title follows the “Playing the EARTH MIDI title” choice in the recorder: in the mix, its own file (or its own stem), or not recorded.</p><div class="row"><button id="bRec">● WAV master</button><button id="bStems">● Stems (WAV, 3 min)</button><button id="bAac">● Small audio (M4A)</button><button id="bVid">● Video for socials</button></div></div>
     <div class="pgrp"><h5>MIDI + data from your session</h5><p>Everything that played since you hit PLAY.</p><div class="row"><button id="bMid">⬇ Performance MIDI</button><button id="bCsv">⬇ Event log CSV</button></div></div>
     <div class="pgrp"><h5>Save + import</h5><p>A session freezes the exact data so it replays identically, anywhere.</p><div class="row"><button id="bSave">💾 Save session</button><label class="btnlike">📂 Import session or preset<input type="file" id="fLoad" accept=".json,application/json" hidden></label></div></div>
     <div class="pgrp"><h5>Credit</h5><p>Free to use, commercial included. Credit required.</p><div class="row"><button id="bCredit">Copy credit line</button></div></div>
@@ -570,12 +574,12 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <script src="js/visuals.js?v=18"></script>
 <script src="js/weather.js?v=17"></script>
 <script src="js/focus.js?v=18"></script>
-<script src="js/io.js?v=17"></script>
+<script src="js/io.js?v=18"></script>
 <script src="js/god.js?v=4"></script>
 <script src="js/ui.js?v=18"></script>
 <script src="js/zones.js?v=2"></script>
 <script src="js/sheet.js?v=18"></script>
-<script src="js/title.js?v=1"></script>
-<script src="js/record.js?v=2"></script>
+<script src="js/title.js?v=2"></script>
+<script src="js/record.js?v=3"></script>
 </body>
 </html>
