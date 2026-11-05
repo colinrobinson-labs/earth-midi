@@ -103,7 +103,8 @@ function stormMove(p){const s=G.storms.find(x=>x.id===p.id);if(!s)return;s.lat=c
 function stormRelease(p){const s=G.storms.find(x=>x.id===p.id);if(!s)return;s.held=false;s.vlat=clamp(p.dlat||0,-6,6);s.vlon=clamp(p.dlon||0,-10,10);G.last=`Category ${cat(s.e)} hurricane`}
 const cat=e=>clamp(1+Math.floor(e*3.4),1,5);
 function doAurora(p){const h=p.h>0?0:1;G.aur[h]=Math.min(1.5,G.aur[h]+p.e);sparkle(p.e,h);G.last=`aurora · Kp ${godKp().toFixed(1)}`}
-function calm(){G.storms.forEach(s=>{s.e=0;stormKill(s)});G.storms=[];G.aur=[0,0];G.cmes=[];G.moon={x:.86,y:.82};msg("The planet is calm")}
+const moonHome=()=>cv.clientWidth<560?{x:.84,y:.68}:{x:.86,y:.82};
+function calm(){G.storms.forEach(s=>{s.e=0;stormKill(s)});G.storms=[];G.aur=[0,0];G.cmes=[];G.moon=moonHome();msg("The planet is calm")}
 
 /* ================= engine tick (audio params, decay, replay) ================= */
 let lastTick=now_();
@@ -153,7 +154,7 @@ function startGesture(pt){const tool=G.tool,t=now_(),ll=unproj(pt.x,pt.y);
   return {kind:tool==="quake"?"quake":"pend",t,pt,ll}}
 function moveGesture(g,pt){const t=now_();VIEW.lastInteract=t;
   if(g.kind==="spin"){const k=180/(globeR()/DPR*Math.PI)/DPR;VIEW.lon=((g.lon-(pt.x-g.x)*k+540)%360)-180;VIEW.lat=clamp(g.lat+(pt.y-g.y)*k,-80,80);return}
-  if(g.kind==="moon"){const W=cv.width,H=cv.height;G.moon.x=clamp((pt.x+g.dx)/W,.04,.96);G.moon.y=clamp((pt.y+g.dy)/H,.05,.95);if(t-g.lastA>40){g.lastA=t;act("moon",{x:+G.moon.x.toFixed(4),y:+G.moon.y.toFixed(4)})}return}
+  if(g.kind==="moon"){const W=cv.width,H=cv.height;G.moonMoved=1;G.moon.x=clamp((pt.x+g.dx)/W,.04,.96);G.moon.y=clamp((pt.y+g.dy)/H,.05,.95);if(t-g.lastA>40){g.lastA=t;act("moon",{x:+G.moon.x.toFixed(4),y:+G.moon.y.toFixed(4)})}return}
   if(g.kind==="aurora"){const d=Math.hypot(pt.x-g.last.x,pt.y-g.last.y);g.last=pt;g.acc+=d/(globeR()*2)*.8;if(t-g.lastA>60&&g.acc>.004){g.lastA=t;act("aur",{h:g.h,e:+g.acc.toFixed(4)});g.acc=0}return}
   if(g.kind==="pend"&&Math.hypot(pt.x-g.pt.x,pt.y-g.pt.y)>12*DPR){if(g.stop)g.stop();g.stop=null;g.kind="storm";g.id=G.nid++;g.last=g.pt;g.hist=[[t,g.ll[1],g.ll[0]]];g.acc=0;g.lastA=0;act("s+",{id:g.id,lat:g.ll[1],lon:g.ll[0]})}
   if(g.kind==="storm"){const ll=unproj(pt.x,pt.y);if(!ll)return;g.acc+=Math.hypot(pt.x-g.last.x,pt.y-g.last.y)/globeR()*.32;g.last=pt;g.hist.push([t,ll[1],ll[0]]);while(g.hist.length>2&&t-g.hist[0][0]>350)g.hist.shift();
@@ -181,7 +182,7 @@ const up=e=>{if(!P.has(e.pointerId))return;e.stopPropagation();P.delete(e.pointe
   if(e.type==="pointercancel"){if(GS.stop)GS.stop();if(GS.kind==="storm")endGesture(GS);GS=null;return}
   if(GS.kind==="zoom"){if(!P.size)GS=null;return}
   if(GS.pinch&&P.size)return;endGesture(GS);GS=null};
-wrap.addEventListener("pointerup",up,{capture:true});wrap.addEventListener("pointercancel",up,{capture:true});
+wrap.addEventListener("pointerup",up,{capture:true});wrap.addEventListener("mousedown",e=>{if(G.on&&e.target===cv)e.preventDefault()},{capture:true});wrap.addEventListener("contextmenu",e=>{if(G.on&&e.target===cv)e.preventDefault()},{capture:true});wrap.addEventListener("pointercancel",up,{capture:true});
 
 /* ================= visuals (drawn on #map, after the live map, so video captures it) ================= */
 let lastF=now_();
@@ -293,7 +294,7 @@ body.god #godTicker{opacity:1;transform:none}
 .hud2{transition:top .4s}
 body.god .hud2{top:34px}
 body.god .stage{border-color:#ffc83d;box-shadow:0 0 0 1px #ffc83d,0 0 50px rgba(255,190,40,.4)}
-body.god .mapwrap{touch-action:none}
+body.god .mapwrap{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 body.god #map{cursor:crosshair}
 body.god .hud .hint2{display:none}
 body.god #tl,body.god .tlh{opacity:.3}
@@ -322,7 +323,7 @@ body.god #godFrame{opacity:1}
 .gp-mix{display:flex;align-items:center;gap:8px;font:11px var(--mono);color:#d9c38e;margin-left:auto}
 .gp-mix input{accent-color:#ffc83d;width:120px}
 #gStat{font:11.5px var(--mono);color:#ffc83d;margin-top:8px;min-height:18px}
-@media (max-width:700px){body.god .hud2{display:none}#godPanel{padding:10px}.gp-tools{display:grid;grid-template-columns:repeat(4,1fr)}.gp-tools button{padding:8px 4px;font-size:11.5px}.gp-row{display:grid;grid-template-columns:1fr 1fr}.gp-row button,.gp-row .btnlike{justify-content:center}.gp-mix{grid-column:1/-1;margin:4px 0 0}.gp-mix input{flex:1}.gp-h button{margin-left:0}}
+@media (max-width:700px){body.god .hud2{display:none}.gp-h span{display:none}.gp-h b{font-size:15px}.gp-h button{margin-left:auto;padding:7px 10px;font-size:12px}#godPanel{padding:10px}.gp-tools{display:grid;grid-template-columns:repeat(4,1fr)}.gp-tools button{padding:8px 4px;font-size:11.5px}.gp-row{display:grid;grid-template-columns:1fr 1fr}.gp-row button,.gp-row .btnlike{justify-content:center}.gp-mix{grid-column:1/-1;margin:4px 0 0}.gp-mix input{flex:1}.gp-h button{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.godbtn::after,#godTicker div,#godFrame::after{animation:none}}`;
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 const TOOLS=[["auto","✋ Auto"],["quake","⚡ Quake"],["storm","🌀 Storm"],["flare","☀ Flare"],["aurora","✦ Aurora"],["tide","☾ Tides"],["spin","↻ Spin"]];
@@ -355,7 +356,7 @@ setInterval(()=>{if(!G.on)return;const s=g$("gStat");if(s){const kp=godKp(),txt=
 
 function setGod(on){if(on===G.on)return;G.on=on;document.body.classList.toggle("god",on);btn.setAttribute("aria-pressed",on);btn.textContent=on?"✕ Exit sandbox":"✋ Hand of God";panel.hidden=!on;
   const tip=$("tip");if(tip)tip.style.display="none";
-  if(on){G.tEnter=now_();setTimeout(measureHud,450);G.hintT=now_()+12000;G.flash=1;G.flashRGB="255,236,180";G.shake=10;ensureAudio();enterSound(true);try{if(!location.hash||location.hash==="#")history.replaceState(null,"","#god")}catch(_){}
+  if(on){G.tEnter=now_();setTimeout(measureHud,450);if(!G.moonMoved)G.moon=moonHome();G.hintT=now_()+12000;G.flash=1;G.flashRGB="255,236,180";G.shake=10;ensureAudio();enterSound(true);try{if(!location.hash||location.hash==="#")history.replaceState(null,"","#god")}catch(_){}
     if(window.matchMedia("(max-width:700px)").matches)setTimeout(()=>$("map").scrollIntoView({behavior:"smooth",block:"start"}),60)}
   else{G.tExit=now_();if(G.rec)recToggle();G.replay=null;syncBtns();G.storms.forEach(s=>{s.held=false;stormKill(s)});G.storms=[];if(G.tideNote!=null){gtx([0x84,G.tideNote,0]);G.tideNote=null;G.tideStep=-1}cv.style.cursor="";enterSound(false);
     if(A&&!S.on){const c=A.ctx.currentTime;A.out.gain.setTargetAtTime(0,c+1.4,.4)}try{if(location.hash==="#god")history.replaceState(null,"",location.pathname+location.search)}catch(_){}}
