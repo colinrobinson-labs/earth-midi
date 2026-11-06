@@ -169,7 +169,7 @@ function updateEngine(){
     A.pad.voices.forEach(x=>x.o.frequency.setTargetAtTime(mtof(degree(sc,ch[x.v],ROOT-12)),c,.9));
     const bzDark=Number.isFinite(bz)&&bz<-8;A.pad.voices.forEach(x=>x.vg.gain.setTargetAtTime(.05*(bzDark&&x.v===3?1.4:1),c,1));
     midiCC(CH("s"),1,map(sp,250,900,0,127));midiCC(CH("s"),2,map(de,0,30,0,127));midiCC(CH("s"),3,map(bz,-20,20,0,127));midiCC(CH("s"),4,map(kp,0,9,0,127));
-    const rn=degree(sc,ch[0],ROOT-12);if(A.pad.rootNote)midiOff(CH("s"),A.pad.rootNote);midiOn(CH("s"),rn,70);A.pad.rootNote=rn;pushNote(rn,"s",60,+CFG.chordEvery*.9);S.hit.s=.6;
+    const rn=degree(sc,ch[0],ROOT-12);if(A.pad.rootNote){midiOff(CH("s"),A.pad.rootNote);A.pad.rootNote=null}if(!(ZN.has("s")&&ZN.bus("s")<.02)){midiOn(CH("s"),rn,70);A.pad.rootNote=rn;pushNote(rn,"s",60,+CFG.chordEvery*.9);S.hit.s=.6}
   }
   const oc=viewOcean(t),oh=oc.h,op=oc.p;
   A.surf.g.gain.setTargetAtTime(muted("o")?0:map(oh,0,6,.05,.42),c,1);A.surf.lfo.frequency.setTargetAtTime(1/Math.max(3,op),c,1);A.surf.bp.frequency.setTargetAtTime(map(op,4,16,1400,380)*TM("oTone"),c,2);A.surf.bp.Q.setTargetAtTime(+SN("oQ"),c,.2);A.surf.pg.gain.setTargetAtTime(.6*CFG.width,c,.2);
@@ -274,7 +274,8 @@ function quakeVoice(q){
   }
   return {note,vel,dur:dec};
 }
-function flareBell(cls,f){if(A&&!muted("x")){const {ctx}=A,c=ctx.currentTime;[0,7,12,19].forEach((d,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=SN("xBell");o.frequency.value=mtof(ROOT+24+d);g.gain.setValueAtTime(0,c+i*.12);g.gain.linearRampToValueAtTime(.08,c+i*.12+.02);g.gain.exponentialRampToValueAtTime(.0003,c+i*.12+5);o.connect(g);g.connect(A.buses.x);o.start(c+i*.12);o.stop(c+6)})}
+function flareBell(cls,f){if(ZN.has("x")&&ZN.bus("x")<.02)return;// zoned X-rays on the night side: no bell, no MIDI
+  if(A&&!muted("x")){const {ctx}=A,c=ctx.currentTime;[0,7,12,19].forEach((d,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=SN("xBell");o.frequency.value=mtof(ROOT+24+d);g.gain.setValueAtTime(0,c+i*.12);g.gain.linearRampToValueAtTime(.08,c+i*.12+.02);g.gain.exponentialRampToValueAtTime(.0003,c+i*.12+5);o.connect(g);g.connect(A.buses.x);o.start(c+i*.12);o.stop(c+6)})}
   pushNote(ROOT+24,"x",100,3);midiNote(CH("x"),ROOT+24,100,1500);S.hit.x=1;
   logEv(`Flare ${cls}`,"x",null,[["Sensor","GOES-East/West X-ray sensor, 0.1–0.8 nm"],["Raw reading",`flux ${(f||0).toExponential(2)} W/m²`],["Formula",`flux crosses into class ${cls[0]} → bell swell\nlog10(flux) −8…−4 → shimmer level`],["Sound + MIDI",`4 triangle bells, root +24\nMIDI ch ${CH("x")} note ${ROOT+24}`],["AI running","none"]])}
 
