@@ -482,13 +482,79 @@ body::before,#title .L{--glow:inherit}
 .fx-lite body::before{transition:none}
 .fx-lite .procta{animation-timing-function:steps(48)!important}
 footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg);text-decoration:none}
+/* ===== Clean pass (Nov 6): one hierarchy, colour for data only, details one tap away ===== */
+/* header: one line, no badge column */
+.stag{display:block;font:17px/1.45 var(--body);color:var(--fg2);margin:0;grid-column:1/-1;text-wrap:balance}
+/* transport: no uppercase captions; Play > Record/Producer > quiet tools */
+.ctl{flex-direction:row;align-items:center}
+.bar .ctl-midi{gap:8px}.bar .ctl-midi .cap{font:500 13px var(--body);letter-spacing:0;text-transform:none;color:var(--mute)}
+.ctl-midi select{width:auto;min-width:0}
+@media (min-width:1100px){.ctl-mode select{width:118px}.bar .ctl-vol input{width:84px}.tools{flex-wrap:nowrap;gap:4px}.tools button{padding:0 11px}.vsw button{padding:0 10px}}
+.vo-m{display:none}@media (max-width:700px){.vo-d{display:none}.vo-m{display:inline}}
+.vpop .znbtn{display:inline-flex;align-items:center;gap:6px}
+.refs .lic{padding:0;margin:0;border-left:1px solid var(--line)}
+.tools #bExp,.tools #bShare{background:transparent;border-color:transparent;color:var(--fg2)}
+.tools #bExp:hover,.tools #bShare:hover{background:var(--sf2);border-color:var(--line2);color:var(--fg)}
+.tools #bExp[aria-expanded="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+/* status line: one quiet sentence */
+.status{font:12.5px var(--body)}
+.status .dot.dw{background:var(--warn);box-shadow:none}
+.dsrc{display:inline}.dsrc summary{display:inline;cursor:pointer;color:var(--mute);text-decoration:underline;text-decoration-color:var(--line3);text-underline-offset:3px;list-style:none}
+.dsrc summary::-webkit-details-marker{display:none}.dsrc[open] summary{color:var(--fg)}.dsrc span{margin-left:6px;color:var(--mute)}
+/* globe HUD: Globe/Flat, View options, Zeus Mode */
+.vopt{position:relative}
+.vopt>button{font:500 12px var(--body);height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;background:transparent}
+.vopt>button[aria-expanded="true"]{background:var(--fg);color:var(--bg)}
+.vopt>button .vdot{width:6px;height:6px;border-radius:50%;background:var(--o);display:none}.vopt.act>button .vdot{display:block}
+.vpop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;display:grid;gap:10px;min-width:260px;padding:12px;border:1px solid var(--line2);border-radius:var(--r2);background:rgba(12,15,18,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.vpop[hidden]{display:none}
+.vpop .vrow{display:flex;align-items:center;justify-content:space-between;gap:12px;font:500 12.5px var(--body);color:var(--fg2)}
+.vpop .seg{background:var(--sf1)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.vpop .vmix .vlbl{display:none}.vpop .vmix{order:0}
+.hud2{flex-wrap:nowrap}
+/* layers: Mute / Solo appear on hover or focus (always shown on touch screens) */
+@media (hover:hover) and (pointer:fine){
+ #pads .lm,#pads .ls{opacity:0;transition:opacity .15s}
+ #pads .lrow:hover .lm,#pads .lrow:hover .ls,#pads .lrow:focus-within .lm,#pads .lrow:focus-within .ls,#pads .lm[aria-pressed="true"],#pads .ls[aria-pressed="true"]{opacity:1}
+}
+.sideh small{font:400 12.5px var(--body);letter-spacing:0;text-transform:none}
+/* layer cards: reading + chart; rule, channel and Mute/Solo behind "How it sounds" */
+.ch h3 small,.ch .map,.ch .ms{display:none}
+.ch.open h3 small,.ch.open .map{display:block}.ch.open .ms{display:flex}
+.ch .sub{font-family:var(--body)}.ch .big small{font-family:var(--body);letter-spacing:0}
+.ch .chow{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:0;height:auto;border:0;background:none;font:500 12px var(--body);color:var(--mute);cursor:pointer}
+.ch .chow::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .2s}
+.ch.open .chow::after{transform:rotate(45deg)}.ch .chow:hover{color:var(--fg)}
+/* inspector: log, MIDI monitor, trace and output in one panel */
+.insp{margin-top:12px}
+.itabs{display:flex;align-items:center;gap:2px;margin:-4px 0 10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.itabs button{height:38px;padding:0 14px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;font:500 14px var(--body);color:var(--mute);margin-bottom:-1px}
+.itabs button:hover{color:var(--fg)}.itabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg)}
+.ihint{margin-left:auto;font:12px var(--body);color:var(--mute);padding:0 4px}
+.ipane[hidden]{display:none}
+.insp #trace{border:0;background:none;padding:0}
+/* reference rows: DAW, How it works, Accuracy, License */
+.refs{margin-top:28px;display:grid;gap:8px}
+.refs .how{margin:0}
+.refs .hs-t{font:600 16px var(--body)}.refs .hs-s{font:13px var(--body)}
+.how-lead{font:15px/1.55 var(--body);color:var(--fg2);max-width:72ch;margin:0 0 14px}.how-lead b{color:var(--fg);font-weight:600}
+.ref ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}.ref li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;margin:0;color:var(--mute);font-size:13.5px}
+.ref li .gi{width:30px;height:30px;--ac:var(--lc,var(--o))}.ref p{color:var(--mute);font-size:13.5px}
+.lic{border-left:1px solid var(--line)!important}
+footer,footer .keys{font-family:var(--body)}
+@media (max-width:700px){
+ .stag{font-size:14px;text-align:center}
+ .itabs button{padding:0 10px;font-size:13px}.ihint{display:none}
+ .vpop{position:fixed;left:12px;right:12px;top:auto;min-width:0}
+ .refs .hs-s{display:none}
+}
 /* ===== Simple view (js/simple.js): opt-in, globe + play + volume. The full view stays the default. ===== */
-.stag,.sback,#bSimple,#mFull{display:none}
+.sback,#bSimple,#mFull{display:none}
 .shint{display:none}
 body.hinted .hud .hint2{opacity:0;transition:opacity .6s}
 html.simple .tag,html.simple .badges,html.simple .bar .status,html.simple .ctl-mode,html.simple .ctl-midi,html.simple #bPro,html.simple #bExp,html.simple .bar .cap,
 html.simple .hud2,html.simple .wxl,html.simple .hud .hint2,html.simple .tlh>span:nth-child(2),html.simple .side,html.simple .grid,html.simple .row2,html.simple #trace,html.simple .panel,
-html.simple .info,html.simple .lic,html.simple #pro,html.simple #exp,html.simple footer p:not(:first-child),html.simple .how .hs-s{display:none!important}
+html.simple .info,html.simple .lic,html.simple .insp,html.simple .ref,html.simple #pro,html.simple #exp,html.simple footer p:not(:first-child),html.simple .how .hs-s{display:none!important}
 html.simple .stag{display:block;font:17px/1.45 var(--body);color:var(--fg2);margin:0;grid-column:1/-1}
 html.simple .main{grid-template-columns:minmax(0,1fr)}
 html.simple .sback{display:block;margin:28px 0 0;text-align:center;font-size:13px;color:var(--mute)}
@@ -514,24 +580,22 @@ html.simple .how{margin-top:16px}
     <h1 id="title" aria-label="Earth MIDI">EARTH MIDI</h1>
     <div class="hmeter" id="hmeter" aria-hidden="true" title="Each bar is one layer, lighting up as its data plays"></div>
   </div>
-  <p class="tag">Live earthquakes, solar wind, ocean swell, tides and the space station, played as sound and sent as MIDI. <b>Every note is a real event</b>: a quake, a solar flare, the sun rising over Lagos. Filter sweeps follow the actual solar wind, the drone bends with real tides. Listen, play along, or take the raw data into your DAW.</p>
   <p class="stag">The planet, played live. Every note is a real event.</p>
-  <div class="badges"><span class="b raw">Live sensor data</span><span class="b alg">Same reading, same note</span><span class="b syn">Synthesized live</span><a class="b more" href="#how">How it works</a></div>
 </header>
 
 
 
 <div class="bar" role="toolbar" aria-label="Player">
   <button class="go" aria-label="Play or stop"><i></i><span>PLAY</span></button>
-  <label class="ctl ctl-mode"><span class="cap">Playback</span><select id="mode" aria-label="Playback mode" autocomplete="off">
+  <label class="ctl ctl-mode"><select id="mode" aria-label="Playback mode" autocomplete="off">
     <option value="0" selected>Live</option>
     <option value="180">Replay last 24h in 3 min, then live</option>
     <option value="600">Replay last 24h in 10 min, then live</option>
     <option value="60">Replay last 24h in 60 s, then live</option>
   </select></label>
   <div class="ctl ctl-style"><div class="seg"><button data-style="ambient" aria-pressed="true">Ambient</button><button data-style="pulse" aria-pressed="false">Pulse</button></div></div>
-  <label class="ctl ctl-vol"><span class="cap">Volume</span><input type="range" id="vol" min="0" max="1" step=".01" value=".8" aria-label="Volume"></label>
-  <label class="ctl ctl-midi" id="midiCtl"><span class="cap">MIDI out</span><select id="midiOut" aria-label="MIDI output"><option value="">Off</option></select></label>
+  <label class="ctl ctl-vol"><input type="range" id="vol" min="0" max="1" step=".01" value=".8" aria-label="Volume"></label>
+  <label class="ctl ctl-midi" id="midiCtl"><span class="cap">MIDI</span><select id="midiOut" aria-label="MIDI output"><option value="">Off</option></select></label>
   <div class="tools">
     <button id="bPro" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2"/><circle cx="12" cy="8" r="2.2"/><circle cx="19" cy="16" r="2.2"/></svg>Producer</button>
     <div class="vsw" id="viewSw" role="group" aria-label="View"><button type="button" data-vw="simple" aria-pressed="false" title="Simple view: the globe, play and volume, nothing else"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/></svg>Simple</button><button type="button" data-vw="globe" aria-pressed="true" title="The globe, timeline and layer cards"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Globe</button><button type="button" data-vw="console" aria-pressed="false" aria-haspopup="dialog" title="Full-screen mixing console: every layer, Sound and Master at once"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 8v8M12 8v8M17 8v8"/><path d="M5.5 13h3M10.5 10h3M15.5 14.5h3"/></svg>Console</button></div>
@@ -591,25 +655,25 @@ html.simple .how{margin-top:16px}
 
 <div class="grid" id="grid"></div>
 
-<div class="row2">
-  <div class="panel"><h3>MIDI monitor <small>every note, as it's sent</small></h3><canvas id="roll"></canvas></div>
-  <div class="panel"><h3>Event log <small>real events only · tap to trace</small></h3><ul id="log"></ul></div>
-</div>
-<div class="panel" id="trace"><h3>Trace a sound <small>sensor → rule → sound, no AI running</small></h3><ol><li><b>Tap a line in the event log</b><span>and its full chain appears here.</span></li></ol></div>
-<div class="panel" style="margin-top:12px"><h3>Output <small>spectrum · waveform · stereo field</small></h3><canvas id="scope"></canvas></div>
+<section class="panel insp" id="insp" aria-label="Inspector">
+  <div class="itabs" role="tablist"><button role="tab" aria-selected="true" data-it="log">Event log</button><button role="tab" aria-selected="false" data-it="roll">MIDI monitor</button><button role="tab" aria-selected="false" data-it="trace">Trace</button><button role="tab" aria-selected="false" data-it="scope">Output</button><span class="ihint" id="ihint">Real events only. Tap one to trace how it became sound.</span></div>
+  <div class="ipane" data-ip="log" role="tabpanel"><ul id="log"></ul></div>
+  <div class="ipane" data-ip="roll" role="tabpanel" hidden><canvas id="roll"></canvas></div>
+  <div class="ipane" data-ip="trace" role="tabpanel" hidden><div id="trace"><ol><li><b>Tap a line in the event log</b><span>and its full chain appears here.</span></li></ol></div></div>
+  <div class="ipane" data-ip="scope" role="tabpanel" hidden><canvas id="scope"></canvas></div>
+</section>
 
-<div class="info">
-  <div style="--ac:var(--o)"><h4><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="7.2" cy="12" r="1.2" class="f"/><circle cx="16.8" cy="12" r="1.2" class="f"/><circle cx="8.6" cy="8.4" r="1.2" class="f"/><circle cx="15.4" cy="8.4" r="1.2" class="f"/><circle cx="12" cy="7" r="1.2" class="f"/><path d="M10 18h4"/></svg></span>Use it in your DAW</h4><ul>
+<div class="refs">
+<details class="how ref" id="daw"><summary><span class="hs-t">Use it in your DAW</span><span class="hs-s">Live MIDI, genres, clock sync, data pack</span><span class="hs-c" aria-hidden="true"></span></summary><div class="how-in"><ul>
     <li><span class="gi" style="--lc:var(--fg)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><span><b>Live MIDI on Mac:</b> Audio MIDI Setup → MIDI Studio → IAC Driver → “Device is online”. Pick it above, arm a MIDI track.</span></li>
     <li><span class="gi" style="--lc:var(--w)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M12 9v11"/></svg></span><span><b>Windows:</b> install loopMIDI, create a port, pick it above.</span></li>
     <li><span class="gi" style="--lc:var(--q)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r=".6" class="f"/></svg></span><span><b>Genres:</b> Producer controls → Rhythm → pick a genre and style. Each sets its own tempo range and groove, and you choose which real data moves the tempo: solar wind, wind, rain, air pressure, storms, quakes, tides and more.</span></li>
     <li><span class="gi" style="--lc:var(--k)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span><span><b>Sync:</b> Producer controls → MIDI → “Send MIDI clock” and your DAW follows the planet's tempo.</span></li>
-    <li><span class="gi" style="--lc:var(--s)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v2M12 7v2M12 11v2"/><rect x="10.5" y="14" width="3" height="4" rx="1"/></svg></span><span><b>No live MIDI?</b> Export the data pack and drag the .mid in. Each layer has its own channel and CC lanes.</span></li></ul></div>
-  <div style="--ac:var(--k)"><h4><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" class="f"/></svg></span>Accuracy</h4><div class="acc"><span style="--lc:var(--q)"><b>~1 min</b>new quakes, after USGS publishes</span><span style="--lc:var(--s)"><b>30–60 min</b>solar wind lead time, measured at L1</span><span style="--lc:var(--o)"><b>24 h</b>replayed in real order and spacing</span><span style="--lc:var(--k)"><b>0</b>values passed off as live when a feed fails</span></div><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div>
-</div>
+    <li><span class="gi" style="--lc:var(--s)"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v2M12 7v2M12 11v2"/><rect x="10.5" y="14" width="3" height="4" rx="1"/></svg></span><span><b>No live MIDI?</b> Export the data pack and drag the .mid in. Each layer has its own channel and CC lanes.</span></li></ul></div></details>
 <details class="how" id="how">
-  <summary><span class="hs-t">How it works</span><span class="hs-s">real sensors → the same rule every time → oscillators in your browser · no active AI</span><span class="hs-c" aria-hidden="true"></span></summary>
+  <summary><span class="hs-t">How it works</span><span class="hs-s">Real sensors, the same rule every time, no active AI</span><span class="hs-c" aria-hidden="true"></span></summary>
   <div class="how-in">
+  <p class="how-lead">Live earthquakes, solar wind, ocean swell, tides and the space station, played as sound and sent as MIDI. <b>Every note is a real event</b>: a quake, a solar flare, the sun rising over Lagos. Filter sweeps follow the actual solar wind, the drone bends with real tides. Listen, play along, or take the raw data into your DAW.</p>
   <ol class="pipe">
     <li><b>Instruments measure</b><span>seismometers, satellites, tide gauges, weather balloons</span></li>
     <li><b>Agencies publish</b><span>USGS, NOAA, NASA, Open-Meteo</span></li>
@@ -642,11 +706,10 @@ html.simple .how{margin-top:16px}
   </div>
   </div>
 </details>
-<div class="lic" id="license">
-  <h4>Free to use in your music. Credit required.</h4>
-  <p>Use anything you record or export from Earth MIDI, including audio, stems, MIDI and data, in released, commercial or live work, free of charge. The one condition is a credit wherever you credit samples or collaborators (liner notes, streaming credits, video descriptions):</p>
+<details class="how ref" id="accuracy"><summary><span class="hs-t">Accuracy</span><span class="hs-s">About a minute behind for quakes, 30–60 minutes ahead for solar wind</span><span class="hs-c" aria-hidden="true"></span></summary><div class="how-in"><div class="acc"><span style="--lc:var(--q)"><b>~1 min</b>new quakes, after USGS publishes</span><span style="--lc:var(--s)"><b>30–60 min</b>solar wind lead time, measured at L1</span><span style="--lc:var(--o)"><b>24 h</b>replayed in real order and spacing</span><span style="--lc:var(--k)"><b>0</b>values passed off as live when a feed fails</span></div><p>Replay compresses the last 24 hours, keeping every event in its real order and spacing. The clock shows the real UTC time being played. Live mode plays new quakes within about a minute of USGS publishing them. Solar wind is measured at L1, 30–60 minutes before it reaches Earth. The ISS position is propagated from its published orbital elements and checked against a live fix (the gap is shown on its card). Sunrise times are computed. If any source fails, the status bar says <span class="warn">demo</span> for that feed and nothing is passed off as live.</p></div></details>
+<details class="how ref lic" id="license"><summary><span class="hs-t">Free to use in your music</span><span class="hs-s">Credit required. Here is the line to copy</span><span class="hs-c" aria-hidden="true"></span></summary><div class="how-in">  <p>Use anything you record or export from Earth MIDI, including audio, stems, MIDI and data, in released, commercial or live work, free of charge. The one condition is a credit wherever you credit samples or collaborators (liner notes, streaming credits, video descriptions):</p>
   <div class="credit"><code id="creditLine">Planetary data sonified with Earth MIDI by Colin Robinson · earthmidi.com</code></div>
-  <p style="font-size:12px">Every export carries this credit: WAV metadata, MIDI copyright and text events, CSV and JSON headers, README and CREDIT files in each zip, and burned into video clips. Underlying data: USGS, NOAA and NASA (public domain) and Open-Meteo (CC BY 4.0, attribution included in every file).</p>
+  <p style="font-size:12px">Every export carries this credit: WAV metadata, MIDI copyright and text events, CSV and JSON headers, README and CREDIT files in each zip, and burned into video clips. Underlying data: USGS, NOAA and NASA (public domain) and Open-Meteo (CC BY 4.0, attribution included in every file).</p></div></details>
 </div>
 <p class="sback">Prefer the full instrument? <button type="button" id="bFull">Show everything</button></p>
 <footer>
@@ -672,16 +735,16 @@ html.simple .how{margin-top:16px}
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="js/fx.js?v=1"></script>
 <script src="js/feeds.js?v=1"></script>
-<script src="js/core.js?v=23"></script>
+<script src="js/core.js?v=24"></script>
 <script src="js/audio.js?v=24"></script>
 <script src="js/visuals.js?v=24"></script>
 <script src="js/weather.js?v=21"></script>
 <script src="js/groove.js?v=1"></script>
-<script src="js/studio.js?v=4"></script>
+<script src="js/studio.js?v=5"></script>
 <script src="js/focus.js?v=19"></script>
 <script src="js/io.js?v=20"></script>
 <script src="js/god.js?v=5"></script>
-<script src="js/ui.js?v=25"></script>
+<script src="js/ui.js?v=26"></script>
 <script src="js/audition.js?v=2"></script>
 <script src="js/zones.js?v=5"></script>
 <script src="js/sheet.js?v=21"></script>
@@ -692,6 +755,7 @@ html.simple .how{margin-top:16px}
 <script src="js/beat.js?v=2"></script>
 <script src="js/home.js?v=2"></script>
 <script src="js/simple.js?v=1"></script>
-<script src="js/console.js?v=4"></script>
+<script src="js/console.js?v=5"></script>
+<script src="js/tidy.js?v=1"></script>
 </body>
 </html>

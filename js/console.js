@@ -208,6 +208,16 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 @media (max-width:820px){.cns-top h2 small,.cns-rd .rk{display:none}.cns-tb .lbl{display:none}.cns-tb{width:44px;padding:0;justify-content:center}}
 @media (max-width:560px){.cns-top{flex-wrap:wrap}.cns-rd{order:9;flex-basis:100%}.cns-top h2{display:none}.cs{flex-basis:58px;min-width:58px}}
 @media (prefers-reduced-motion:reduce){.cns,.vsw.nudge button::after,.vtip{animation:none}}
+/* clean pass (Nov 6): no micro-captions; colour on the channel strips only */
+.cns .cs-ic,.cns .cx-h .gi,.cns-top h2 small,.cns .cs-snd small,.cns .cx-h small{display:none}
+.cns .cx-h{font:700 14px var(--disp);letter-spacing:0;text-transform:none}
+.cns .cs-h{min-height:0}.cns .cs-h b{font:600 11.5px var(--body);letter-spacing:0}
+.cns .cs-v{color:var(--fg2)}
+.cns .lb{font:500 12px var(--body);letter-spacing:0;text-transform:none}.cns .lb *{color:var(--mute)!important}
+.cns .cx.master,.cns .cx.pulse{--ac:var(--fg2)!important;--q:var(--fg2)}
+.cns .cx-h .pgo{background:transparent;color:var(--fg);border:1px solid var(--line2)}
+.cns .chips:not(.gen) button[aria-pressed="true"],.cns .cns-tray button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg);box-shadow:none}
+.cns .cns-tb[aria-pressed="true"]{border-color:var(--fg);color:var(--fg);background:var(--sf2)}
 `;
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 

@@ -220,6 +220,23 @@ const css=`
  .piano{height:64px}.piano .w{height:64px}.piano .b{height:38px}
 }
 @media (prefers-reduced-motion:reduce){.pro:not([hidden]),.enter>*,.fam::after,.gt .sg .ph,.eq i,.fp:hover .mixb i,.fp.flash{animation:none!important}}
+/* clean pass (Nov 6): neutral chrome; layer colour stays on sliders and the card's top rule */
+#ptabs button small{display:none}
+#ptabs button{padding:9px 14px 9px 11px}
+#ptabs button .sic{color:var(--mute)}
+#ptabs button[aria-selected="true"]{border-color:var(--fg);background:var(--sf2);box-shadow:none}
+#ptabs button[aria-selected="true"] .sic{color:var(--fg)}
+.pro .pgrp{background:var(--sf1);border-color:var(--line)}
+.pro .pgrp::before{opacity:.45}
+.pro .pgrp>h5 .gi,.pro .pgrp>h5 .lch{display:none}
+.pro .pc output{padding:0;border:0;background:none;color:var(--mute);font-weight:500}
+.segc button[aria-pressed="true"]{color:var(--bg);background:var(--fg);border-color:var(--fg);box-shadow:none}
+.pro h2 small{display:none}
+.pmore{grid-column:1/-1;display:flex;align-items:center;gap:6px;width:100%;margin:8px 0 0;padding:9px 0 0;height:auto;border:0;border-top:1px solid var(--line);border-radius:0;background:none;font:500 12.5px var(--body);color:var(--mute);cursor:pointer}
+.pmore:hover{color:var(--fg)}
+.pmore::after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+.pgrp.more-open .pmore::after{transform:rotate(225deg)}
+.pgrp:not(.more-open) .xtra{display:none}
 `;
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 

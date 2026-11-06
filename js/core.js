@@ -198,7 +198,7 @@ async function refresh(full){
   const d=Object.entries(S.demo).filter(([,v])=>v).map(([k])=>DEMO_NAMES[k]||k);
   const late=[...LATE].filter(([n])=>!d.includes(n)),ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<90?m+" min":Math.round(m/60)+" h"};
   const lateNote=late.length?` · <span class="late" title="${late.map(([n,t])=>`${n}: reading from ${ago(t)} ago`).join("\n")}\nThe source didn't answer, so this plays its last real reading.">${late.length>2?"some readings":late.map(([n])=>n).join(", ")} delayed</span>`:"";
-  if(!S.frozen)$("dataState").innerHTML=(d.length?`<span class="warn">demo: ${d.join(", ")}</span> (source unreachable)`:`<span class="dot"></span>14 live feeds · updated ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`)+lateNote;
+  if(!S.frozen)$("dataState").innerHTML=(d.length?`<span class="dot dw"></span>${d.length>=13?"Live feeds unreachable, playing demo data":`${14-d.length} of 14 feeds live · ${d.length} on demo data`} <details class="dsrc"><summary>which</summary><span>${d.join(", ")} (source unreachable)</span></details>`:`<span class="dot"></span>14 live feeds · updated ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`)+lateNote;
   if(window.onData)onData();
 }
 
