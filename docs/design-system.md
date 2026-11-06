@@ -90,3 +90,19 @@ Start from `--sf0` panel + `--line` border + `--r2`. Heading in `var(--disp)` 70
 
 ## Simple view (js/simple.js)
 Opt-in decluttered layout for people who find the full view too dense: title, one-line tagline, Play, Ambient/Pulse, volume, Record, the globe, timeline and Play live. Everything else is hidden, not removed; settings keep working. Entry: "Simple" in the Simple | Globe | Console switch, the Simple button on phones, or earthmidi.com/#simple. Remembered per browser (`em.simple`). Exit: Globe, "Show all" in the phone dock, or "Show everything" at the bottom. The full view stays the default.
+
+## Clean pass (Nov 6, 2026)
+Made after "too busy / looks vibe coded" feedback. Nothing was removed; details moved one tap away.
+
+- **Header:** one-line tagline (`.stag`). The long description now opens How it works (`.how-lead`). No badge column.
+- **Transport:** no uppercase captions. MIDI out has an inline "MIDI" label. Export and Share are quiet text buttons; Play, Record and Producer carry the weight.
+- **Status line:** one sentence in Plex Sans ("Live feeds unreachable, playing demo data", or "12 of 14 feeds live · 2 on demo data") with a "which" toggle listing the feeds.
+- **Globe HUD:** Globe/Flat, **View options** (Live weather, Sound follows view, Zones) and Zeus Mode. The popover lives in `js/tidy.js`; a dot on the button shows when Zones are on or weather is off.
+- **Layers:** Mute/Solo show on hover or focus with a fine pointer, always on touch screens, and stay visible while active.
+- **Layer cards:** reading and chart only; "How it sounds" opens the rule, channel/CC and Mute/Solo (`.ch.open`).
+- **Inspector (`#insp`):** Event log, MIDI monitor, Trace and Output as tabs. Tapping an event opens Trace.
+- **Reference rows (`.refs`):** Use it in your DAW (`#daw`), How it works (`#how`), Accuracy (`#accuracy`), Free to use (`#license`). Links to those ids open the row.
+- **Producer:** tab subtitles, group icon tiles and channel tags hidden; selected chips are paper white; values are plain mono. Groups with 6+ controls show four plus "More (n)".
+- **Console:** no captions under section names, no strip icons or VERB labels, neutral Master and Pulse. Channel strips keep their layer colours.
+
+Rule of thumb from here: uppercase mono is for numbers only, a label earns its place only if the control is unclear without it, and colour means data.

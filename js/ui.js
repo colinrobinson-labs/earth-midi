@@ -17,7 +17,8 @@ const CARDS=[
  ["m","Moon","CC 9","<b>illumination → reverb size</b> · computed from orbital mechanics, not fetched"]];
 function buildCards(){$("grid").innerHTML=CARDS.map(([k,n,midi,m])=>`<div class="ch" id="c${k}" style="--c:${COLS[k]}"><h3><span>${n}</span><small>ch ${CH(k==="m"?"m":k)} · ${midi}</small></h3>
   <div class="vrow"><div class="big" id="v${k}">–</div>${k!=="m"?`<canvas class="vu" id="vu${k}"></canvas>`:""}</div><div class="sub" id="s${k}"></div><canvas class="spark" id="k${k}"></canvas>
-  <div class="map">${m}</div>${k!=="m"?`<div class="ms"><button data-m="${k}" aria-pressed="false">Mute</button><button data-s="${k}" aria-pressed="false">Solo</button></div>`:""}</div>`).join("");
+  <button type="button" class="chow" aria-expanded="false" aria-controls="c${k}">How it sounds</button><div class="map">${m}</div>${k!=="m"?`<div class="ms"><button data-m="${k}" aria-pressed="false">Mute</button><button data-s="${k}" aria-pressed="false">Solo</button></div>`:""}</div>`).join("");
+  document.querySelectorAll("#grid .chow").forEach(b=>b.onclick=()=>{const c=b.closest(".ch"),o=c.classList.toggle("open");b.setAttribute("aria-expanded",String(o))});
   bindMS()}
 function bindMS(){document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>toggleMute(b.dataset.m));document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>toggleSolo(b.dataset.s))}
 function toggleMute(k){S.mute[k]=!S.mute[k];syncMS()}
@@ -93,7 +94,7 @@ function ctl(k,label,type,o){const id="p_"+k.replace(".","_"),v=getP(CFG,k);
   if(type==="rng")return `<div class="pc"><label for="${id}">${label}</label><output id="${id}_o">${v}</output><input type="range" id="${id}" data-k="${k}" data-t="rng" min="${o[0]}" max="${o[1]}" step="${o[2]}" value="${v}"></div>`;
   if(type==="sel")return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select></div>`;
   return `<div class="pc ck"><input type="checkbox" id="${id}" data-k="${k}" data-t="ck" ${v?"checked":""}><label for="${id}">${label}</label></div>`}
-let TAB=0,TABIN=true;
+let TAB=0,TABIN=true;const PMORE=new Set();
 function buildPro(){
   $("ptabs").innerHTML=STUDIO.tabs(TABS,TAB);
   document.querySelectorAll("#ptabs button").forEach(b=>b.onclick=()=>{if(TAB!==+b.dataset.i){TAB=+b.dataset.i;TABIN=true}buildPro()});
@@ -106,6 +107,11 @@ function buildPro(){
     el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)};
     if(ty==="sel"||(ty==="rng"&&/^(oct|tune|coct|qoct|snd\.)/.test(k)))el.addEventListener("change",()=>AUD.pick(k))});
   if(name!=="Presets")STUDIO.enhance(g);
+  if(name!=="Presets"&&name!=="Mixer")g.querySelectorAll(".pgrp").forEach(grp=>{const t=(grp.querySelector("h5")||{}).textContent||"",cs=[...grp.children].filter(e=>e.tagName!=="H5"&&!e.classList.contains("linfo"));if(cs.length<6)return;
+    // long groups show their first four controls; the rest sit behind "More"
+    cs.slice(4).forEach(e=>e.classList.add("xtra"));if(PMORE.has(t))grp.classList.add("more-open");
+    const b=document.createElement("button");b.type="button";b.className="pmore";const lab=()=>{const o=grp.classList.contains("more-open");b.textContent=o?"Fewer controls":`More (${cs.length-4})`;b.setAttribute("aria-expanded",String(o))};lab();
+    b.onclick=()=>{const o=grp.classList.toggle("more-open");o?PMORE.add(t):PMORE.delete(t);lab()};grp.appendChild(b)});
   g.classList.toggle("enter",TABIN);TABIN=false}
 function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
   g.innerHTML=STUDIO.presets();
