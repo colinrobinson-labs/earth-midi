@@ -170,7 +170,7 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 /* entry points */
 /* view switch: Globe | Console, in the bar and in the console's own top bar */
 .vsw{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;flex:none;background:var(--sf2)}
-.vsw button{height:44px;display:inline-flex;align-items:center;gap:7px;padding:0 13px;border:0;border-radius:0;background:transparent;color:var(--mute);font:500 12px var(--body);position:relative;touch-action:manipulation}
+.vsw button{height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border:0;border-radius:0;background:transparent;color:var(--mute);font:500 12px var(--body);position:relative;touch-action:manipulation}
 .vsw button+button{border-left:1px solid var(--line2)}
 .vsw button:hover{color:var(--fg)}
 .vsw button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
@@ -399,7 +399,7 @@ function open(){if(!root){root=document.createElement("div");root.className="cns
   try{localStorage.setItem(SEEN,"1")}catch(_){}syncSw();tipHide();
   try{if(location.hash!=="#console")history.replaceState(null,"","#console")}catch(_){}
   requestAnimationFrame(loop);setTimeout(fit,60);const pl=$("cnPlay");pl&&pl.focus({preventScroll:true})}
-function syncSw(){document.querySelectorAll("#viewSw button").forEach(b=>{b.setAttribute("aria-pressed",(b.dataset.vw==="console")===open_)});const v=$("viewSw");if(v&&open_)v.classList.remove("nudge")}
+function syncSw(){const sim=document.documentElement.classList.contains("simple");document.querySelectorAll("#viewSw button").forEach(b=>{b.setAttribute("aria-pressed",String(open_?b.dataset.vw==="console":b.dataset.vw===(sim?"simple":"globe")))});const v=$("viewSw");if(v&&open_)v.classList.remove("nudge")}
 function startIn(){try{return localStorage.getItem(START)==="console"?"console":"globe"}catch(_){return "globe"}}
 function setStart(v){try{localStorage.setItem(START,v)}catch(_){}}
 function close(){if(!root||root.hidden)return;open_=false;root.hidden=true;document.documentElement.classList.remove("cns-on");drags.clear();
@@ -413,7 +413,7 @@ addEventListener("hashchange",()=>{if(location.hash==="#console")open()});
 
 /* entry points: the Globe | Console switch in the bar, a Console button in the Producer header, #console,
    "Start in: Console" (saved per browser), and a one-time suggestion on tablet-size touch screens. Never switches on its own. */
-document.querySelectorAll("#viewSw button").forEach(b=>b.onclick=()=>b.dataset.vw==="console"?open():close());
+document.querySelectorAll("#viewSw button").forEach(b=>b.onclick=()=>{if(b.dataset.vw==="console")return open();close();if(window.SIMPLE)SIMPLE.set(b.dataset.vw==="simple")});
 const ph=document.querySelector("#pro h2");if(ph){const b=document.createElement("button");b.type="button";b.className="cns-go";b.innerHTML=`${ic("mixer")}Console`;b.title="Open the full-screen mixing console";b.onclick=open;ph.insertBefore(b,$("pstat"))}
 const ipadOS=/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1;
 const tablet=(matchMedia("(pointer:coarse)").matches||ipadOS)&&Math.min(screen.width,screen.height)>=700&&Math.min(innerWidth,innerHeight)>=600;

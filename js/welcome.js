@@ -106,5 +106,5 @@
   document.querySelectorAll("[data-welcome]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();open()}));
 
   // every fresh visit (one tap = sound on, since browsers only allow audio after a tap); never on top of a shared link
-  if(hash==="welcome"||!hash)setTimeout(open,350);
+  if(hash==="welcome"||hash==="simple"||!hash)setTimeout(open,350);
 })();
