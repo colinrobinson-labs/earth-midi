@@ -21,7 +21,12 @@
   reset();
   // rows breathe with their layer
   const rows={},dots={},bars={},dw=$("ldots"),hm=$("hmeter");document.querySelectorAll(".lrow").forEach(r=>{const k=r.dataset.k;rows[k]=r;const d=document.createElement("i");d.style.setProperty("--c",COLS[k]);dw.appendChild(d);dots[k]=d;if(hm){const b=document.createElement("i");b.style.setProperty("--c",COLS[k]);hm.appendChild(b);bars[k]=b}});
-  (function glow(){for(const k in rows){const v=(S.hit[k]||0).toFixed(3);rows[k].style.setProperty("--hit",v);if(bars[k]){bars[k].style.setProperty("--hit",v);bars[k].classList.toggle("off",muted(k))}if(mq.matches){dots[k].style.setProperty("--hit",v);dots[k].classList.toggle("off",muted(k))}}requestAnimationFrame(glow)})();
+  // ~30 fps (15 at the light effects level, js/fx.js), and only writes what changed and what's on screen
+  let gT=0;(function glow(now){requestAnimationFrame(glow);if(document.hidden||now-gT<(FX.lvl?62:31))return;gT=now;
+    const rOn=FX.on(side),hOn=FX.on(hm),dOn=mq.matches;
+    for(const k in rows){const v=(S.hit[k]||0).toFixed(2),off=muted(k);if(rOn)FX.css(rows[k],"--hit",v);
+      if(bars[k]&&hOn){FX.css(bars[k],"--hit",v);if(bars[k]._off!==off){bars[k]._off=off;bars[k].classList.toggle("off",off)}}
+      if(dOn){FX.css(dots[k],"--hit",v);if(dots[k]._off!==off){dots[k]._off=off;dots[k].classList.toggle("off",off)}}}})(0);
   // first visit on a phone: a small lift so people see the drawer is there
   let seen=false;try{seen=!!localStorage.getItem("em5.sheetSeen")}catch(_){}
   if(mq.matches&&!seen){setTimeout(()=>{if(state===0){side.classList.add("nudge");side.addEventListener("animationend",()=>side.classList.remove("nudge"),{once:true})}},2200)}

@@ -14,7 +14,7 @@ const Q=[];window.onKick=(t,v)=>{if(Q.length<64)Q.push([t,v])};
 const EV={q:1,x:1,u:.8,e:.8,i:.45,w:.6}; // which layers count as "events" in Ambient, and how much
 const prev={};
 let env=0,shown=0,last=0,lastEv=0,still=true;
-function rest(){if(still)return;still=true;env=shown=0;Q.length=0;window.BEATG=0;if(h)h.style.setProperty("--bt","0")}
+function rest(){if(still)return;still=true;env=shown=0;Q.length=0;window.BEATG=0;FX.css(h,"--bt","0")}
 function frame(now){
   requestAnimationFrame(frame);
   const dt=Math.min(.1,last?(now-last)/1000:.016);last=now;
@@ -38,7 +38,7 @@ function frame(now){
   env*=Math.exp(-dt/.12);
   if(RM.matches)env=0;
   const v=Math.max(0,shown);
-  if(h)h.style.setProperty("--bt",v.toFixed(3));
+  if(FX.on(h))FX.css(h,"--bt",v.toFixed(3)); // only while the title is on screen (js/fx.js)
   window.BEATG=v*.014; // the globe grows by at most 1.4% on a full kick
 }
 requestAnimationFrame(frame);

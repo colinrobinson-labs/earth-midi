@@ -149,7 +149,7 @@ async function shareLast(){if(!LAST)return;const file=new File([LAST.blob],LAST.
 /* ---------------- video compositor ---------------- */
 function makeCompositor(shape,god){
   const sz=SHAPES[shape],scale=IS_MOBILE?(2/3):1,W=Math.round(sz.w*scale/2)*2,H=Math.round(sz.h*scale/2)*2,u=W/1080*(shape==="wide"?.75:1);
-  const c=document.createElement("canvas");c.width=W;c.height=H;c.className="rec-canvas";c.setAttribute("aria-hidden","true");document.body.appendChild(c);
+  const c=document.createElement("canvas");c.keepFx=true;c.width=W;c.height=H;c.className="rec-canvas";c.setAttribute("aria-hidden","true");document.body.appendChild(c);
   const g=c.getContext("2d"),stream=c.captureStream(30),wrap=document.querySelector(".mapwrap"),wave=new Float32Array(A.an?A.an.fftSize:2048);
   let raf=0,alive=true;
   // map area inside the frame

@@ -464,6 +464,23 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
  .tools #bRecord{display:none}
 }
 @media (prefers-reduced-motion:reduce){.rs-card,.rs-back{transition:none}.rp-dot{animation:none}}
+/* ---------- performance (js/fx.js) ---------- */
+/* --glow changes every frame while playing. Non-inherited, so writing it doesn't restyle the whole page;
+   JS writes it to body, the title and the Play buttons, and these pass it down to the parts that use it. */
+@property --glow{syntax:"<number>";inherits:false;initial-value:0}
+body::before,#title .L{--glow:inherit}
+/* scrolled out of view: idle animations pause */
+#title.offscr .L,#title.offscr{animation-play-state:paused!important}
+/* light effects: same look, far less repainting */
+.fx-lite h1 .L,.fx-lite body.god h1 .L{filter:none;will-change:transform}
+/* light: one painted-once warm halo behind the title stands in for the per-letter glow filters */
+.fx-lite #title{position:relative}.fx-lite #title::before{content:"";position:absolute;inset:-35% -6%;z-index:-1;pointer-events:none;background:radial-gradient(52% 58% at 50% 55%,rgba(255,140,90,.2),rgba(255,140,90,.06) 55%,transparent 75%)}
+.fx-lite #title .L,.fx-lite #title .L.tap{animation-timing-function:steps(96),cubic-bezier(.2,1.6,.4,1)}
+.fx-lite *,.fx-lite *::backdrop{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.fx-lite .hud2 .seg{background:rgba(12,15,18,.92)}
+.fx-lite body::before{transition:none}
+.fx-lite .procta{animation-timing-function:steps(48)!important}
+footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg);text-decoration:none}
 </style>
 </head>
 <body>
@@ -625,11 +642,12 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="js/fx.js?v=1"></script>
 <script src="js/feeds.js?v=1"></script>
-<script src="js/core.js?v=22"></script>
+<script src="js/core.js?v=23"></script>
 <script src="js/audio.js?v=23"></script>
-<script src="js/visuals.js?v=23"></script>
-<script src="js/weather.js?v=20"></script>
+<script src="js/visuals.js?v=24"></script>
+<script src="js/weather.js?v=21"></script>
 <script src="js/groove.js?v=1"></script>
 <script src="js/studio.js?v=4"></script>
 <script src="js/focus.js?v=19"></script>
@@ -638,12 +656,12 @@ body.god .rpill,body.god .rs-go{box-shadow:0 0 24px rgba(255,207,74,.35)}
 <script src="js/ui.js?v=24"></script>
 <script src="js/audition.js?v=2"></script>
 <script src="js/zones.js?v=4"></script>
-<script src="js/sheet.js?v=20"></script>
+<script src="js/sheet.js?v=21"></script>
 <script src="js/title.js?v=2"></script>
-<script src="js/record.js?v=5"></script>
+<script src="js/record.js?v=6"></script>
 <script src="js/welcome.js?v=6"></script>
-<script src="js/procta.js?v=2"></script>
-<script src="js/beat.js?v=1"></script>
+<script src="js/procta.js?v=3"></script>
+<script src="js/beat.js?v=2"></script>
 <script src="js/home.js?v=2"></script>
 <script src="js/console.js?v=3"></script>
 </body>
