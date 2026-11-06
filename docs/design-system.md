@@ -10,7 +10,7 @@ Three rules carry the identity:
 2. **Three type voices, each with one job.** Archivo Expanded for headings and legends, IBM Plex Sans for anything you read or press, IBM Plex Mono for numbers, readings, rules, timestamps and tiny uppercase captions.
 3. **The planet is the light source.** Glows are driven by `--hit` / `--glow` (real events). Nothing glows decoratively at rest except the Play call-to-action and the Producer button's live knobs.
 
-The signature element is the **layer meter** under the title (`#hmeter`): one bar per layer, in its colour, jumping with that layer's live hits and dimming when muted. The 6-hue `--spectrum` strip (hard stops, not a smooth rainbow) is its static echo on the top edge of the Producer panel, Console, welcome card and phone Layers sheet.
+The signature element is the **layer meter** under the title (`#hmeter`): one bar per layer, in its colour, its height following that layer's real audio level (dB scale) plus its note hits, fast rise and slower fall; muted, un-soloed and stopped layers fall to dim hairlines (js/sheet.js). The 6-hue `--spectrum` strip (hard stops, not a smooth rainbow) is its static echo on the top edge of the Producer panel, Console, welcome card and phone Layers sheet.
 
 ## Tokens (index.html `:root`)
 

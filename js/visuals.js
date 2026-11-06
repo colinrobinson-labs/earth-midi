@@ -213,10 +213,14 @@ function drawScope(off){if(off){if(!A)return 0;td=td||new Float32Array(A.an.fftS
   return Math.sqrt(rms/td.length)}
 /* ---------- per-card live meters (each layer's own audio) ---------- */
 const mbuf=new Float32Array(256);
-function drawMeters(){if(!A)return;PAN_KEYS.forEach(k=>{const c=$("vu"+k);if(!c||!c.offsetParent)return;
-  if(!FX.on(c)){A.meters[k].getFloatTimeDomainData(mbuf);let rms=0;for(let i=0;i<mbuf.length;i++)rms+=mbuf[i]*mbuf[i];rms=Math.sqrt(rms/mbuf.length);S.hit[k]=Math.max(S.hit[k],clamp(rms*5,0,1)*.7);return} // scrolled away: level only, no drawingconst w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);
-  A.meters[k].getFloatTimeDomainData(mbuf);let rms=0;g.beginPath();for(let i=0;i<mbuf.length;i++){rms+=mbuf[i]*mbuf[i];const x=i/mbuf.length*w,y=h/2+clamp(mbuf[i]*3,-1,1)*h/2;i?g.lineTo(x,y):g.moveTo(x,y)}
-  g.strokeStyle=COLS[k];g.lineWidth=1.2*DPR;g.shadowColor=COLS[k];g.shadowBlur=6*DPR;g.stroke();g.shadowBlur=0;rms=Math.sqrt(rms/mbuf.length);S.hit[k]=Math.max(S.hit[k],clamp(rms*5,0,1)*.7)})}
+// every layer's level is read every frame (cheap: 13 x 256 samples), even when its card is hidden or scrolled away,
+// so the title meter, rows and Console always follow the real mix; the waveform is only drawn when the card is on screen
+function drawMeters(){if(!A)return;const lv=S.lv||(S.lv={});PAN_KEYS.forEach(k=>{const m=A.meters[k];if(!m)return;m.getFloatTimeDomainData(mbuf);
+  let rms=0;for(let i=0;i<mbuf.length;i++)rms+=mbuf[i]*mbuf[i];rms=Math.sqrt(rms/mbuf.length);lv[k]=rms;S.hit[k]=Math.max(S.hit[k]||0,clamp(rms*5,0,1)*.7);
+  const c=$("vu"+k);if(!c||!c.offsetParent||!FX.on(c))return;
+  const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);g.beginPath();
+  for(let i=0;i<mbuf.length;i++){const x=i/mbuf.length*w,y=h/2+clamp(mbuf[i]*3,-1,1)*h/2;i?g.lineTo(x,y):g.moveTo(x,y)}
+  g.strokeStyle=COLS[k];g.lineWidth=1.2*DPR;g.shadowColor=COLS[k];g.shadowBlur=6*DPR;g.stroke();g.shadowBlur=0})}
 /* ---------- title letters glow with their layer ---------- */
 const TL_LAYERS=["q","s","o","x","w","t","c","i","u"];
 let titleLs=null;function drawTitle(){if(!titleLs||!titleLs[0]||!titleLs[0].isConnected)titleLs=[...document.querySelectorAll("#title .L")];titleLs.forEach((el,i)=>{const k=TL_LAYERS[i%TL_LAYERS.length];FX.css(el,"--h",(S.hit[k]||0).toFixed(2))})}
