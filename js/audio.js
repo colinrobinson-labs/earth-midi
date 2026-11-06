@@ -125,16 +125,23 @@ function issPluck(n,vel,pan,land,gm=1){if(!A||muted("i"))return;const {ctx}=A,c=
   const inst=CFG.inst.i;o.type=inst==="square"?"square":"sine";m.frequency.value=f*(land?3:2);mg.gain.setValueAtTime(f*(inst==="pluck"?2.5:inst==="glass"?1.2:.4),c);mg.gain.exponentialRampToValueAtTime(f*.01,c+.25);
   o.frequency.value=f;g.gain.setValueAtTime(0,c);g.gain.linearRampToValueAtTime(Math.pow(vel/127,1.4)*.16*gm*(inst==="square"?.5:1),c+.004);g.gain.exponentialRampToValueAtTime(.0004,c+(inst==="glass"?2.4:.9));
   p.pan.value=W_(pan);m.connect(mg);mg.connect(o.frequency);o.connect(g);g.connect(p);p.connect(A.buses.i);p.connect(A.dly);o.start(c);m.start(c);o.stop(c+2.6);m.stop(c+2.6)}
-/* ---------- NASA EONET: wildfire crackle, volcano drones, storm swirl ---------- */
-function buildEvents(){const {ctx}=A,cr=ctx.createGain();cr.gain.value=1;const hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=1800;cr.connect(hp);hp.connect(A.buses.e);
+/* ---------- NASA EONET: wildfire embers, volcano drones, storm swirl ---------- */
+function buildEvents(){const {ctx}=A,cr=ctx.createGain();cr.gain.value=1;const hp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=450;hp.Q.value=.5;const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.frequency.value=4500;lp.Q.value=.5;cr.connect(hp);hp.connect(lp);lp.connect(A.buses.e);
   const vol=ctx.createGain();vol.gain.value=0;const vlp=ctx.createBiquadFilter();vlp.type="lowpass";vlp.frequency.value=180;vlp.Q.value=4;vol.connect(vlp);vlp.connect(A.buses.e);
   const vo=[0,1,2,3,4,5].map(i=>{const o=ctx.createOscillator();o.type="sawtooth";o.frequency.value=mtof(ROOT-24+[0,7,12,-5,3,10][i]);o.detune.value=(i-2.5)*9;const g=ctx.createGain();g.gain.value=0;o.connect(g);g.connect(vol);o.start();return {o,g}});
   const st=ctx.createBufferSource();st.buffer=A.nb;st.loop=true;st.playbackRate.value=.4;const sbp=ctx.createBiquadFilter();sbp.type="bandpass";sbp.Q.value=2;sbp.frequency.value=400;const sg=ctx.createGain();sg.gain.value=0;
   const sl=ctx.createOscillator();sl.frequency.value=.2;const sl2=ctx.createGain();sl2.gain.value=300;sl.connect(sl2);sl2.connect(sbp.frequency);sl.start();const sp=ctx.createStereoPanner();const spl=ctx.createOscillator();spl.frequency.value=.13;const spg=ctx.createGain();spg.gain.value=.9;spl.connect(spg);spg.connect(sp.pan);spl.start();
   st.connect(sbp);sbp.connect(sg);sg.connect(sp);sp.connect(A.buses.e);st.start();
-  A.ev={cr,hp,vol,vo,sg,sl,nextCrackle:0}}
-function crackle(when,amp){const {ctx}=A,n=ctx.createBufferSource();n.buffer=A.nb;const g=ctx.createGain(),p=ctx.createStereoPanner();const d=.004+Math.random()*.02;
-  g.gain.setValueAtTime(amp,when);g.gain.exponentialRampToValueAtTime(.0005,when+d);p.pan.value=W_(Math.random()*1.6-.8);n.connect(g);g.connect(p);p.connect(A.ev.cr);n.start(when,Math.random()*3.5);n.stop(when+d+.01)}
+  A.ev={cr,hp,lp,vol,vo,sg,sl,nextCrackle:0}}
+/* Embers: each fire grain is a soft, tuned glint (sine on a scale note) plus a short breath of filtered noise.
+   Every envelope ramps up from zero and back down to zero, so nothing starts or stops on a hard edge.
+   The old crackle was 4-24 ms raw noise bursts that jumped straight to full level, which read as clicks. */
+function ember(when,amp,sc,dest,ctx=A.ctx){const b=+SN("eHp"),up=b>=3200?12:b<=800?-12:0,m=degree(sc,7+Math.floor(Math.random()*sc.length*1.5))+up;
+  const p=ctx.createStereoPanner();p.pan.value=W_(Math.random()*1.4-.7);p.connect(dest);
+  const o=ctx.createOscillator();o.type="sine";o.frequency.value=mtof(m);const og=ctx.createGain(),dec=.22+Math.random()*.38;
+  og.gain.setValueAtTime(0,when);og.gain.linearRampToValueAtTime(amp,when+.006);og.gain.exponentialRampToValueAtTime(amp*.004,when+dec);og.gain.linearRampToValueAtTime(0,when+dec+.02);o.connect(og);og.connect(p);o.start(when);o.stop(when+dec+.04);
+  const n=ctx.createBufferSource();n.buffer=A.nb;const bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=clamp(b*(.75+Math.random()*.5),300,8000);bp.Q.value=2.5;const ng=ctx.createGain(),nd=.06+Math.random()*.08;
+  ng.gain.setValueAtTime(0,when);ng.gain.linearRampToValueAtTime(amp*1.6,when+.008);ng.gain.exponentialRampToValueAtTime(amp*.006,when+nd);ng.gain.linearRampToValueAtTime(0,when+nd+.02);n.connect(bp);bp.connect(ng);ng.connect(p);n.start(when,Math.random()*3.5);n.stop(when+nd+.04)}
 /* ---------- Magnetosphere: Dst ring-current drone + proton glitter ---------- */
 function buildMag(){const {ctx}=A,a=ctx.createOscillator(),b=ctx.createOscillator(),rm=ctx.createGain(),g=ctx.createGain(),f=ctx.createBiquadFilter();
   a.frequency.value=mtof(ROOT);b.frequency.value=mtof(ROOT)*1.414;rm.gain.value=0;b.connect(rm.gain);a.connect(rm);f.type="bandpass";f.frequency.value=900;f.Q.value=1.5;rm.connect(f);f.connect(g);g.gain.value=0;g.connect(A.buses.g);a.start();b.start();
@@ -196,12 +203,12 @@ function updateEngine(){
   if(S.iss){const p=issAt(t);if(p){const sp2=sunPos(t),lit=sunElev(p.lat,p.lon,sp2)>-18;
     A.issV.o.frequency.setTargetAtTime(mtof(degree(sc,Math.round(map(p.lat,-52,52,0,sc.length*2)),ROOT+12)),c,.4);A.issV.g.gain.setTargetAtTime(muted("i")?0:(lit?.035:.018)*FOCUS.gain(p.lat,p.lon)*ZN.w("i",p.lat,p.lon),c,.3);A.issV.p.pan.setTargetAtTime(W_(FOCUS.pan(p.lat,p.lon,clamp(p.lon/180,-1,1)*.85)),c,.15);
     midiCC(CH("i"),16,map(p.lat,-52,52,0,127));midiCC(CH("i"),17,map(p.lon,-180,180,0,127));S.cur.iss=p;S.cur.issLit=lit}}
-  // events: wildfire crackle density, volcano drones, storm swirl
+  // events: wildfire ember density, volcano drones, storm swirl
   const act=S.events.filter(e=>e.start<=t),fireL=act.filter(e=>e.kind==="fire"),volL=act.filter(e=>e.kind==="volcano"),stormL=act.filter(e=>e.kind==="storm"),fires=fireL.length,vols=volL.length,storms=stormL.length;
   const fireV=viewCount(fireL),volV=viewCount(volL),stormV=viewCount(stormL); // what you hear leans toward the ones facing you; MIDI keeps the raw counts
-  A.ev.vo.forEach((v,i)=>{v.g.gain.setTargetAtTime(i<vols?.05*clamp(volV-i,0,1):0,c,2);v.o.frequency.setTargetAtTime(mtof(ROOT-24+12*SN("eOct")+[0,7,12,-5,3,10][i]),c,1)});A.ev.hp.frequency.setTargetAtTime(+SN("eHp"),c,.2);A.ev.vol.gain.setTargetAtTime(muted("e")?0:.9,c,1);
+  A.ev.vo.forEach((v,i)=>{v.g.gain.setTargetAtTime(i<vols?.05*clamp(volV-i,0,1):0,c,2);v.o.frequency.setTargetAtTime(mtof(ROOT-24+12*SN("eOct")+[0,7,12,-5,3,10][i]),c,1)});A.ev.hp.frequency.setTargetAtTime(+SN("eHp")*.25,c,.2);A.ev.lp.frequency.setTargetAtTime(Math.min(16000,+SN("eHp")*2.5),c,.2);A.ev.vol.gain.setTargetAtTime(muted("e")?0:.9,c,1);
   A.ev.sg.gain.setTargetAtTime(muted("e")?0:map(stormV,0,8,0,.28),c,2);A.ev.sl.frequency.setTargetAtTime(map(stormV,0,8,.05,.6),c,2);
-  if(!muted("e")&&fires&&fireV>.05){const rate=clamp(fireV/12,.3,14);while(A.ev.nextCrackle<c+.15){A.ev.nextCrackle=Math.max(A.ev.nextCrackle,c)+(-Math.log(1-Math.random()))/rate;crackle(A.ev.nextCrackle,.25+Math.random()*.4)}}
+  if(!muted("e")&&fires&&fireV>.05){const rate=clamp(fireV/14,.3,7),lv=.07/Math.sqrt(Math.max(1,rate/1.5));while(A.ev.nextCrackle<c+.15){A.ev.nextCrackle=Math.max(A.ev.nextCrackle,c)+(-Math.log(1-Math.random()))/rate;ember(A.ev.nextCrackle,lv*(.5+Math.random()*.6),sc,A.ev.cr)}}
   midiCC(CH("e"),20,map(fires,0,400,0,127));midiCC(CH("e"),21,map(vols,0,20,0,127));midiCC(CH("e"),22,map(storms,0,10,0,127));
   // magnetosphere
   const dst=dstAt(t),pf=protAt(t);A.mag.g.gain.setTargetAtTime(muted("g")?0:map(-(Number.isFinite(dst)?dst:0),-10,150,0,.2),c,2);A.mag.a.frequency.setTargetAtTime(mtof(ROOT),c,1);A.mag.b.frequency.setTargetAtTime(mtof(ROOT)*(SN("gMode")==="fifth"?1.5:SN("gMode")==="octave"?2:map(-(dst||0),0,200,1.414,2.618)),c,2);
