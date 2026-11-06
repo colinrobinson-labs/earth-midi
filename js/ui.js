@@ -112,12 +112,13 @@ function buildPro(){
     cs.slice(4).forEach(e=>e.classList.add("xtra"));if(PMORE.has(t))grp.classList.add("more-open");
     const b=document.createElement("button");b.type="button";b.className="pmore";const lab=()=>{const o=grp.classList.contains("more-open");b.textContent=o?"Fewer controls":`More (${cs.length-4})`;b.setAttribute("aria-expanded",String(o))};lab();
     b.onclick=()=>{const o=grp.classList.toggle("more-open");o?PMORE.add(t):PMORE.delete(t);lab()};grp.appendChild(b)});
+  if(typeof RESET!=="undefined")RESET.decorate(g);
   g.classList.toggle("enter",TABIN);TABIN=false}
 function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
   g.innerHTML=STUDIO.presets();
   g.querySelectorAll("[data-genre]").forEach(b=>b.onclick=()=>{if(S.style!=="pulse")setStyle("pulse");STUDIO.setLast(null);applyGenre(b.dataset.genre);AUD.pick("genre")});
   g.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>{STUDIO.setLast(b.dataset.fp);applyPreset(PRESETS[b.dataset.fp],b.dataset.fp);AUD.pick("preset");const n=$("pgrid").querySelector(`[data-fp="${CSS.escape(b.dataset.fp)}"]`);n&&n.classList.add("flash")});
-  g.querySelector("[data-reset]").onclick=()=>{STUDIO.setLast(null);CFG=clone(DEF);afterCFG();xs("Settings reset")};
+  g.querySelector("[data-reset]").onclick=()=>{STUDIO.setLast(null);if(typeof RESET!=="undefined"){if(!RESET.all())xs("Already at the defaults")}else{CFG=clone(DEF);afterCFG();xs("Settings reset")}};
   g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];STUDIO.setLast(b.dataset.up);CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`);AUD.pick("preset")});
   g.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteUserPreset(b.dataset.del));
   $("bUP").onclick=saveUserPreset;$("bEP").onclick=exportPreset;$("fPre").onchange=e=>{e.target.files[0]&&loadFile(e.target.files[0]);e.target.value=""};

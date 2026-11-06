@@ -154,6 +154,7 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 .pnote{font:11px var(--mono);color:var(--mute);margin:4px 0 0}
 .cx-h .pgo{margin-left:auto;height:30px;padding:0 10px;border-radius:9px;background:var(--q);color:var(--bg);border:0;font:700 11px var(--mono);letter-spacing:0;text-transform:none}
 .cns.edit .cx-h .pgo{display:none}
+.cx-h .rzg{height:30px;padding:0 10px 0 8px;font-size:11px;letter-spacing:0;text-transform:none}.cx-h .rzg:not([hidden]){display:inline-flex}.cx-h .pgo:not([hidden])~.rzg{margin-left:6px}.cns.edit .cx-h .rzg{display:none!important}
 .pnote button{min-height:32px;padding:0 10px;border-radius:9px;margin-left:6px;background:var(--q);color:var(--bg);border:0;font:600 12px var(--body)}
 /* master */
 .mfs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -254,7 +255,8 @@ function reset(d){const v=defOf(d);if(d.k==="rev"){CFG.rev=-1;afterCFG(true);dir
 
 /* ---------- sections ---------- */
 function head(id){const extra=id==="pulse"?`<button type="button" class="pgo" id="cnPNote" data-style="pulse" hidden title="The groove rests in Ambient">Switch to Pulse</button>`:"";const m=SECS[id],i=L.order.filter(k=>!L.hide.includes(k)).indexOf(id),n=L.order.filter(k=>!L.hide.includes(k)).length;
-  return `<header class="cx-h"><span class="gi">${ic(m.i)}</span>${m.n}<small>${m.s}</small>${extra}<span class="cx-ed"><button data-smv="-1" data-sec="${id}" aria-label="Move ${m.n} earlier"${i<=0?" disabled":""}>↑</button><button data-smv="1" data-sec="${id}" aria-label="Move ${m.n} later"${i>=n-1?" disabled":""}>↓</button><button data-shide="${id}" aria-label="Hide ${m.n}">${eye}</button></span></header>`}
+  const rz=typeof RESET!=="undefined"?`<button type="button" class="rzg" data-srz="${id}" hidden title="Put every ${m.n} setting back to default"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg><span>Reset</span></button>`:"";
+  return `<header class="cx-h"><span class="gi">${ic(m.i)}</span>${m.n}<small>${m.s}</small>${extra}${rz}<span class="cx-ed"><button data-smv="-1" data-sec="${id}" aria-label="Move ${m.n} earlier"${i<=0?" disabled":""}>↑</button><button data-smv="1" data-sec="${id}" aria-label="Move ${m.n} later"${i>=n-1?" disabled":""}>↓</button><button data-shide="${id}" aria-label="Hide ${m.n}">${eye}</button></span></header>`}
 const eye=svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 20L20 4"/>');
 function secCh(){const ks=L.chOrder.filter(k=>!L.chHide.includes(k));
   return `<section class="cx ch" style="--ac:var(--o)">${head("ch")}<div class="strips">${ks.map((k,i)=>{const col=COLS[k],nm=LNAME[k];
@@ -291,6 +293,8 @@ function secMaster(){const col=(k,lab,o,extra)=>vcol(k,lab,Object.assign({aria:"
    <div class="mf vol"><span>VOLUME</span>${fd("_vol",{lab:"Volume",min:0,max:1,step:.01,fmt:pct,aria:"Master volume"})}<output data-o="_vol"></output></div></div>
    <div class="mrow"><div class="cg"><div class="lb">Reverb room</div>${chips("revType",ROOM_L)}</div><div class="cg"><div class="lb">Delay time</div>${chips("dtime",DT_L)}</div></div></section>`}
 const SEC={ch:secCh,sound:secSound,pulse:secPulse,master:secMaster};
+/* what each section's Reset puts back (master volume is the listener's own level, so it stays) */
+const SECK={ch:PAN_KEYS.flatMap(k=>["vol."+k,"send."+k]),sound:["key","oct","scale","prog"],pulse:["genre","pattern","bpmMin","bpmMax","tempoSrc","swing","humanize","hats","duck","bpmLock"],master:["rev","dfb","drive","lowEq","highEq","hpf","mlp","revType","dtime"]};
 
 /* ---------- build ---------- */
 let root=null,body=null,open_=false,dirty=false;
@@ -339,6 +343,7 @@ function syncAll(force){
   const pl=$("cnPlay");if(pl){pl.classList.toggle("on",!!S.on)}
   const pn=$("cnPNote");if(pn)pn.hidden=S.style==="pulse";const px=root.querySelector(".cx.pulse");if(px)px.classList.toggle("dim",S.style!=="pulse");
   const gg=$("cnGrid");if(gg&&gg._p!==CFG.pattern){gg._p=CFG.pattern;gg.innerHTML=STUDIO.grid(CFG.pattern,1);const gn=$("cnGName");if(gn)gn.textContent=(GROOVES[CFG.pattern]||{}).n||""}
+  if(typeof RESET!=="undefined")root.querySelectorAll("[data-srz]").forEach(b=>{const h=!SECK[b.dataset.srz].some(RESET.changed);if(b.hidden!==h)b.hidden=h});
   root.querySelectorAll(".cs").forEach(s=>{const k=s.dataset.k;s.classList.toggle("off",muted(k));s.classList.toggle("solo",S.solo===k);
     const m=s.querySelector("[data-cm]"),so=s.querySelector("[data-cs]");if(m)m.setAttribute("aria-pressed",!!S.mute[k]);if(so)so.setAttribute("aria-pressed",S.solo===k)})}
 const scName=()=>CFG.scale==="auto"?kpScaleName(S.cur.kp||2)+" (auto)":SCALE_F[CFG.scale]||CFG.scale;
@@ -381,6 +386,7 @@ function bind(){
     if(b.id==="cnEdit"||b.id==="cnDone"){editing=!editing;if(b.id==="cnDone")editing=false;root.classList.toggle("edit",editing);$("cnEdit").setAttribute("aria-pressed",editing);fit();return}
     if(b.id==="cnFs"){toggleFs();return}
     if(b.id==="cnReset"){L=clone(DEFL);save();build();return}
+    if(ds.srz){RESET.keys(SECK[ds.srz],SECS[ds.srz].n);dirty=true;syncAll(true);return}
     if(b.id==="cnMoon"){CFG.rev=+CFG.rev<0?moonRev():-1;afterCFG(true);dirty=true;syncAll(true);return}
     if(ds.style){setStyle(ds.style);syncAll(false);return}
     if(ds.cm){toggleMute(ds.cm);syncAll(false);return}
