@@ -21,12 +21,17 @@
   reset();
   // rows breathe with their layer
   const rows={},dots={},bars={},dw=$("ldots"),hm=$("hmeter");document.querySelectorAll(".lrow").forEach(r=>{const k=r.dataset.k;rows[k]=r;const d=document.createElement("i");d.style.setProperty("--c",COLS[k]);dw.appendChild(d);dots[k]=d;if(hm){const b=document.createElement("i");b.style.setProperty("--c",COLS[k]);hm.appendChild(b);bars[k]=b}});
-  // ~30 fps (15 at the light effects level, js/fx.js), and only writes what changed and what's on screen
-  let gT=0;(function glow(now){requestAnimationFrame(glow);if(document.hidden||now-gT<(FX.lvl?62:31))return;gT=now;
-    const rOn=FX.on(side),hOn=FX.on(hm),dOn=mq.matches;
-    for(const k in rows){const v=(S.hit[k]||0).toFixed(2),off=muted(k);if(rOn)FX.css(rows[k],"--hit",v);
-      if(bars[k]&&hOn){FX.css(bars[k],"--hit",v);if(bars[k]._off!==off){bars[k]._off=off;bars[k].classList.toggle("off",off)}}
-      if(dOn){FX.css(dots[k],"--hit",v);if(dots[k]._off!==off){dots[k]._off=off;dots[k].classList.toggle("off",off)}}}})(0);
+  // ~30 fps (15 at the light effects level, js/fx.js), and only writes what changed and what's on screen.
+  // The title meter and the phone dots show each layer's real audio level on a dB scale (so quiet beds still register)
+  // plus its note hits; muted, un-soloed and stopped layers fall to a hairline. Fast rise, slower fall, same speed at any fps.
+  const DB_LO=-64,DB_SPAN=48,mv={};
+  const lvl=k=>{if(!S.on||muted(k))return 0;const r=S.lv&&S.lv[k]||0,d=r>1e-5?clamp((20*Math.log10(r)-DB_LO)/DB_SPAN,0,1):0;return Math.max(d,clamp(S.hit[k]||0,0,1))};
+  let gT=0;(function glow(now){requestAnimationFrame(glow);if(document.hidden||now-gT<(FX.lvl?62:31))return;const dt=gT?Math.min(250,now-gT):31;gT=now;
+    const rOn=FX.on(side),hOn=FX.on(hm),dOn=mq.matches,up=1-Math.pow(.25,dt/31),dn=1-Math.pow(.88,dt/31);
+    for(const k in rows){const off=muted(k);if(rOn)FX.css(rows[k],"--hit",(S.hit[k]||0).toFixed(2));
+      const t=lvl(k),o=mv[k]||0,v=o+(t-o)*(t>o?up:dn);mv[k]=v<.005?0:v;const vs=mv[k].toFixed(2);
+      if(bars[k]&&hOn){FX.css(bars[k],"--hit",vs);if(bars[k]._off!==off){bars[k]._off=off;bars[k].classList.toggle("off",off)}}
+      if(dOn){FX.css(dots[k],"--hit",vs);if(dots[k]._off!==off){dots[k]._off=off;dots[k].classList.toggle("off",off)}}}})(0);
   // first visit on a phone: a small lift so people see the drawer is there
   let seen=false;try{seen=!!localStorage.getItem("em5.sheetSeen")}catch(_){}
   if(mq.matches&&!seen){setTimeout(()=>{if(state===0){side.classList.add("nudge");side.addEventListener("animationend",()=>side.classList.remove("nudge"),{once:true})}},2200)}
