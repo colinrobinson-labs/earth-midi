@@ -155,8 +155,8 @@ function tick(){
     S.recent.push(nowMs);
     if(CFG.quant&&S.style==="pulse"&&A){S.played.add(q.id);const d=Math.max(0,(seq.next-A.ctx.currentTime)*1000);setTimeout(()=>playQuake(q),d)}else playQuake(q)}
   const xf=xrayAt(t),xc=flareClass(xf)[0];if(lastX&&"CMX".includes(xc)&&"ABCMX".indexOf(xc)>"ABCMX".indexOf(lastX))flareBell(flareClass(xf),xf);lastX=xc;
-  const oh=S.cur.oh||0,op=S.cur.op||8;
-  if(nowMs-lastOceanNote>op*1000){lastOceanNote=nowMs;const n=degree(scaleFor(S.cur.kp||2),Math.round(map(oh,0,6,2,8)),ROOT-12);midiNote(CH("o"),n,Math.round(map(oh,0,6,30,110)),op*600);pushNote(n,"o",map(oh,0,6,30,110),op*.6);S.hit.o=.7}
+  let oh=S.cur.oh||0,op=S.cur.op||8;const oZ=ZN.has("o");if(oZ){const v=viewOcean(t);if(Number.isFinite(v.h))oh=v.h;if(Number.isFinite(v.p))op=v.p||op}
+  if(nowMs-lastOceanNote>op*1000&&!(oZ&&ZN.bus("o")<.02)){lastOceanNote=nowMs;const n=degree(scaleFor(S.cur.kp||2),Math.round(map(oh,0,6,2,8)),ROOT-12);midiNote(CH("o"),n,Math.round(map(oh,0,6,30,110)),op*600);pushNote(n,"o",map(oh,0,6,30,110),op*.6);S.hit.o=.7}
   // ISS: a pluck every 5° of orbit (72 per revolution)
   if(S.iss){const per=86400000/S.iss.n,st=Math.floor((t-S.iss.epoch)/(per/72));if(issStep!==null&&st!==issStep&&(()=>{const p=issAt(t);return p&&ZN.w("i",p.lat,p.lon)>.02})()){const p=issAt(t),land=isLand(p.lat,p.lon),sc=scaleFor(S.cur.kp||2),n=degree(sc,Math.round(map(p.lat,-52,52,0,sc.length*2))+(land?sc.length:0),ROOT),vel=S.cur.issLit?(land?96:76):48;
       issPluck(n,vel,FOCUS.pan(p.lat,p.lon,clamp(p.lon/180,-1,1)*.85),land,FOCUS.gain(p.lat,p.lon));midiNote(CH("i"),n,vel,300);pushNote(n,"i",vel,.6);S.hit.i=.9}issStep=st}

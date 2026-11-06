@@ -2,7 +2,8 @@
    Draw a circle, a latitude band or pick a region for a layer, and that layer only plays what is inside it.
    Still real data: events outside are skipped, sensor layers average only the sensors inside, and the sky
    layers follow physics (X-rays and solar wind reach the sunlit side, the magnetosphere sings where the aurora is).
-   A soft edge fades things in across the border instead of cutting them. Off by default; stands down in Zeus Mode.
+   The edge is exact: what you see drawn is what you hear. A zone can sweep around the planet like a playhead, and
+   then each quake or event from the last 24 h plays as the zone passes over it. Off by default; stands down in Zeus Mode.
    Zones live in CFG.zones, so sessions, presets and share links carry them.
    MIDI: each zoned layer sends CC 102 size, 103 centre longitude, 104 centre latitude, 105 how much is inside,
    on that layer's own channel. Notes stay exactly what the sensors said. */
@@ -18,7 +19,7 @@ const Z={sel:"q",armed:false,drawing:null,sky:{s:1,x:1,g:1},skyT:0,eff:{},beats:
 const godOn_=()=>!!(window.GOD&&window.GOD.on);
 const active=()=>!!CFG.zonesOn&&!godOn_();
 const zOf=k=>{const z=CFG.zones&&CFG.zones[k];return z&&z.shape?z:null};
-// the zone as it is right now, after its motion (breathe, orbit, drift, follow)
+// the zone as it is right now, after its sweep
 const zE=k=>{const z=zOf(k);return z?(Z.eff[k]||z):null};
 const save=()=>{try{localStorage.setItem("em5.cfg",JSON.stringify(CFG))}catch(_){}};
 
@@ -26,22 +27,21 @@ const save=()=>{try{localStorage.setItem("em5.cfg",JSON.stringify(CFG))}catch(_)
 function gcKm(la1,lo1,la2,lo2){const p1=la1*D2R,p2=la2*D2R,dp=p2-p1,dl=(lo2-lo1)*D2R,a=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*KM*Math.asin(Math.min(1,Math.sqrt(a)))}
 const sstep=e=>{e=clamp(e,0,1);return e*e*(3-2*e)};
 const fall=(d,f)=>d<=0?1:f<=0?0:d>=f?0:1-sstep(d/f);
-const wrapLon=d=>Math.abs(((d+540)%360)-180);
-function rawW(z,lat,lon){let w=1;
-  if(z.shape==="circle"){const d=gcKm(z.lat,z.lon,lat,lon);w=fall(d-z.r,z.r*z.soft)}
-  else if(z.shape==="band"){const lo=Math.min(z.a,z.b),hi=Math.max(z.a,z.b),d=lat<lo?lo-lat:lat>hi?lat-hi:0;w=fall(d,Math.max(2,(hi-lo)*.6)*z.soft)}
-  else if(z.shape==="region"){const R=REGIONS[z.id];if(!R)return 1;let best=1e9;
-    for(const [a,b,c,d] of R){const dl=lat<a?a-lat:lat>b?lat-b:0,dn=(lon>=c&&lon<=d)?0:Math.min(wrapLon(lon-c),wrapLon(lon-d));best=Math.min(best,Math.hypot(dl,dn*Math.cos(lat*D2R)))}
-    w=fall(best,20*z.soft)}
-  return z.inv?1-w:w}
+// inside = 1, outside = 0. Hard edge, so the line on the map is the line you hear.
+// (older saves may carry soft/inv fields from the first version; they are ignored.)
+function rawW(z,lat,lon){
+  if(z.shape==="circle")return gcKm(z.lat,z.lon,lat,lon)<=z.r?1:0;
+  if(z.shape==="band"){const lo=Math.min(z.a,z.b),hi=Math.max(z.a,z.b);return lat>=lo&&lat<=hi?1:0}
+  if(z.shape==="region"){const R=REGIONS[z.id];if(!R)return 1;return R.some(([a,b,c,d])=>lat>=a&&lat<=b&&lon>=c&&lon<=d)?1:0}
+  return 1}
 // rough centre + size, for MIDI and labels
 function zMeta(z){if(z.shape==="circle")return {lat:z.lat,lon:z.lon,km:z.r};
   if(z.shape==="band"){const lo=Math.min(z.a,z.b),hi=Math.max(z.a,z.b);return {lat:(lo+hi)/2,lon:0,km:(hi-lo)*111.2/2}}
   const R=REGIONS[z.id]||[[-90,90,-180,180]],b=R[0];return {lat:(b[0]+b[1])/2,lon:(b[2]+b[3])/2,km:Math.max(b[1]-b[0],(b[3]-b[2])*Math.cos((b[0]+b[1])/2*D2R))*111.2/2}}
 const kmTxt=km=>km>=995?`${(Math.round(km/100)/10).toLocaleString()}k km`:`${Math.round(km/10)*10} km`;
-function zLabel(z){if(!z)return "Whole Earth";const inv=z.inv?"Outside ":"";
-  if(z.shape==="circle")return inv+"Circle "+kmTxt(z.r);if(z.shape==="band"){const f=v=>`${Math.abs(Math.round(v))}°${v>=0?"N":"S"}`;return inv+`Band ${f(Math.min(z.a,z.b))}–${f(Math.max(z.a,z.b))}`}
-  return inv+(RNAME[z.id]||"Region")}
+function zLabel(z){if(!z)return "Whole Earth";
+  if(z.shape==="circle")return "Circle "+kmTxt(z.r);if(z.shape==="band"){const f=v=>`${Math.abs(Math.round(v))}°${v>=0?"N":"S"}`;return `Band ${f(Math.min(z.a,z.b))}–${f(Math.max(z.a,z.b))}`}
+  return RNAME[z.id]||"Region"}
 
 /* ---------- the sky layers: physics decides which part of a zone they reach ---------- */
 const GRID=[];for(let la=-87.5;la<90;la+=5)for(let lo=-177.5;lo<180;lo+=5)GRID.push([la,lo,Math.cos(la*D2R)]);
@@ -64,33 +64,17 @@ ZN.bus=k=>{if(!active())return 1;const z=zE(k);if(!z)return 1;
 ZN.label=k=>zLabel(zOf(k));
 
 
-/* ---------- motion: zones breathe, orbit, drift or follow something real, locked to the tempo ---------- */
-const MOVES={circle:[["still","Still"],["breathe","Breathe"],["orbit","Orbit"],["drift","Drift"],["follow","Follow"],["keys","Keys"]],band:[["still","Still"],["breathe","Breathe"],["orbit","Sway"],["drift","Climb"],["keys","Keys"]],region:[["still","Still"],["breathe","Breathe"]]};
-const FOLLOW=[["sun","Midday sun"],["night","Midnight"],["iss","Space station"],["dawn","Sunrise line"],["dusk","Sunset line"]];
-const FNAME=Object.fromEntries(FOLLOW),BARS=[1,2,4,8,16,32];
-const mvOf=z=>z&&z.move&&z.move.type&&z.move.type!=="still"?z.move:null;
-function mvWord(z){const m=mvOf(z);if(!m)return "";if(m.type==="keys")return ` · ${(m.keys||[]).length} keys /${m.bars} bar${m.bars>1?"s":""}`;if(m.type==="follow")return ` · follows ${FNAME[m.target]||"sun"}`;
-  const n={breathe:"breathes",orbit:z.shape==="band"?"sways":"orbits",drift:z.shape==="band"?"climbs":"drifts east"}[m.type]||m.type;return ` · ${n} /${m.bars} bar${m.bars>1?"s":""}`}
-function dest(lat,lon,brg,ang){const p1=lat*D2R,d=ang*D2R,p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(brg));
-  return [p2/D2R,((lon+Math.atan2(Math.sin(brg)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2))/D2R+540)%360)-180]}
-function followAt(target){const t=realNow(),sp=sunPos(t);
-  if(target==="iss"){const p=S.iss&&issAt(t);return p?[p.lat,p.lon]:null}
-  if(target==="night")return [-sp.lat,((sp.lon+360)%360)-180];
-  if(target==="dawn")return [0,((sp.lon-90+540)%360)-180];if(target==="dusk")return [0,((sp.lon+90+540)%360)-180];
-  return [sp.lat,sp.lon]}
-/* keyframes: the zone travels between the shapes you set, once per loop */
-const KF=["lat","lon","r","a","b"];
-const keyOf=z=>z.shape==="circle"?{lat:z.lat,lon:z.lon,r:z.r}:{a:z.a,b:z.b};
-function keyAt(z,m,ph){const ks=(m.keys||[]).slice().sort((a,b)=>a.t-b.t);if(!ks.length)return null;if(ks.length===1)return ks[0];
-  let i=ks.length-1;for(let j=0;j<ks.length;j++)if(ks[j].t<=ph)i=j;const A_=ks[i],B_=ks[(i+1)%ks.length],t0=A_.t,t1=B_.t+(i===ks.length-1?1:0),p=ph<t0?ph+1:ph;
-  let f=t1>t0?clamp((p-t0)/(t1-t0),0,1):0;f=m.ease==="jump"?0:m.ease==="linear"?f:sstep(f);
-  if(z.shape==="circle"){let dl=B_.lon-A_.lon;if(dl>180)dl-=360;if(dl<-180)dl+=360;return {lat:lerp(A_.lat,B_.lat,f),lon:((A_.lon+dl*f+540)%360)-180,r:Math.exp(lerp(Math.log(A_.r),Math.log(B_.r),f))}}
-  return {a:lerp(A_.a,B_.a,f),b:lerp(A_.b,B_.b,f)}}
-/* Scan: a moving zone works like a playhead. An earthquake or natural event from the last 24 h plays when the zone
+/* ---------- motion: Still, or Sweep (one lap per N bars, locked to the tempo) ----------
+   A circle sweeps east around the planet; a band sweeps pole to pole and back. */
+const BARS=[4,8,16,32];
+const mvOf=z=>z&&z.shape!=="region"&&z.move&&z.move.type==="drift"?z.move:null;// older saves: breathe/orbit/follow/keys now read as Still
+const lapTxt=m=>`/${m.bars} bar${m.bars>1?"s":""}`;
+function mvWord(z){const m=mvOf(z);return m?` · sweeps ${z.shape==="band"?"pole to pole":"east"} ${lapTxt(m)}`:""}
+/* Sweep doubles as a playhead. An earthquake or natural event from the last 24 h plays when the zone
    sweeps over it. What you hear is still the real event (its note, magnitude, place); when you hear it is your move. */
 const SCAN={prev:{q:new Map(),e:new Map()},last:new Map(),recent:[]};
 function scanTick(){if(!active()||!S.on)return;const t=realNow(),nowMs=performance.now();SCAN.recent=SCAN.recent.filter(x=>nowMs-x<1000);
-  for(const k of ["q","e"]){const z=zOf(k);if(!z||!z.scan){SCAN.prev[k].clear();continue}const ez=zE(k),pv=SCAN.prev[k],list=k==="q"?S.quakes.filter(q=>q.time<=t&&q.time>t-864e5&&q.mag>=CFG.mmin):S.events.filter(e=>e.start<=t);
+  for(const k of ["q","e"]){const z=zOf(k);if(!mvOf(z)){SCAN.prev[k].clear();continue}const ez=zE(k),pv=SCAN.prev[k],list=k==="q"?S.quakes.filter(q=>q.time<=t&&q.time>t-864e5&&q.mag>=CFG.mmin):S.events.filter(e=>e.start<=t);
     for(const o of list){const w=rawW(ez,o.lat,o.lon),was=pv.get(o.id);pv.set(o.id,w);if(was===undefined||was>=.5||w<.5)continue;
       if(nowMs-(SCAN.last.get(o.id)||0)<1500||SCAN.recent.length>=CFG.dens||muted(k))continue;SCAN.last.set(o.id,nowMs);SCAN.recent.push(nowMs);
       if(k==="q"){Z.forceW=true;try{playQuake(o)}finally{Z.forceW=false}}
@@ -98,18 +82,9 @@ function scanTick(){if(!active()||!S.on)return;const t=realNow(),nowMs=performan
 function moveTick(){const now=performance.now(),dt=Z.lastT?Math.min(.25,(now-Z.lastT)/1000):0;Z.lastT=now;
   let bpm=120;try{bpm=curBPM()||120}catch(_){}Z.bpm=bpm;Z.beats+=dt*bpm/60;let any=false;
   for(const k of ZKEYS){const z=zOf(k),m=mvOf(z);if(!m||!CFG.zonesOn){delete Z.eff[k];continue}any=true;
-    const ph=(Z.beats/(Math.max(1,m.bars)*4))%1,d=clamp(m.depth??.5,0,1),sn=Math.sin(2*Math.PI*ph),e=Object.assign({},z);
-    if(z.shape==="circle"){
-      if(m.type==="breathe")e.r=clamp(z.r*(1+d*.9*sn),50,15000);
-      else if(m.type==="orbit"){const [la,lo]=dest(z.lat,z.lon,2*Math.PI*ph,Math.max(2,z.r*(.3+d*1.7)/KM/D2R));e.lat=la;e.lon=lo}
-      else if(m.type==="drift")e.lon=((z.lon+360*ph+540)%360)-180;
-      else if(m.type==="follow"){const f=followAt(m.target);if(f){e.lat=f[0];e.lon=f[1]}}}
-    else if(z.shape==="band"){const lo=Math.min(z.a,z.b),hi=Math.max(z.a,z.b),c=(lo+hi)/2,h=(hi-lo)/2;
-      if(m.type==="breathe"){const h2=Math.max(1,h*(1+d*.9*sn));e.a=clamp(c-h2,-90,90);e.b=clamp(c+h2,-90,90)}
-      else if(m.type==="orbit"){const sh=d*35*sn;e.a=clamp(lo+sh,-90,90);e.b=clamp(hi+sh,-90,90)}
-      else if(m.type==="drift"){const span=180-2*h,cc=-90+h+span*(1-Math.abs(1-2*ph));e.a=cc-h;e.b=cc+h}}
-    else if(z.shape==="region"&&m.type==="breathe")e.soft=Math.max(0,z.soft+d*1.5*(1+sn));
-    if(m.type==="keys"&&z.shape!=="region"){const kv=k===Z.sel&&Z.ksel!=null&&m.keys[Z.ksel]?m.keys[Z.ksel]:keyAt(z,m,ph);if(kv)for(const f of KF)if(f in kv)e[f]=kv[f]}
+    const ph=(Z.beats/(Math.max(1,m.bars)*4))%1,e=Object.assign({},z);
+    if(z.shape==="circle")e.lon=((z.lon+360*ph+540)%360)-180;
+    else{const lo=Math.min(z.a,z.b),hi=Math.max(z.a,z.b),h=(hi-lo)/2,span=180-2*h,cc=-90+h+span*(1-Math.abs(1-2*ph));e.a=cc-h;e.b=cc+h}
     if(k===Z.sel)Z.ph=ph;
     Z.eff[k]=e}
   if(any&&now-Z.skyT>250&&active())skyUpdate();try{scanTick()}catch(err){console.error(err)}}
@@ -133,7 +108,7 @@ function status(k){const z=zE(k);if(!z)return `${LNAME[k]} plays the whole plane
     case"g":return Z.sky.g>.05?"This area touches the aurora oval: the magnetosphere sings here.":"This area is away from the aurora oval, so the magnetosphere is quiet. Try the far north or south."}
   return ""}
 
-function statusAll(k){const z=zOf(k),m=mvOf(z);return status(k)+(m?` Motion: ${mvWord(z).replace(" · ","")}${m.type==="follow"?"":` at ${Math.round(Z.bpm)} BPM`}.`:"")}
+function statusAll(k){const z=zOf(k),m=mvOf(z);return status(k)+(m?` Sweeping ${z.shape==="band"?"pole to pole":"east"}, one lap every ${m.bars} bars at ${Math.round(Z.bpm)} BPM${k==="q"||k==="e"?`: each ${k==="q"?"quake":"event"} from the last 24 h plays as the zone passes over it`:""}.`:"")}
 /* ---------- MIDI: zone moves as CCs on each layer's own channel ---------- */
 setInterval(()=>{if(!active()||!S.on)return;for(const k of ZKEYS){const z=zE(k);if(!z)continue;const m=zMeta(z),ch=CH(k);
   midiCC(ch,102,map(Math.log10(Math.max(50,m.km)),Math.log10(50),Math.log10(20000),0,127));midiCC(ch,103,map(m.lon,-180,180,0,127));midiCC(ch,104,map(m.lat,-90,90,0,127));midiCC(ch,105,ZN.bus(k)*127)}},100);
@@ -150,16 +125,15 @@ window.drawZones=function(now){if(!CFG.zonesOn||godOn_())return;const W=cv.width
   const keys=ZKEYS.filter(k=>zOf(k)).sort((a,b)=>(a===Z.sel)-(b===Z.sel));if(!keys.length&&!Z.armed)return;
   cx.save();cx.font=`600 ${10.5*DPR}px "IBM Plex Mono",monospace`;const placed=[];
   for(const k of keys){const z=zE(k),base=zOf(k),col=COLS[k]||"#fff",sel=k===Z.sel,a=sel?.95:.5,march=-(now/(sel?45:90))%24;
-    cx.lineWidth=(sel?2:1.2)*DPR;cx.strokeStyle=rgba(col,a);cx.fillStyle=rgba(col,z.inv?0:(sel?.10:.05));
-    let shapes=[],soft=[];
-    if(z.shape==="circle"){const ang=z.r/KM/D2R;shapes=[smallCircle(z.lat,z.lon,Math.min(179,ang),96)];if(z.soft>0)soft=[smallCircle(z.lat,z.lon,Math.min(179,ang+z.r*z.soft/KM/D2R),96)]}
-    else if(z.shape==="band"){const lo=Math.min(z.a,z.b),hi=Math.max(z.a,z.b),f=Math.max(2,(hi-lo)*.6)*z.soft;shapes=[latLine(lo),latLine(hi)];if(z.soft>0)soft=[latLine(clamp(lo-f,-89,89)),latLine(clamp(hi+f,-89,89))];
-      if(!z.inv){if(CFG.mapView==="flat"){const [,y1]=proj(0,hi),[,y2]=proj(0,lo);cx.fillRect(0,y1,W,y2-y1)}}}
+    cx.lineWidth=(sel?2:1.2)*DPR;cx.strokeStyle=rgba(col,a);cx.fillStyle=rgba(col,sel?.10:.05);
+    let shapes=[];
+    if(z.shape==="circle"){const ang=z.r/KM/D2R;shapes=[smallCircle(z.lat,z.lon,Math.min(179,ang),96)]}
+    else if(z.shape==="band"){const lo=Math.min(z.a,z.b),hi=Math.max(z.a,z.b);shapes=[latLine(lo),latLine(hi)];
+      if(CFG.mapView==="flat"){const [,y1]=proj(0,hi),[,y2]=proj(0,lo);cx.fillRect(0,y1,W,y2-y1)}}
     else{const R=REGIONS[z.id]||[];shapes=R.map(b=>boxPts(...b))}
     if(z!==base&&base.shape==="circle"){cx.save();cx.setLineDash([1.5*DPR,5*DPR]);cx.lineWidth=1*DPR;cx.strokeStyle=rgba(col,a*.35);strokePath(smallCircle(base.lat,base.lon,Math.min(179,base.r/KM/D2R),72));cx.restore()}
-    if(!z.inv&&z.shape!=="band")shapes.forEach(fillPts);
+    if(z.shape!=="band")shapes.forEach(fillPts);
     cx.setLineDash([8*DPR,5*DPR]);cx.lineDashOffset=march*DPR;shapes.forEach(strokePath);
-    if(soft.length){cx.setLineDash([2*DPR,6*DPR]);cx.lineWidth=1*DPR;cx.strokeStyle=rgba(col,a*.55);soft.forEach(strokePath)}
     cx.setLineDash([]);
     const m=zMeta(z),[x,y0,v]=z.shape==="band"?proj(CFG.mapView==="flat"?0:VIEW.lon,Math.max(z.a,z.b)):proj(m.lon,m.lat);let y=y0;
     if(v>0){if(z.shape==="circle"){cx.strokeStyle=rgba(col,a);cx.lineWidth=1.2*DPR;cx.beginPath();cx.moveTo(x-5*DPR,y);cx.lineTo(x+5*DPR,y);cx.moveTo(x,y-5*DPR);cx.lineTo(x,y+5*DPR);cx.stroke()}
@@ -193,22 +167,16 @@ const css=`
 .zn-rng input[type=range]{width:150px}
 .zn-rng output{color:var(--fg);min-width:64px}
 .zn-row select{font:12px var(--mono);padding:6px 8px;background:var(--sf2);color:var(--fg);border:1px solid var(--line2);border-radius:8px}
-.zn-chk{display:inline-flex;align-items:center;gap:6px;font:11.5px var(--mono);color:var(--fg)}
 .zn-stat{font:12px/1.5 var(--mono);color:#c9d6e2;margin:2px 0 0;min-height:18px}
-.zn-lane{position:relative;flex:1;min-width:220px;height:34px;border:1px solid var(--line2);border-radius:8px;background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),transparent 0);overflow:hidden;touch-action:none;cursor:pointer}
-.zn-lane .tk,.zn-lane .zn-ph,.zn-lane .kf{left:calc(12px + var(--x,0)*(100% - 24px))}.zn-lane .tk{pointer-events:none;position:absolute;top:6px;bottom:6px;width:1px;background:var(--mute);opacity:.6}.zn-lane .tk.bt{opacity:.25;top:12px;bottom:12px}
-.zn-lane .zn-ph{position:absolute;top:0;bottom:0;width:2px;background:var(--kc);box-shadow:0 0 10px var(--kc);pointer-events:none}
-.zn-lane .kf{position:absolute;top:50%;width:14px;height:14px;min-height:0;padding:0;margin:-7px 0 0 -7px;transform:rotate(45deg);border-radius:2px!important;box-sizing:border-box;min-width:0;background:var(--sf2);border:2px solid var(--kc);cursor:grab}
-.zn-lane .kf.on{background:var(--kc);box-shadow:0 0 12px var(--kc)}
-#znKDel:disabled{opacity:.4}
 .zn-u{font:10.5px var(--mono);color:var(--mute)}
 .zn-bars button{min-width:34px}
+.zn-lap{display:inline-flex;align-items:center;gap:8px}.zn-lap[hidden]{display:none}
 .zn-note{font:11px/1.5 var(--mono);color:var(--mute);margin:0}
 .zn-more{margin-left:auto;display:flex;gap:6px}
 body.god #znPanel{display:none}
 .lrow.zoned .lname::after{content:"◎";color:var(--c);font-size:12px;margin-left:-2px;text-shadow:0 0 8px var(--c)}
 @media (max-width:700px){#znPanel{padding:10px}.zn-h span{flex-basis:100%;order:3}.zn-lay{flex-wrap:nowrap;overflow-x:auto;margin:0 -10px 10px;padding:0 10px;scrollbar-width:none}.zn-lay::-webkit-scrollbar{display:none}.zn-lay button{flex:none}
-  .zn-row .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;width:100%}.zn-row .zn-bars{width:auto;flex:1}.zn-lane{min-width:0;width:100%;height:40px}.zn-lane .kf{width:18px;height:18px;margin:-9px 0 0 -9px}.zn-row .seg button{padding:8px 2px}.zn-row>span{display:none}.zn-rng{width:100%}.zn-rng input[type=range]{flex:1;width:auto}.zn-more{margin-left:0;width:100%}.zn-more button{flex:1}
+  .zn-row .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;width:100%}.zn-row .zn-bars{width:auto;flex:1}.zn-row .seg button{padding:8px 2px}.zn-row>span{display:none}.zn-rng{width:100%}.zn-rng input[type=range]{flex:1;width:auto}.zn-lap{width:100%}.zn-more{margin-left:0;width:100%}.zn-more button{flex:1}
   body.imm #znPanel{position:fixed;left:0;right:0;bottom:calc(var(--dock) + var(--peek));z-index:41;max-height:46vh;overflow:auto}}
 @media (prefers-reduced-motion:reduce){#znDraw.on{animation:none}}`;
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
@@ -224,12 +192,7 @@ panel.innerHTML=`<div class="zn-h"><b>Zones</b><span>Pick a layer, then choose w
  <div class="zn-row" data-for="circle"><button id="znDraw">✎ Draw on the map</button><button id="znHere">⌖ Centre on view</button><label class="zn-rng">Radius <input type="range" id="znR" min="0" max="1" step=".005" aria-label="Radius"><output id="znRo"></output></label></div>
  <div class="zn-row" data-for="band"><button id="znDrawB">✎ Draw on the map</button><label class="zn-rng">From <input type="range" id="znA" min="-90" max="90" step="1" aria-label="Band from latitude"><output id="znAo"></output></label><label class="zn-rng">To <input type="range" id="znB" min="-90" max="90" step="1" aria-label="Band to latitude"><output id="znBo"></output></label></div>
  <div class="zn-row" data-for="region"><select id="znReg" aria-label="Region">${ZREG.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select></div>
- <div class="zn-row" data-for="move"><span>Motion</span><div class="seg" id="znMove"></div></div>
- <div class="zn-row" data-for="moveopts"><span>Every</span><div class="seg zn-bars" id="znBars">${BARS.map(b=>`<button data-zb="${b}" aria-pressed="false">${b}</button>`).join("")}</div><small class="zn-u">bars</small><label class="zn-rng" id="znDepthL">Depth <input type="range" id="znDepth" min="0" max="1" step=".05" aria-label="Motion depth"><output id="znDo"></output></label></div>
- <div class="zn-row" data-for="keys"><div class="zn-lane" id="znLane" aria-label="Keyframe loop"><b class="zn-ph"></b></div></div>
- <div class="zn-row" data-for="keys"><button id="znKAdd">＋ Key here</button><button id="znKDel">Delete key</button><select id="znEase" aria-label="Glide between keys"><option value="smooth">Smooth glide</option><option value="linear">Even glide</option><option value="jump">Jump</option></select><small class="zn-u" id="znKNote"></small></div>
- <div class="zn-row" data-for="follow"><span>Follow</span><select id="znFol" aria-label="Follow">${FOLLOW.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select><small class="zn-u" id="znFolNote"></small></div>
- <div class="zn-row" data-for="any"><label class="zn-rng">Soft edge <input type="range" id="znSoft" min="0" max="1" step=".05" aria-label="Soft edge"><output id="znSo"></output></label><label class="zn-chk"><input type="checkbox" id="znInv"> Everything outside instead</label><label class="zn-chk" id="znScanL" title="A moving zone plays each quake or event from the last 24 h as it passes over it"><input type="checkbox" id="znScan"> Scan: play events as the zone passes</label>
+ <div class="zn-row" data-for="move"><span>Motion</span><div class="seg" id="znMove"><button data-zm="still" aria-pressed="false">Still</button><button data-zm="drift" aria-pressed="false">Sweep</button></div><div class="zn-lap" id="znLap"><small class="zn-u">one lap every</small><div class="seg zn-bars" id="znBars">${BARS.map(b=>`<button data-zb="${b}" aria-pressed="false">${b}</button>`).join("")}</div><small class="zn-u">bars</small></div>
   <div class="zn-more"><button id="znAll">Use on all layers</button><button id="znClr">Reset all</button></div></div>
  <p class="zn-stat" id="znStat" role="status"></p>
  <p class="zn-note">Each zoned layer also sends its zone as MIDI CC 102–105 (size, longitude, latitude, how much is inside) on its own channel. Notes stay exactly what the sensors said.</p>
@@ -239,67 +202,37 @@ const q$=id=>panel.querySelector("#"+id);
 const rToV=r=>Math.log10(r/100)/2,vToR=v=>Math.round(100*Math.pow(100,v)/10)*10;
 const viewCentre=()=>CFG.mapView==="flat"?{lat:20,lon:0}:{lat:clamp(VIEW.lat,-85,85),lon:VIEW.lon};
 function setZone(k,z){if(z)CFG.zones[k]=z;else delete CFG.zones[k];save();skyUpdate();sync()}
-function setShape(s){const k=Z.sel,old=zOf(k),c=viewCentre(),soft=old?old.soft:.3,inv=old?!!old.inv:false;Z.armed=false;delete Z.eff[k];
+function setShape(s){const k=Z.sel,old=zOf(k),c=viewCentre();Z.armed=false;delete Z.eff[k];
   if(s==="none")return setZone(k,null);if(old&&old.shape===s)return;
-  if(s==="circle")setZone(k,{shape:"circle",lat:+c.lat.toFixed(2),lon:+c.lon.toFixed(2),r:2000,soft,inv});
-  else if(s==="band")setZone(k,{shape:"band",a:Math.round(clamp(c.lat-15,-90,90)),b:Math.round(clamp(c.lat+15,-90,90)),soft,inv});
-  else setZone(k,{shape:"region",id:"ring",soft,inv});
+  if(s==="circle")setZone(k,{shape:"circle",lat:+c.lat.toFixed(2),lon:+c.lon.toFixed(2),r:2000});
+  else if(s==="band")setZone(k,{shape:"band",a:Math.round(clamp(c.lat-15,-90,90)),b:Math.round(clamp(c.lat+15,-90,90))});
+  else setZone(k,{shape:"region",id:"ring"});
   if(s==="circle"||s==="band")xs(s==="circle"?"Circle placed at the centre of the view. Tap Draw to place it by hand.":"Band placed around the view. Drag the sliders or Draw it.")}
-function sync(){keySync();const k=Z.sel,z=zOf(k),s=z?z.shape:"none";btn.setAttribute("aria-pressed",!!CFG.zonesOn);panel.hidden=!CFG.zonesOn;
+function sync(){const k=Z.sel,z=zOf(k),s=z?z.shape:"none";btn.setAttribute("aria-pressed",!!CFG.zonesOn);panel.hidden=!CFG.zonesOn;
   panel.querySelectorAll("[data-zk]").forEach(b=>{const kk=b.dataset.zk,zz=zOf(kk);b.setAttribute("aria-pressed",kk===k);b.classList.toggle("has",!!zz);b.querySelector("small").textContent=zz?zLabel(zz):"Earth"});
   panel.querySelectorAll("[data-zs]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.zs===s));
-  const mv=z&&z.move||{type:"still"},mt=mvOf(z)?mv.type:"still";
-  const mb=q$("znMove"),opts=z?MOVES[s]||[]:[];if(mb.dataset.sh!==s){mb.dataset.sh=s;mb.innerHTML=opts.map(([v,l])=>`<button data-zm="${v}" aria-pressed="false">${l}</button>`).join("");mb.querySelectorAll("[data-zm]").forEach(b=>b.onclick=()=>setMove(b.dataset.zm))}
-  mb.querySelectorAll("[data-zm]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.zm===mt));
-  const vis={any:!!z,move:!!z,moveopts:!!z&&mt!=="still"&&mt!=="follow",follow:!!z&&mt==="follow",keys:!!z&&mt==="keys"};
-  q$("znScanL").hidden=!(k==="q"||k==="e");if(z)q$("znScan").checked=!!z.scan;
-  if(mt==="keys")drawLane(z);
-  panel.querySelectorAll("[data-for]").forEach(r=>{const f=r.dataset.for;r.hidden=f in vis?!vis[f]:f!==s});
-  if(z&&mt!=="still"){panel.querySelectorAll("[data-zb]").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.zb===mv.bars));q$("znDepth").value=mv.depth??.5;q$("znDo").textContent=Math.round((mv.depth??.5)*100)+"%";q$("znDepthL").hidden=mt==="drift"||mt==="keys";
-    if(mt==="follow"){q$("znFol").value=mv.target||"sun";q$("znFolNote").textContent="moves in real time; faster during a replay"}}
-  if(z){q$("znSoft").value=z.soft;q$("znSo").textContent=z.soft?Math.round(z.soft*100)+"%":"hard";q$("znInv").checked=!!z.inv;
-    if(s==="circle"){q$("znR").value=rToV(z.r);q$("znRo").textContent=kmTxt(z.r)}
+  const m=mvOf(z);panel.querySelectorAll("[data-zm]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.zm===(m?"drift":"still")));
+  q$("znLap").hidden=!m;if(m)panel.querySelectorAll("[data-zb]").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.zb===m.bars));
+  // region has no motion; the Use on all / Reset buttons live on the motion row, so keep the row and hide just the switch
+  q$("znMove").hidden=q$("znMove").previousElementSibling.hidden=!z||s==="region";
+  panel.querySelectorAll("[data-for]").forEach(r=>{const f=r.dataset.for;r.hidden=f==="move"?!z:f!==s});
+  if(z){if(s==="circle"){q$("znR").value=rToV(z.r);q$("znRo").textContent=kmTxt(z.r)}
     if(s==="band"){const f=v=>`${Math.abs(v)}°${v>=0?"N":"S"}`;q$("znA").value=z.a;q$("znB").value=z.b;q$("znAo").textContent=f(z.a);q$("znBo").textContent=f(z.b)}
     if(s==="region")q$("znReg").value=z.id}
   for(const id of ["znDraw","znDrawB"]){const b=q$(id);b.classList.toggle("on",Z.armed);b.textContent=Z.armed?"✕ Cancel drawing":"✎ Draw on the map"}
   wrap.style.touchAction=Z.armed?"none":"";cv.style.cursor=Z.armed?"crosshair":"";
   q$("znStat").textContent=statusAll(k);
   document.querySelectorAll(".lrow").forEach(r=>{const zz=CFG.zonesOn&&zOf(r.dataset.k);r.classList.toggle("zoned",!!zz);r.title=zz?`Zone: ${zLabel(zz)}`:""})}
-function setMove(t){Z.ksel=null;edit(z=>{const old=z.move||{};if(t==="keys"){const k0=Object.assign({t:0},keyOf(z)),k1=Object.assign({t:.5},keyOf(z));
-    if(z.shape==="circle"){k1.lon=((z.lon+60+540)%360)-180;k1.r=Math.max(300,z.r*.6)}else{k1.a=clamp(z.a+30,-90,90);k1.b=clamp(z.b+30,-90,90)}
-    z.move={type:"keys",bars:old.bars||8,depth:old.depth??.5,target:old.target||"sun",keys:(old.keys&&old.keys.length?old.keys:[k0,k1]),ease:old.ease||"smooth"};return}z.move=t==="still"?{type:"still",bars:old.bars||4,depth:old.depth??.5,target:old.target||"sun"}:{type:t,bars:old.bars||4,depth:old.depth??.5,target:old.target||"sun"};if(t==="follow"&&z.shape==="circle"&&z.r>4000)z.r=2500});
-  const z=zOf(Z.sel);if(t!=="still"&&z)xs(`${LNAME[Z.sel]}: ${zLabel(z)}${mvWord(z)}${t==="follow"?"":` at ${Math.round(Z.bpm)} BPM`}`)}
-/* keyframe lane: diamonds on a loop; pick one to edit it (the zone holds still on that key), tap empty lane to let it run */
-function keySync(){const z=zOf(Z.sel),m=z&&z.move;if(!m||m.type!=="keys"||Z.ksel==null||!m.keys[Z.ksel])return;Object.assign(m.keys[Z.ksel],keyOf(z))}
-function drawLane(z){const L=q$("znLane"),m=z.move,ks=m.keys||[];L.style.setProperty("--kc",COLS[Z.sel]||"#fff");let html=`<b class="zn-ph"></b>`;for(let i=1;i<m.bars*4;i++)html+=`<span class="tk${i%4?" bt":""}" style="--x:${i/(m.bars*4)}"></span>`;
-  ks.forEach((kk,i)=>html+=`<span class="kf${i===Z.ksel?" on":""}" data-ki="${i}" style="--x:${kk.t}" role="button" aria-label="Key ${i+1}"></span>`);
-  if(L.dataset.h!==html){L.innerHTML=html;L.dataset.h=html}
-  q$("znEase").value=m.ease||"smooth";q$("znKDel").disabled=Z.ksel==null||ks.length<=1;
-  q$("znKNote").textContent=Z.ksel!=null?`Editing key ${Z.ksel+1}: draw or slide the zone. Tap the empty lane to let it run.`:"Tap a diamond to edit that key.";}
-(()=>{const L=q$("znLane");let drag=null;
-  L.addEventListener("pointerdown",e=>{const z=zOf(Z.sel),m=z&&z.move;if(!m||m.type!=="keys")return;const b=e.target.closest(".kf");
-    if(!b){Z.ksel=null;sync();return}const i=+b.dataset.ki;Z.ksel=i;Object.assign(z,m.keys[i]);delete z.t;drag={i,id:e.pointerId,x:e.clientX,moved:false};try{L.setPointerCapture(e.pointerId)}catch(_){}sync()});
-  L.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;const z=zOf(Z.sel),m=z.move,r=L.getBoundingClientRect();if(Math.abs(e.clientX-drag.x)<4&&!drag.moved)return;drag.moved=true;
-    const snap=1/(m.bars*4);m.keys[drag.i].t=clamp(Math.round((e.clientX-r.left-12)/(r.width-24)/snap)*snap,0,1-snap);drawLane(z)});
-  const up=e=>{if(!drag||e.pointerId!==drag.id)return;drag=null;save()};L.addEventListener("pointerup",up);L.addEventListener("pointercancel",up);
-  const tickPh=()=>{const z=zOf(Z.sel);if(z&&mvOf(z)&&z.move.type==="keys"&&!panel.hidden){const ph=L.querySelector(".zn-ph");if(ph)ph.style.setProperty("--x",Z.ph||0)}requestAnimationFrame(tickPh)};requestAnimationFrame(tickPh)})();
+function setMove(t){edit(z=>{const bars=(z.move&&BARS.includes(z.move.bars))?z.move.bars:16;z.move={type:t==="drift"?"drift":"still",bars}});
+  const z=zOf(Z.sel);if(mvOf(z))xs(`${LNAME[Z.sel]}: ${zLabel(z)}${mvWord(z)} at ${Math.round(Z.bpm)} BPM`)}
 const edit=fn=>{const z=zOf(Z.sel);if(!z)return;fn(z);save();skyUpdate();sync()};
-panel.querySelectorAll("[data-zk]").forEach(b=>b.onclick=()=>{Z.sel=b.dataset.zk;Z.armed=false;Z.ksel=null;sync()});
+panel.querySelectorAll("[data-zk]").forEach(b=>b.onclick=()=>{Z.sel=b.dataset.zk;Z.armed=false;sync()});
+panel.querySelectorAll("[data-zm]").forEach(b=>b.onclick=()=>setMove(b.dataset.zm));
 panel.querySelectorAll("[data-zs]").forEach(b=>b.onclick=()=>setShape(b.dataset.zs));
 q$("znR").oninput=e=>edit(z=>z.r=vToR(+e.target.value));
 q$("znA").oninput=e=>edit(z=>z.a=+e.target.value);q$("znB").oninput=e=>edit(z=>z.b=+e.target.value);
 q$("znReg").onchange=e=>edit(z=>z.id=e.target.value);
-panel.querySelectorAll("[data-zb]").forEach(b=>b.onclick=()=>edit(z=>{if(z.move)z.move.bars=+b.dataset.zb}));
-q$("znDepth").oninput=e=>edit(z=>{if(z.move)z.move.depth=+e.target.value});
-q$("znFol").onchange=e=>edit(z=>{if(z.move)z.move.target=e.target.value});
-q$("znKAdd").onclick=()=>{const z=zOf(Z.sel),m=z&&z.move;if(!m||m.type!=="keys")return;const snap=1/(m.bars*4),t=clamp(Math.round((Z.ph||0)/snap)*snap,0,1-snap);
-  const cur=zE(Z.sel),kk=Object.assign({t},keyOf(cur));const at=m.keys.findIndex(x=>Math.abs(x.t-t)<snap/2);if(at>=0)m.keys[at]=kk;else m.keys.push(kk);
-  m.keys.sort((a,b)=>a.t-b.t);Z.ksel=m.keys.indexOf(kk);Object.assign(z,keyOf(kk));save();sync();xs(`Key ${Z.ksel+1} added. Draw or slide the zone to shape it`)};
-q$("znKDel").onclick=()=>{const z=zOf(Z.sel),m=z&&z.move;if(!m||m.type!=="keys"||Z.ksel==null||m.keys.length<=1)return;m.keys.splice(Z.ksel,1);Z.ksel=null;save();sync()};
-q$("znEase").onchange=e=>edit(z=>{if(z.move)z.move.ease=e.target.value});
-q$("znScan").onchange=e=>{edit(z=>z.scan=e.target.checked);const z=zOf(Z.sel);if(e.target.checked)xs(mvOf(z)?"Scan on: events play as the zone sweeps over them":"Scan on: give the zone some Motion so it sweeps")};
-q$("znSoft").oninput=e=>edit(z=>z.soft=+e.target.value);
-q$("znInv").onchange=e=>edit(z=>z.inv=e.target.checked);
+panel.querySelectorAll("[data-zb]").forEach(b=>b.onclick=()=>edit(z=>{if(mvOf(z))z.move.bars=+b.dataset.zb}));
 q$("znHere").onclick=()=>edit(z=>{const c=viewCentre();z.lat=+c.lat.toFixed(2);z.lon=+c.lon.toFixed(2)});
 q$("znDraw").onclick=q$("znDrawB").onclick=()=>{Z.armed=!Z.armed;Z.drawing=null;sync();if(Z.armed){xs(zOf(Z.sel).shape==="band"?"Drag up or down on the map to set the band":"Press where the centre goes and drag out the size");if(IS_MOBILE)cv.scrollIntoView({behavior:"smooth",block:"center"})}};
 q$("znAll").onclick=()=>{const z=zOf(Z.sel);if(!z)return;ZKEYS.forEach(k=>CFG.zones[k]=clone(z));save();skyUpdate();sync();xs(`Every layer now listens to: ${zLabel(z)}`)};
