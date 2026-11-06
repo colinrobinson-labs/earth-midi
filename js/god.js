@@ -254,9 +254,9 @@ function overlay(now,t,dt){const W=cv.width,H=cv.height,a=G.amt,globe=CFG.mapVie
   if(S.recVideo){cx.fillStyle="#1a1200";cx.fillRect(0,H-28*DPR,W,28*DPR);cx.fillStyle=GOLD;cx.font=`700 ${12*DPR}px "IBM Plex Mono",monospace`;cx.fillText("EARTH MIDI · ZEUS MODE SANDBOX · performed by hand, not real data · earthmidi.com",12*DPR,H-10*DPR)}
   // 10. entrance title
   const ea=(t-G.tEnter)/2600;if(G.on&&ea>=0&&ea<1){const k=ea<.15?ea/.15:ea>.7?(1-ea)/.3:1,sc=1.25-.25*Math.min(1,ea/.25),fs=Math.min(W/7.2,H/4.2);cx.save();cx.translate(gx,gy);cx.scale(sc,sc);cx.textAlign="center";cx.textBaseline="middle";
-    cx.font=`800 ${fs}px Syne,system-ui,sans-serif`;cx.shadowColor="rgba(255,190,40,.95)";cx.shadowBlur=40*DPR;cx.fillStyle=`rgba(255,236,170,${k})`;cx.fillText("ZEUS MODE",0,-fs*.12);cx.shadowBlur=0;
+    cx.font=`800 ${fs}px Archivo,system-ui,sans-serif`;cx.shadowColor="rgba(255,190,40,.95)";cx.shadowBlur=40*DPR;cx.fillStyle=`rgba(255,236,170,${k})`;cx.fillText("ZEUS MODE",0,-fs*.12);cx.shadowBlur=0;
     cx.font=`700 ${Math.max(11*DPR,fs*.16)}px "IBM Plex Mono",monospace`;cx.fillStyle=`rgba(255,210,100,${k})`;cx.fillText("SANDBOX · YOU ARE THE WEATHER · NOT REAL DATA",0,fs*.55);cx.restore()}
-  const xa=(t-G.tExit)/1400;if(!G.on&&xa>=0&&xa<1){const fs=Math.min(W/12,H/7);cx.textAlign="center";cx.textBaseline="middle";cx.font=`800 ${fs}px Syne,system-ui,sans-serif`;cx.fillStyle=`rgba(230,240,255,${(1-xa)})`;cx.fillText("BACK TO REAL EARTH",gx,gy);cx.textAlign="left";cx.textBaseline="alphabetic"}
+  const xa=(t-G.tExit)/1400;if(!G.on&&xa>=0&&xa<1){const fs=Math.min(W/12,H/7);cx.textAlign="center";cx.textBaseline="middle";cx.font=`800 ${fs}px Archivo,system-ui,sans-serif`;cx.fillStyle=`rgba(230,240,255,${(1-xa)})`;cx.fillText("BACK TO REAL EARTH",gx,gy);cx.textAlign="left";cx.textBaseline="alphabetic"}
   cx.restore();
   // camera shake (CSS, so the page itself trembles)
   if(G.shake>.2){cv.style.transform=`translate(${((Math.random()-.5)*G.shake).toFixed(1)}px,${((Math.random()-.5)*G.shake).toFixed(1)}px)`;G.shake*=Math.exp(-dt*5)}else if(cv.style.transform){cv.style.transform="";G.shake=0}}
@@ -280,10 +280,11 @@ async function loadTake(f){try{const j=JSON.parse(await f.text());if(!j.godTake|
 
 /* ================= UI ================= */
 const css=`
-.godbtn{position:relative;font:700 11.5px var(--mono);letter-spacing:.04em;padding:7px 12px;border-radius:10px;color:#1a1200;background:linear-gradient(135deg,#fff1b8,#ffc83d 45%,#d18a00);border:1px solid #ffd76a;box-shadow:0 0 16px rgba(255,190,40,.45);white-space:nowrap}
+.godbtn{position:relative;display:inline-flex;align-items:center;gap:6px;font:600 12px var(--body);padding:0 12px;height:32px;border-radius:8px;color:#ffd56a;background:rgba(26,18,2,.82);border:1px solid rgba(255,200,61,.55);box-shadow:0 0 14px rgba(255,190,40,.18);white-space:nowrap}
+.godbtn .ic{width:14px;height:14px;fill:currentColor;stroke:none}.godbtn[aria-pressed="true"] .ic{fill:none;stroke:currentColor}
 .godbtn::after{content:"";position:absolute;inset:-1px;border-radius:inherit;box-shadow:0 0 30px 4px rgba(255,200,60,.8);opacity:0;animation:gpulse 2.6s ease-in-out infinite;pointer-events:none}
-.godbtn:hover{border-color:#fff1b8}
-@keyframes gpulse{50%{opacity:1}}
+.godbtn:hover{border-color:#ffd56a;background:rgba(40,28,4,.9)}
+@keyframes gpulse{50%{opacity:.45}}
 body.god .godbtn{background:rgba(20,12,0,.85);color:#ffc83d}body.god .godbtn::after{animation:none}
 #godTicker{position:absolute;left:0;right:0;top:0;height:24px;overflow:hidden;z-index:4;pointer-events:none;background:#1a1200;opacity:0;transform:translateY(-100%);transition:transform .5s cubic-bezier(.2,1.4,.4,1),opacity .4s;border-bottom:1px solid #ffc83d}
 #godTicker div{display:flex;width:max-content;animation:gtick 22s linear infinite}
@@ -315,12 +316,12 @@ body.god #godFrame{opacity:1}
 .gp-h span{font:600 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#1a1200;background:#ffc83d;border-radius:999px;padding:3px 9px}
 .gp-h button{margin-left:auto}
 .gp-tools{display:flex;gap:6px;flex-wrap:wrap}
-.gp-tools button{font:600 12px var(--mono);border-radius:999px;padding:8px 13px;border-color:rgba(255,200,61,.35);background:#140f04;color:#ffe6a6;min-height:38px}
+.gp-tools button{font:500 12px var(--body);border-radius:999px;padding:8px 13px;border-color:rgba(255,200,61,.35);background:#140f04;color:#ffe6a6;min-height:38px}
 .gp-tools button[aria-pressed="true"]{background:#ffc83d;color:#1a1200;border-color:#ffc83d;box-shadow:0 0 16px rgba(255,190,40,.5)}
 .gp-hint{font:12px/1.55 var(--mono);color:#d9c38e;margin:10px 0}
 .gp-hint b{color:#ffe6a6;font-weight:600}
 .gp-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.gp-row button,.gp-row .btnlike{font:600 12px var(--mono);border-color:rgba(255,200,61,.35);background:#140f04;color:#ffe6a6;min-height:38px;display:inline-flex;align-items:center}
+.gp-row button,.gp-row .btnlike{font:500 12px var(--body);border-color:rgba(255,200,61,.35);background:#140f04;color:#ffe6a6;min-height:38px;display:inline-flex;align-items:center}
 .gp-row button.on{animation:bl 1s infinite}
 .gp-mix{display:flex;align-items:center;gap:8px;font:11px var(--mono);color:#d9c38e;margin-left:auto}
 .gp-mix input{accent-color:#ffc83d;width:120px}
@@ -335,7 +336,7 @@ const HINTS={auto:"<b>Tap the globe</b> to drop a quake (hold longer for a bigge
   tide:"<b>Drag the moon</b> anywhere. Closer to the planet means stronger tides and a louder, brighter drone. Its angle sets the drone note.",spin:"<b>Drag anywhere to turn the planet</b>, pinch or scroll to zoom. Your storms ride along with it. In any tool, two fingers (phone) or right-drag / Shift+drag (mouse) also turns it."};
 const ticker=document.createElement("div");ticker.id="godTicker";ticker.setAttribute("aria-hidden","true");ticker.innerHTML=`<div>${Array(12).fill("<span>⚡ ZEUS MODE</span><span>SANDBOX · NOT REAL DATA</span>").join("")}</div>`;wrap.appendChild(ticker);
 const frameEl=document.createElement("div");frameEl.id="godFrame";frameEl.setAttribute("aria-hidden","true");document.body.appendChild(frameEl);
-const btn=document.createElement("button");btn.className="godbtn";btn.id="godBtn";btn.setAttribute("aria-pressed","false");btn.title="Zeus Mode sandbox (z)";btn.textContent="⚡ Zeus Mode";(wrap.querySelector(".hud2")||wrap).appendChild(btn);
+const btn=document.createElement("button");btn.className="godbtn";btn.id="godBtn";btn.setAttribute("aria-pressed","false");btn.title="Zeus Mode sandbox (z)";btn.innerHTML='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg>Zeus Mode';(wrap.querySelector(".hud2")||wrap).appendChild(btn);
 const panel=document.createElement("div");panel.id="godPanel";panel.hidden=true;
 panel.innerHTML=`<div class="gp-h"><b>⚡ ZEUS MODE</b><span>Sandbox · not real data</span><button id="gExit">Back to real Earth</button></div>
 <div class="gp-tools" role="toolbar" aria-label="Sandbox tools">${TOOLS.map(([k,l])=>`<button data-tool="${k}" aria-pressed="${k==="auto"}">${l}</button>`).join("")}</div>
@@ -356,7 +357,7 @@ btn.addEventListener("click",e=>{e.stopPropagation();setGod(!G.on)});
 setTool("auto");syncBtns();
 setInterval(()=>{if(!G.on)return;const s=g$("gStat");if(s){const kp=godKp(),txt=`${G.storms.length} storm${G.storms.length===1?"":"s"} · aurora Kp ${kp.toFixed(1)} · tidal pull ${Math.round(G.tideF*100)}%${G.last?" · last: "+G.last:""}${G.rec?" · ● REC "+((now_()-G.rec.t0)/1000).toFixed(0)+" s":""}`;if(!s._msgUntil||now_()>s._msgUntil)s.textContent=txt}},250);
 
-function setGod(on){if(on===G.on)return;G.on=on;document.body.classList.toggle("god",on);btn.setAttribute("aria-pressed",on);btn.textContent=on?"✕ Exit sandbox":"⚡ Zeus Mode";panel.hidden=!on;
+function setGod(on){if(on===G.on)return;G.on=on;document.body.classList.toggle("god",on);btn.setAttribute("aria-pressed",on);btn.innerHTML=on?'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Exit sandbox':'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg>Zeus Mode';panel.hidden=!on;
   const tip=$("tip");if(tip)tip.style.display="none";
   if(on){G.tEnter=now_();setTimeout(measureHud,450);if(!G.moonMoved)G.moon=moonHome();G.hintT=now_()+12000;G.flash=1;G.flashRGB="255,236,180";G.shake=10;ensureAudio();enterSound(true);try{if(!location.hash||location.hash==="#")history.replaceState(null,"","#zeus")}catch(_){}
     if(window.matchMedia("(max-width:700px)").matches)setTimeout(()=>$("map").scrollIntoView({behavior:"smooth",block:"start"}),60)}

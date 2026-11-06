@@ -14,13 +14,13 @@ css.textContent=`
 @property --pa{syntax:"<angle>";inherits:false;initial-value:0deg}
 .procta{--pl:0;--pc:#7cff9e;position:relative;font-weight:700!important;color:#fff;
  border:1.5px solid transparent!important;
- background:radial-gradient(120% 140% at 50% 120%,color-mix(in srgb,var(--pc) calc(var(--pl)*30%),transparent),transparent 70%) padding-box,linear-gradient(#111a23,#0c131a) padding-box,
+ background:radial-gradient(120% 140% at 50% 120%,color-mix(in srgb,var(--pc) calc(var(--pl)*30%),transparent),transparent 70%) padding-box,linear-gradient(var(--sf2),var(--sf2)) padding-box,
   conic-gradient(from var(--pa),var(--q),var(--s),var(--k),var(--o),var(--x),var(--c),var(--q)) border-box!important;
  box-shadow:0 0 calc(6px + var(--pl)*22px) color-mix(in srgb,var(--pc) calc(25% + var(--pl)*45%),transparent),inset 0 1px 0 rgba(255,255,255,.06);
  animation:pspin 7s linear infinite;transition:box-shadow .12s,transform .1s}
 .procta:hover{box-shadow:0 0 calc(12px + var(--pl)*22px) color-mix(in srgb,var(--pc) 60%,transparent),inset 0 1px 0 rgba(255,255,255,.08)}
 .procta .ic{stroke-width:2.2}
-.procta .ic circle{fill:#0c131a;stroke:currentColor;transition:fill .15s}
+.procta .ic circle{fill:var(--sf2);stroke:currentColor;transition:fill .15s}
 .procta[aria-expanded="true"]{color:var(--bg)!important;
  background:linear-gradient(var(--fg),var(--fg)) padding-box,conic-gradient(from var(--pa),var(--q),var(--s),var(--k),var(--o),var(--x),var(--c),var(--q)) border-box!important}
 .procta[aria-expanded="true"] .ic circle{fill:var(--fg)}

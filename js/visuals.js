@@ -170,7 +170,7 @@ function drawSparks(){
   const T=(id,h)=>{const e=$(id);if(e&&e._h!==h){e.innerHTML=h;e._h=h}},Tt=(id,s)=>{const e=$(id);if(e&&e.textContent!==s)e.textContent=s};
   T("vs",Number.isFinite(c.sp)?`${Math.round(c.sp)}<small>km/s</small>`:"–");
   Tt("ss",Number.isFinite(c.sp)?`density ${c.de?.toFixed(1)} p/cm³ · Bz ${c.bz?.toFixed(1)} nT · Kp ${c.kp?.toFixed(1)} → ${c.kp>=5?"storm":c.kp>=4?"unsettled":"quiet"}`:"");
-  T("vo",S.ocean.length?`${c.oh?.toFixed(1)}<small>m avg · ${c.op?.toFixed(1)} s</small>`:"–");
+  T("vo",S.ocean.length&&Number.isFinite(c.oh)?`${c.oh.toFixed(1)}<small>m avg${Number.isFinite(c.op)?` · ${c.op.toFixed(1)} s`:""}</small>`:"–");
   const big=S.ocean.slice().sort((a,b)=>b.h-a.h)[0];Tt("so",big?`biggest: ${big.name} ${big.h.toFixed(1)} m every ${big.p.toFixed(0)} s`:"");
   if(Number.isFinite(c.jv)){T("vw",`${Math.round(c.jv)}<small>km/h avg</small>`);const fast=S.jet.map(p=>[p.name,tsAt(p,t)]).sort((a,b)=>b[1]-a[1])[0];Tt("sw",`fastest: ${fast[0]} ${Math.round(fast[1])} km/h`)}
   if(S.tides.length){const o=S.tides[0],v=tsAt(o,t),prev=tsAt(o,t-6e5);T("vt",`${v.toFixed(2)}<small>m · ${v>=prev?"rising":"falling"}</small>`);Tt("st",S.tides.map(x=>`${x.name} ${tsAt(x,t).toFixed(2)} m`).join(" · ")+(S.demo.t?" (demo)":""))}
