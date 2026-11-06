@@ -23,12 +23,12 @@ body.imm #homeBtn{display:none}
  #homeBtn span{display:none}
  body.god #homeBtn{top:calc(32px + env(safe-area-inset-top,0px))}}
 @media (prefers-reduced-motion:reduce){#homeBtn,#homeBtn.show{transition:none;transform:none}}
-#homeAsk{border:1px solid var(--line2);border-radius:16px;background:#0b1016;color:var(--fg);padding:18px 18px 14px;max-width:min(380px,calc(100vw - 32px));box-shadow:0 24px 80px rgba(0,0,0,.6)}
+#homeAsk{border:1px solid var(--line2);border-radius:16px;background:var(--sf2);color:var(--fg);padding:18px 18px 14px;max-width:min(380px,calc(100vw - 32px));box-shadow:0 24px 80px rgba(0,0,0,.6)}
 #homeAsk::backdrop{background:rgba(3,5,8,.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #homeAsk h3{font:700 17px var(--disp);margin:0 0 6px}
 #homeAsk p{font:13.5px/1.5 var(--body);color:var(--mute);margin:0 0 14px}
 #homeAsk .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-#homeAsk button{min-height:40px;padding:0 14px;border-radius:10px;font:600 13px var(--mono);cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--fg)}
+#homeAsk button{min-height:40px;padding:0 14px;border-radius:10px;font:500 13px var(--body);cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--fg)}
 #homeAsk button.go2{background:var(--fg);color:var(--bg);border-color:var(--fg)}`;
 document.head.appendChild(css);
 

@@ -177,7 +177,7 @@ function makeCompositor(shape,god){
     const pad=Math.round(48*u);
     // header: wordmark + clock
     const hy=shape==="vertical"?Math.round(230*u):pad+Math.round(40*u);
-    g.textBaseline="alphabetic";g.textAlign="left";g.font=`800 ${Math.round((shape==="vertical"?96:64)*u)}px Syne,system-ui,sans-serif`;
+    g.textBaseline="alphabetic";g.textAlign="left";g.font=`800 ${Math.round((shape==="vertical"?96:64)*u)}px Archivo,system-ui,sans-serif`;
     const wm="EARTH MIDI",ww=g.measureText(wm).width,hue=(now/16000)%1,lg=g.createLinearGradient(pad,0,pad+ww,0);
     ["#ff5a3c","#ffc53d","#7cff9e","#3cc8ff","#c77dff"].forEach((col,i,arr)=>lg.addColorStop(((i/arr.length)+hue)%1,col));
     if(god){g.fillStyle=goldGrad(g,pad,ww)}else g.fillStyle=lg;
@@ -226,7 +226,7 @@ const shortName=k=>REC_SHORT[k]||(LNAME[k]||k).slice(0,5).toUpperCase();
   const av=$("bVid"),aa=$("bAac");if(av)av.onclick=()=>openSheet("video");if(aa)aa.onclick=()=>{CAP.afmt="small";openSheet("audio")};
   // keep the sandbox note current
   new MutationObserver(()=>{if(!$("recSheet").hidden&&!$("recSheet").querySelector(".rs-setup").hidden)syncSheet()}).observe(document.body,{attributes:true,attributeFilter:["class"]});
-  document.fonts&&document.fonts.load&&["800 40px Syne","500 20px 'IBM Plex Mono'","500 20px 'IBM Plex Sans'"].forEach(f=>document.fonts.load(f).catch(()=>{}));
+  document.fonts&&document.fonts.load&&["800 40px Archivo","500 20px 'IBM Plex Mono'","500 20px 'IBM Plex Sans'"].forEach(f=>document.fonts.load(f).catch(()=>{}));
 })();
 window.EMRec={open:openSheet,stop:stopCapture,get capturing(){return !!CREC},get last(){return LAST},caption,isGod,VID_MIMES,AUD_MIMES};
 }

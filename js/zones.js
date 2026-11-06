@@ -170,35 +170,35 @@ window.drawZones=function(now){if(!CFG.zonesOn||godOn_())return;const W=cv.width
 /* ---------- UI ---------- */
 const css=`
 .znbtn[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
-#znPanel{border-top:1px solid var(--line2);padding:12px 14px 14px;background:linear-gradient(180deg,rgba(124,200,255,.07),transparent 70%),#070b10;animation:znin .45s ease}
+#znPanel{border-top:1px solid var(--line2);padding:12px 14px 14px;background:linear-gradient(180deg,rgba(124,200,255,.07),transparent 70%),var(--sf1);animation:znin .45s ease}
 @keyframes znin{from{opacity:0;transform:translateY(-6px)}}
 .zn-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .zn-h b{font:800 16px var(--disp);letter-spacing:.02em}
 .zn-h span{font:11px var(--mono);color:var(--mute)}
-.zn-h button{margin-left:auto;font:600 11.5px var(--mono);padding:6px 11px}
+.zn-h button{margin-left:auto;font:500 12px var(--body);padding:6px 11px}
 .zn-lay{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.zn-lay button{display:inline-flex;align-items:center;gap:7px;font:600 11.5px var(--mono);padding:6px 10px 6px 8px;border-radius:999px;background:rgba(11,16,22,.75);min-height:34px;transition:background .2s,border-color .2s}
+.zn-lay button{display:inline-flex;align-items:center;gap:7px;font:500 12px var(--body);padding:6px 10px 6px 8px;border-radius:999px;background:rgba(11,16,22,.75);min-height:34px;transition:background .2s,border-color .2s}
 .zn-lay button i{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);flex:none}
 .zn-lay button small{font:10px var(--mono);color:var(--mute);font-weight:400}
 .zn-lay button.has small{color:var(--c)}
-.zn-lay button[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,#0b1016)}
+.zn-lay button[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--sf2))}
 .zn-ed{display:grid;gap:10px}
 .zn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .zn-row>span{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);min-width:52px}
-.zn-row .seg button{font:600 11.5px var(--mono);padding:7px 12px}
+.zn-row .seg button{font:500 12px var(--body);padding:7px 12px}
 .zn-row .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
-.zn-row>button{font:600 11.5px var(--mono);padding:7px 12px;min-height:34px}
+.zn-row>button{font:500 12px var(--body);padding:7px 12px;min-height:34px}
 #znDraw.on{background:var(--fg);color:var(--bg);animation:bl 1s infinite}
 .zn-rng{display:flex;align-items:center;gap:8px;font:11px var(--mono);color:var(--mute)}
 .zn-rng input[type=range]{width:150px}
 .zn-rng output{color:var(--fg);min-width:64px}
-.zn-row select{font:12px var(--mono);padding:6px 8px;background:#0b1016;color:var(--fg);border:1px solid var(--line2);border-radius:8px}
+.zn-row select{font:12px var(--mono);padding:6px 8px;background:var(--sf2);color:var(--fg);border:1px solid var(--line2);border-radius:8px}
 .zn-chk{display:inline-flex;align-items:center;gap:6px;font:11.5px var(--mono);color:var(--fg)}
 .zn-stat{font:12px/1.5 var(--mono);color:#c9d6e2;margin:2px 0 0;min-height:18px}
 .zn-lane{position:relative;flex:1;min-width:220px;height:34px;border:1px solid var(--line2);border-radius:8px;background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),transparent 0);overflow:hidden;touch-action:none;cursor:pointer}
 .zn-lane .tk,.zn-lane .zn-ph,.zn-lane .kf{left:calc(12px + var(--x,0)*(100% - 24px))}.zn-lane .tk{pointer-events:none;position:absolute;top:6px;bottom:6px;width:1px;background:var(--mute);opacity:.6}.zn-lane .tk.bt{opacity:.25;top:12px;bottom:12px}
 .zn-lane .zn-ph{position:absolute;top:0;bottom:0;width:2px;background:var(--kc);box-shadow:0 0 10px var(--kc);pointer-events:none}
-.zn-lane .kf{position:absolute;top:50%;width:14px;height:14px;min-height:0;padding:0;margin:-7px 0 0 -7px;transform:rotate(45deg);border-radius:2px!important;box-sizing:border-box;min-width:0;background:#0b1016;border:2px solid var(--kc);cursor:grab}
+.zn-lane .kf{position:absolute;top:50%;width:14px;height:14px;min-height:0;padding:0;margin:-7px 0 0 -7px;transform:rotate(45deg);border-radius:2px!important;box-sizing:border-box;min-width:0;background:var(--sf2);border:2px solid var(--kc);cursor:grab}
 .zn-lane .kf.on{background:var(--kc);box-shadow:0 0 12px var(--kc)}
 #znKDel:disabled{opacity:.4}
 .zn-u{font:10.5px var(--mono);color:var(--mute)}
@@ -213,11 +213,11 @@ body.god #znPanel{display:none}
 @media (prefers-reduced-motion:reduce){#znDraw.on{animation:none}}`;
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 const wrap=cv.closest(".mapwrap"),hud=wrap.querySelector(".hud2");
-const seg=document.createElement("div");seg.className="seg";seg.innerHTML=`<button class="znbtn" id="znBtn" aria-pressed="false" title="Zones: limit layers to part of the planet">◎ Zones</button>`;
+const seg=document.createElement("div");seg.className="seg";seg.innerHTML=`<button class="znbtn" id="znBtn" aria-pressed="false" title="Zones: limit layers to part of the planet"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg>Zones</button>`;
 const godB=hud.querySelector("#godBtn");godB?hud.insertBefore(seg,godB):hud.appendChild(seg);
 const btn=seg.firstChild;
 const panel=document.createElement("div");panel.id="znPanel";panel.hidden=true;
-panel.innerHTML=`<div class="zn-h"><b>◎ Zones</b><span>Pick a layer, then choose where on Earth it listens. Live data only.</span><button id="znOff">Turn off zones</button></div>
+panel.innerHTML=`<div class="zn-h"><b>Zones</b><span>Pick a layer, then choose where on Earth it listens. Live data only.</span><button id="znOff">Turn off zones</button></div>
 <div class="zn-lay" id="znLay" role="toolbar" aria-label="Layer to edit">${ZKEYS.map(k=>`<button data-zk="${k}" style="--c:${COLS[k]}" aria-pressed="false"><i></i>${ZSHORT[k]}<small></small></button>`).join("")}</div>
 <div class="zn-ed">
  <div class="zn-row"><span>Area</span><div class="seg" id="znShape">${[["none","Whole Earth"],["circle","Circle"],["band","Band"],["region","Region"]].map(([v,l])=>`<button data-zs="${v}" aria-pressed="false">${l}</button>`).join("")}</div></div>

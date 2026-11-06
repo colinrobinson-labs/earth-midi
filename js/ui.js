@@ -99,8 +99,8 @@ function buildPro(){
   document.querySelectorAll("#ptabs button").forEach(b=>b.onclick=()=>{if(TAB!==+b.dataset.i){TAB=+b.dataset.i;TABIN=true}buildPro()});
   const [name,groups]=TABS[TAB],g=$("pgrid");
   if(name==="Mixer"){g.className="mixer";g.innerHTML=STUDIO.mixer();bindMS();syncMS()}
-  else if(name==="Presets"){g.className="pgrid";renderPresets()}
-  else{g.className="pgrid";g.innerHTML=groups.map(([t,cs,lk],i)=>STUDIO.group(t,cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join(""),i,lk)).join("")}
+  else if(name==="Presets"){g.className="pgrid pre";renderPresets()}
+  else{g.className=groups.length>4?"pgrid mas":"pgrid";g.innerHTML=groups.map(([t,cs,lk],i)=>STUDIO.group(t,cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join(""),i,lk)).join("")}
   g.querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,ty=el.dataset.t;if(!ty)return;
     el.addEventListener("focus",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});el.addEventListener("pointerdown",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});
     el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)};
