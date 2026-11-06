@@ -35,7 +35,7 @@ const BASE=[14,8,16],G=[["q","e","r"],["s","x","g","w","a"],["o","t","c","i","u"
 const lvl=[0,0,0];let last=0,still=false;
 function frame(now){
   requestAnimationFrame(frame);
-  if(document.hidden||now-last<33)return;last=now;
+  if(document.hidden||now-last<(window.FX&&FX.lvl?66:33))return;last=now;
   if(RM.matches){if(!still){still=true;knobs.forEach(ks=>ks.forEach((c,i)=>{c.setAttribute("cy",BASE[i]);c.style.fill=""}));btns.forEach(b=>b.style.setProperty("--pl",0))}return}
   still=false;
   const on=typeof S!=="undefined"&&S.on,hit=on?S.hit:{};let top=0,topC=null;

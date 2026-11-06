@@ -23,14 +23,15 @@ function strokePath(pts){cx.beginPath();let pen=false,prev=null;for(const [lo,la
 let parts=[];S.flashes=[];
 function drawMap(now){
   const W=cv.width,H=cv.height,t=realNow(),globe=CFG.mapView!=="flat";cx.clearRect(0,0,W,H);
-  if(globe&&CFG.spin&&!VIEW.drag&&!(typeof MOTION!=="undefined"&&MOTION.inertia)&&now-VIEW.lastInteract>4000)VIEW.lon=((VIEW.lon+.03+540)%360)-180;
+  const fk=drawMap.t?clamp((now-drawMap.t)/16.7,.25,4):1;drawMap.t=now; // per-frame motion scaled to real time, so 30 fps looks the same speed
+  if(globe&&CFG.spin&&!VIEW.drag&&!(typeof MOTION!=="undefined"&&MOTION.inertia)&&now-VIEW.lastInteract>4000)VIEW.lon=((VIEW.lon+.03*fk+540)%360)-180;
   const sp=sunPos(t),c=S.cur||{};
   // solar wind particles (background): count from density, speed from wind speed, colour from Bz
   const spd=Number.isFinite(c.sp)?c.sp:400,den=Number.isFinite(c.de)?c.de:4,bz=Number.isFinite(c.bz)?c.bz:0;
   if(globe){STARS.forEach(s=>{cx.fillStyle=`rgba(220,230,255,${.25+.25*Math.sin(now/900+s[3])})`;cx.fillRect(s[0]*W,s[1]*H,s[2]*DPR,s[2]*DPR)})}
   const want=Math.round(map(den,0,25,30,260)*(IS_MOBILE?.6:1));while(parts.length<want)parts.push({x:Math.random()*W,y:Math.random()*H,l:Math.random()*.6+.4});parts.length=Math.min(parts.length,want);
   cx.strokeStyle=bz<-5?"rgba(255,120,90,.45)":"rgba(255,210,120,.3)";cx.lineWidth=DPR;const dir=globe?(((sp.lon-VIEW.lon+540)%360-180)>0?-1:1):1;
-  parts.forEach(p=>{const v=spd/400*2.2*DPR*p.l;p.x+=v*dir;if(p.x>W)p.x=0;if(p.x<0)p.x=W;cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(p.x-v*6*dir,p.y);cx.stroke()});
+  parts.forEach(p=>{const v=spd/400*2.2*DPR*p.l;p.x+=v*dir*fk;if(p.x>W)p.x=0;if(p.x<0)p.x=W;cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(p.x-v*6*dir,p.y);cx.stroke()});
   if(globe){const R=globeR(),gx=W/2,gy=H/2,rms=S.rms||0;
     const at=cx.createRadialGradient(gx,gy,R*.95,gx,gy,R*1.18+rms*R*.3);at.addColorStop(0,"rgba(60,200,255,.35)");at.addColorStop(.4,`rgba(60,160,255,${.12+rms*.6+(window.BEATG||0)*9})`);at.addColorStop(1,"rgba(60,160,255,0)");cx.fillStyle=at;cx.beginPath();cx.arc(gx,gy,R*1.3,0,7);cx.fill();
     const oc=cx.createRadialGradient(gx-R*.35,gy-R*.35,R*.1,gx,gy,R);oc.addColorStop(0,"#0f2233");oc.addColorStop(1,"#060b12");cx.fillStyle=oc;cx.beginPath();cx.arc(gx,gy,R,0,7);cx.fill();
@@ -145,7 +146,7 @@ tl.addEventListener("pointermove",e=>{const r=tl.getBoundingClientRect();TLH=(e.
 tl.addEventListener("pointerdown",e=>{const r=tl.getBoundingClientRect(),f=(e.clientX-r.left)/r.width;if(!S.on){startStop().then(()=>seekTo(f))}else seekTo(f);xs(`Jumped to ${new Date(Date.now()-864e5*(1-f)).toISOString().slice(11,16)} UTC`)});
 
 /* ---------- sparklines with glowing playhead ---------- */
-function spark(id,ts,vs,col,t,lo,hi){const c=$(id);if(!c||!c.offsetParent)return;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);if(!vs.length)return;
+function spark(id,ts,vs,col,t,lo,hi){const c=$(id);if(!c||!c.offsetParent||!FX.on(c))return;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);if(!vs.length)return;
   const t0=ts[0],t1=ts[ts.length-1],X=x=>(x-t0)/(t1-t0||1)*w,Y=v=>h-((v-lo)/(hi-lo||1))*(h-6)-3;
   const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,col+"55");gr.addColorStop(1,col+"00");g.beginPath();let st=false;ts.forEach((tt,i)=>{const v=vs[i];if(!Number.isFinite(v))return;st?g.lineTo(X(tt),Y(v)):g.moveTo(X(tt),Y(v));st=true});
   g.strokeStyle=col;g.lineWidth=1.5*DPR;g.stroke();g.lineTo(w,h);g.lineTo(0,h);g.fillStyle=gr;g.fill();
@@ -199,7 +200,8 @@ function drawRoll(now){const c=$("roll"),w=c.clientWidth*DPR,h=c.clientHeight*DP
   g.globalAlpha=1;g.fillStyle="rgba(255,255,255,.5)";g.fillRect(w-2,0,2,h)}
 /* ---------- output: spectrum, waveform, stereo vectorscope ---------- */
 let td,fd,tl_,tr_;
-function drawScope(){const c=$("scope"),w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const g=c.getContext("2d");g.fillStyle="rgba(5,7,10,.35)";g.fillRect(0,0,w,h);
+function drawScope(off){if(off){if(!A)return 0;td=td||new Float32Array(A.an.fftSize);A.an.getFloatTimeDomainData(td);let r=0;for(let i=0;i<td.length;i++)r+=td[i]*td[i];return Math.sqrt(r/td.length)}
+  const c=$("scope"),w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const g=c.getContext("2d");g.fillStyle="rgba(5,7,10,.35)";g.fillRect(0,0,w,h);
   if(!A){g.fillStyle="#7d8b99";g.font=`${12*DPR}px "IBM Plex Mono",monospace`;g.fillText("press PLAY to hear the planet",16*DPR,h/2);return 0}
   td=td||new Float32Array(A.an.fftSize);fd=fd||new Uint8Array(A.an.frequencyBinCount);A.an.getFloatTimeDomainData(td);A.an.getByteFrequencyData(fd);
   const vw=Math.min(h,w*.3),sw=w-vw-8*DPR,bars=IS_MOBILE?48:96;for(let i=0;i<bars;i++){const idx=Math.floor(Math.pow(i/bars,2)*fd.length*.5),v=fd[idx]/255,bh=v*h*.9,hue=lerp(10,280,i/bars);g.fillStyle=`hsla(${hue},90%,60%,${.25+v*.6})`;g.fillRect(i*sw/bars,h-bh,sw/bars-2*DPR,bh)}
@@ -211,12 +213,13 @@ function drawScope(){const c=$("scope"),w=c.clientWidth*DPR,h=c.clientHeight*DPR
   return Math.sqrt(rms/td.length)}
 /* ---------- per-card live meters (each layer's own audio) ---------- */
 const mbuf=new Float32Array(256);
-function drawMeters(){if(!A)return;PAN_KEYS.forEach(k=>{const c=$("vu"+k);if(!c||!c.offsetParent)return;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);
+function drawMeters(){if(!A)return;PAN_KEYS.forEach(k=>{const c=$("vu"+k);if(!c||!c.offsetParent)return;
+  if(!FX.on(c)){A.meters[k].getFloatTimeDomainData(mbuf);let rms=0;for(let i=0;i<mbuf.length;i++)rms+=mbuf[i]*mbuf[i];rms=Math.sqrt(rms/mbuf.length);S.hit[k]=Math.max(S.hit[k],clamp(rms*5,0,1)*.7);return} // scrolled away: level only, no drawingconst w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);
   A.meters[k].getFloatTimeDomainData(mbuf);let rms=0;g.beginPath();for(let i=0;i<mbuf.length;i++){rms+=mbuf[i]*mbuf[i];const x=i/mbuf.length*w,y=h/2+clamp(mbuf[i]*3,-1,1)*h/2;i?g.lineTo(x,y):g.moveTo(x,y)}
   g.strokeStyle=COLS[k];g.lineWidth=1.2*DPR;g.shadowColor=COLS[k];g.shadowBlur=6*DPR;g.stroke();g.shadowBlur=0;rms=Math.sqrt(rms/mbuf.length);S.hit[k]=Math.max(S.hit[k],clamp(rms*5,0,1)*.7)})}
 /* ---------- title letters glow with their layer ---------- */
 const TL_LAYERS=["q","s","o","x","w","t","c","i","u"];
-function drawTitle(){document.querySelectorAll("#title .L").forEach((el,i)=>{const k=TL_LAYERS[i%TL_LAYERS.length];el.style.setProperty("--h",(S.hit[k]||0).toFixed(3))})}
+let titleLs=null;function drawTitle(){if(!titleLs||!titleLs[0]||!titleLs[0].isConnected)titleLs=[...document.querySelectorAll("#title .L")];titleLs.forEach((el,i)=>{const k=TL_LAYERS[i%TL_LAYERS.length];FX.css(el,"--h",(S.hit[k]||0).toFixed(2))})}
 /* ---------- event log + trace ---------- */
 function chordTrace(t){return [["Sensor","Open-Meteo weather model, 2 m air temperature, 10 cities"],["Raw reading",S.temps.map(x=>`${x.name}: ${tsAt(x,t).toFixed(1)}°C`).join("\n")],["Formula","temperature −30…45 °C → scale step 0…"+(scaleFor(S.cur.kp||2).length*3-1)+"\n(cold low, hot high)"],["Sound + MIDI",`10 voices panned by longitude\nMIDI ch ${CH("c")}, one note per city`],["AI running","none"]]}
 function showTrace(tr){$("trace").querySelector("ol").innerHTML=tr.map(([a])=>`<li><b${a==="AI running"?' class="ai0"':""}>${a}</b><span${a==="AI running"?' class="ai0"':""}></span></li>`).join("");[...$("trace").querySelectorAll("li span")].forEach((e,i)=>e.textContent=tr[i][1])}
@@ -226,11 +229,21 @@ function logEv(txt,k,q,tr){const real=q?q.time:realNow();if(S.on&&EVENTS.length<
   const tm=new Date(real).toISOString().slice(11,19);li.innerHTML=`<span>${tm}</span>${q?`<b>M${q.mag.toFixed(1)}</b>`:`<b style="color:${COLS[k]}">${{x:"FLARE",u:"SUN",e:"NASA",i:"ISS",c:"CHORD"}[k]||"•"}</b>`}<span></span>`;li.lastChild.textContent=q?txt.split(" · ").slice(1).join(" · "):txt;
   const ul=$("log");ul.prepend(li);while(ul.children.length>40)ul.lastChild.remove()}
 
-let lastFrame=0;
+let lastFrame=0,lastDraw=0,decayT=0;
+// js/fx.js: at the light level the canvases redraw at ~30 fps; at every level, things scrolled out of view skip drawing
+const mapWrap=document.querySelector(".mapwrap"),titleEl=$("title");
 function frame(now){
-  try{drawMap(now);if(window.drawFocus)drawFocus(now);if(window.drawZones)drawZones(now);drawTimeline();if(now-lastFrame>(IS_MOBILE?120:60)){drawSparks();lastFrame=now}drawRoll(now);const rms=drawScope();S.rms=rms||0;drawMeters();drawTitle();
-  const glow=clamp((rms||0)*6+S.hit.q*.6,0,1);document.documentElement.style.setProperty("--glow",glow.toFixed(3));
-  [...PAN_KEYS,"m"].forEach(k=>{S.hit[k]*=.93;const el=$("c"+k);if(el)el.style.setProperty("--hit",S.hit[k].toFixed(3))});
-  if($("mini"))$("mini").style.setProperty("--lvl",clamp((rms||0)*5,0,1).toFixed(3))}catch(err){console.error(err)}
   requestAnimationFrame(frame);
+  const fm=FX.frameMs();if(fm&&now-lastDraw<fm)return;
+  const dtf=lastDraw?Math.min(4,(now-lastDraw)/16.7):1;lastDraw=now;
+  try{const mapOn=FX.on(mapWrap)||document.body.classList.contains("imm")||(window.EMRec&&EMRec.capturing);
+  if(mapOn){drawMap(now);if(window.drawFocus)drawFocus(now);if(window.drawZones)drawZones(now)}else $("clock").textContent=new Date(realNow()).toISOString().slice(0,19).replace("T"," ")+" UTC";
+  if(FX.on(tl))drawTimeline();if(now-lastFrame>(IS_MOBILE||fm?120:60)){drawSparks();lastFrame=now}if(FX.on($("roll")))drawRoll(now);const rms=drawScope(!FX.on($("scope")));S.rms=rms||0;drawMeters();if(FX.on(titleEl))drawTitle();
+  const glow=clamp((rms||0)*6+S.hit.q*.6,0,1).toFixed(2);setGlow(glow);
+  // layer levels fall at the same speed whatever the frame rate
+  const dk=Math.pow(.93,dtf);[...PAN_KEYS,"m"].forEach(k=>{S.hit[k]*=dk;FX.css($("c"+k),"--hit",S.hit[k].toFixed(2))});
+  FX.css($("mini"),"--lvl",clamp((rms||0)*5,0,1).toFixed(2))}catch(err){console.error(err)}
 }
+/* --glow is registered as non-inherited (see index.html), so it's written only to the few things that use it,
+   instead of the whole page restyling every frame */
+let glowEls=null;function setGlow(v){if(!glowEls)glowEls=[document.body,titleEl,...document.querySelectorAll(".go")];glowEls.forEach(el=>FX.css(el,"--glow",v))}

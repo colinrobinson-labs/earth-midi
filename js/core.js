@@ -4,7 +4,8 @@
 "use strict";
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,map=(v,a,b,c,d)=>lerp(c,d,clamp((v-a)/(b-a),0,1));
-const DPR=Math.min(2,window.devicePixelRatio||1);
+let DPR=window.FX?FX.dpr():Math.min(2,window.devicePixelRatio||1);
+addEventListener("fxchange",()=>{DPR=FX.dpr();dispatchEvent(new Event("resize"))});
 const VERSION="0.6";
 const IS_MOBILE=matchMedia("(max-width:700px)").matches;
 

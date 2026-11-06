@@ -79,7 +79,10 @@ function globeCache(G){const p0=VIEW.lat*D2R,sp0=Math.sin(p0),cp0=Math.cos(p0),n
   WX.g={row,dl,sl,cl,lb};WX.gLat=VIEW.lat;WX.gSize=G;
   WX.gc=WX.gc||document.createElement("canvas");WX.gc.width=WX.gc.height=G;WX.gimg=WX.gc.getContext("2d").createImageData(G,G)}
 function drawClouds(globe,sp){const sd=Math.sin(sp.lat*D2R),cd=Math.cos(sp.lat*D2R);for(let x=0;x<360;x++)WX_COS[x]=Math.cos((-179.5+x-sp.lon)*D2R);
-  if(globe){const G=IS_MOBILE?180:240;if(!WX.g||WX.gSize!==G||Math.abs(WX.gLat-VIEW.lat)>.05)globeCache(G);
+  if(globe){const G=FX.lvl?140:IS_MOBILE?180:240;if(!WX.g||WX.gSize!==G||Math.abs(WX.gLat-VIEW.lat)>.05)globeCache(G);
+    // light effects (js/fx.js): while the globe is just drifting, re-shade the clouds ~12 times a second and reuse them in between
+    const pn=performance.now();if(FX.lvl&&WX.gT&&pn-WX.gT<80&&!VIEW.drag&&!(typeof MOTION!=="undefined"&&MOTION.inertia)&&WX.gL===VIEW.lon-VIEW.lon%.5){const R=globeR();cx.drawImage(WX.gc,cv.width/2-R,cv.height/2-R,2*R,2*R);return}
+    WX.gT=pn;WX.gL=VIEW.lon-VIEW.lon%.5;
     const {row,dl,sl,cl,lb}=WX.g,img=WX.gimg,d=img.data,L=VIEW.lon+179.5,C=WX.texC,Rr=WX.texR;
     for(let q=0,n=G*G;q<n;q++){const o=q*4,r=row[q];if(r<0){d[o+3]=0;continue}
       // bilinear texel lookup so 1° texels never show as steps
