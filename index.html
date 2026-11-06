@@ -25,6 +25,7 @@
 <meta name="apple-mobile-web-app-title" content="Earth MIDI">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,500..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>try{if(location.hash==="#simple"||localStorage.getItem("em.simple")==="1")document.documentElement.classList.add("simple")}catch(_){}</script>
 <style>
 :root{
  /* Earth MIDI design tokens (docs/design-system.md). Chrome is neutral graphite; the 13 layer hues are data colours. */
@@ -134,12 +135,12 @@ body:not(.playing) .go{animation:goCall 2.4s ease-in-out infinite}
 .ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
 .cap{font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 .ctl select{height:44px;padding:0 12px}
-.ctl-mode select{width:184px}
+.ctl-mode select{width:144px}
 .seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--sf2)}
 .seg button{border:0;border-radius:0;background:transparent;padding:9px 14px}.seg button+button{border-left:1px solid var(--line2)}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
-.ctl .seg button{height:42px;min-width:90px}
-.bar .ctl-vol input{height:44px;margin:0;width:104px}
+.ctl .seg button{height:42px;min-width:80px}
+.bar .ctl-vol input{height:44px;margin:0;width:96px}
 :where(input[type=range]){accent-color:var(--fg);width:130px}
 .tools{display:flex;gap:6px;align-items:flex-end;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
 .tools button{height:44px;display:inline-flex;align-items:center;gap:8px;padding:0 13px}
@@ -481,6 +482,29 @@ body::before,#title .L{--glow:inherit}
 .fx-lite body::before{transition:none}
 .fx-lite .procta{animation-timing-function:steps(48)!important}
 footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg);text-decoration:none}
+/* ===== Simple view (js/simple.js): opt-in, globe + play + volume. The full view stays the default. ===== */
+.stag,.sback,#bSimple,#mFull{display:none}
+.shint{display:none}
+body.hinted .hud .hint2{opacity:0;transition:opacity .6s}
+html.simple .tag,html.simple .badges,html.simple .bar .status,html.simple .ctl-mode,html.simple .ctl-midi,html.simple #bPro,html.simple #bExp,html.simple .bar .cap,
+html.simple .hud2,html.simple .wxl,html.simple .hud .hint2,html.simple .tlh>span:nth-child(2),html.simple .side,html.simple .grid,html.simple .row2,html.simple #trace,html.simple .panel,
+html.simple .info,html.simple .lic,html.simple #pro,html.simple #exp,html.simple footer p:not(:first-child),html.simple .how .hs-s{display:none!important}
+html.simple .stag{display:block;font:17px/1.45 var(--body);color:var(--fg2);margin:0;grid-column:1/-1}
+html.simple .main{grid-template-columns:minmax(0,1fr)}
+html.simple .sback{display:block;margin:28px 0 0;text-align:center;font-size:13px;color:var(--mute)}
+html.simple .sback button{margin-left:8px;height:36px;padding:0 14px}
+html.simple .how{margin-top:16px}
+@media (min-width:701px){html.simple #map{aspect-ratio:2/1}}
+@media (max-width:700px){
+ #bSimple{display:inline-flex;height:38px;padding:0 11px;gap:6px;font-size:12.5px;margin-right:6px}#bSimple .ic{width:15px;height:15px}
+ html.simple{--peek:0px}
+ html.simple body{padding-bottom:var(--dock)}
+ html.simple .bar{display:none}
+ html.simple .stag{font-size:14px;text-align:center}
+ html.simple .dock [data-jump]{display:none}
+ html.simple #mFull{display:flex}
+ html.simple header{margin-bottom:14px}
+}
 </style>
 </head>
 <body>
@@ -491,6 +515,7 @@ footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg
     <div class="hmeter" id="hmeter" aria-hidden="true" title="Each bar is one layer, lighting up as its data plays"></div>
   </div>
   <p class="tag">Live earthquakes, solar wind, ocean swell, tides and the space station, played as sound and sent as MIDI. <b>Every note is a real event</b>: a quake, a solar flare, the sun rising over Lagos. Filter sweeps follow the actual solar wind, the drone bends with real tides. Listen, play along, or take the raw data into your DAW.</p>
+  <p class="stag">The planet, played live. Every note is a real event.</p>
   <div class="badges"><span class="b raw">Live sensor data</span><span class="b alg">Same reading, same note</span><span class="b syn">Synthesized live</span><a class="b more" href="#how">How it works</a></div>
 </header>
 
@@ -504,13 +529,14 @@ footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg
     <option value="600">Replay last 24h in 10 min, then live</option>
     <option value="60">Replay last 24h in 60 s, then live</option>
   </select></label>
-  <div class="ctl ctl-style"><span class="cap">Style</span><div class="seg"><button data-style="ambient" aria-pressed="true">Ambient</button><button data-style="pulse" aria-pressed="false">Pulse</button></div></div>
+  <div class="ctl ctl-style"><div class="seg"><button data-style="ambient" aria-pressed="true">Ambient</button><button data-style="pulse" aria-pressed="false">Pulse</button></div></div>
   <label class="ctl ctl-vol"><span class="cap">Volume</span><input type="range" id="vol" min="0" max="1" step=".01" value=".8" aria-label="Volume"></label>
   <label class="ctl ctl-midi" id="midiCtl"><span class="cap">MIDI out</span><select id="midiOut" aria-label="MIDI output"><option value="">Off</option></select></label>
   <div class="tools">
     <button id="bPro" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2"/><circle cx="12" cy="8" r="2.2"/><circle cx="19" cy="16" r="2.2"/></svg>Producer</button>
-    <div class="vsw" id="viewSw" role="group" aria-label="View"><button type="button" data-vw="globe" aria-pressed="true" title="The globe, timeline and layer cards"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Globe</button><button type="button" data-vw="console" aria-pressed="false" aria-haspopup="dialog" title="Full-screen mixing console: every layer, Sound and Master at once"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 8v8M12 8v8M17 8v8"/><path d="M5.5 13h3M10.5 10h3M15.5 14.5h3"/></svg>Console</button></div>
+    <div class="vsw" id="viewSw" role="group" aria-label="View"><button type="button" data-vw="simple" aria-pressed="false" title="Simple view: the globe, play and volume, nothing else"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/></svg>Simple</button><button type="button" data-vw="globe" aria-pressed="true" title="The globe, timeline and layer cards"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Globe</button><button type="button" data-vw="console" aria-pressed="false" aria-haspopup="dialog" title="Full-screen mixing console: every layer, Sound and Master at once"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 8v8M12 8v8M17 8v8"/><path d="M5.5 13h3M10.5 10h3M15.5 14.5h3"/></svg>Console</button></div>
     <button id="bExp" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Export</button>
+    <button id="bSimple" type="button" aria-pressed="false" title="Simple view"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/></svg>Simple</button>
     <button id="bShare"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Share</button>
   </div>
   <div class="status"><span id="dataState">loading 14 feeds…</span><span id="midiState"></span><span id="xState" role="status"></span></div>
@@ -622,6 +648,7 @@ footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg
   <div class="credit"><code id="creditLine">Planetary data sonified with Earth MIDI by Colin Robinson · earthmidi.com</code></div>
   <p style="font-size:12px">Every export carries this credit: WAV metadata, MIDI copyright and text events, CSV and JSON headers, README and CREDIT files in each zip, and burned into video clips. Underlying data: USGS, NOAA and NASA (public domain) and Open-Meteo (CC BY 4.0, attribution included in every file).</p>
 </div>
+<p class="sback">Prefer the full instrument? <button type="button" id="bFull">Show everything</button></p>
 <footer>
   <p><b>Earth MIDI by Colin Robinson</b> · v0.6 · earthmidi.com · © 2026 Colin Robinson. Site, code and sound design all rights reserved; what you record or export is yours to use under the credit license above. <a href="https://github.com/colinrobinson-labs/earth-midi/blob/main/LICENSE.md">Full notice</a>.</p>
   <p id="privacy"><b>Privacy:</b> no accounts, cookies, analytics or ads. Your settings and presets stay in this browser. Your browser fetches data straight from the public sources below, and fonts from Google Fonts; like any website, they see your IP address.</p>
@@ -638,6 +665,7 @@ footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg
     <button class="db" id="mRec" aria-label="Record video or audio"><b>●</b>Record</button>
     <button class="db" data-jump="exp" aria-label="Export"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Export</button>
     <button class="db" data-jump="pro" aria-label="Producer controls"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2"/><circle cx="12" cy="8" r="2.2"/><circle cx="19" cy="16" r="2.2"/></svg>Producer</button>
+    <button class="db" id="mFull" type="button" aria-label="Show everything"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>Show all</button>
   </div>
 </nav>
 
@@ -659,10 +687,11 @@ footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg
 <script src="js/sheet.js?v=21"></script>
 <script src="js/title.js?v=2"></script>
 <script src="js/record.js?v=6"></script>
-<script src="js/welcome.js?v=6"></script>
+<script src="js/welcome.js?v=7"></script>
 <script src="js/procta.js?v=3"></script>
 <script src="js/beat.js?v=2"></script>
 <script src="js/home.js?v=2"></script>
-<script src="js/console.js?v=3"></script>
+<script src="js/simple.js?v=1"></script>
+<script src="js/console.js?v=4"></script>
 </body>
 </html>

@@ -87,3 +87,6 @@ Checked at 1440, 768 and 390 px wide, with labelled demo data (the review sandbo
 ## Adding a screen
 
 Start from `--sf0` panel + `--line` border + `--r2`. Heading in `var(--disp)` 700 sentence case, captions with `.cap`, controls as plain `button` / `.seg`. Use a layer colour only if the element shows that layer's data, passed as `--c` / `--ac`.
+
+## Simple view (js/simple.js)
+Opt-in decluttered layout for people who find the full view too dense: title, one-line tagline, Play, Ambient/Pulse, volume, Record, the globe, timeline and Play live. Everything else is hidden, not removed; settings keep working. Entry: "Simple" in the Simple | Globe | Console switch, the Simple button on phones, or earthmidi.com/#simple. Remembered per browser (`em.simple`). Exit: Globe, "Show all" in the phone dock, or "Show everything" at the bottom. The full view stays the default.
