@@ -50,6 +50,7 @@ Only the width-125 Archivo face is loaded, so every `var(--disp)` renders Expand
 - **Globe HUD:** every control is a 32px `.seg` on a blurred 80% graphite plate. Zeus Mode is the one gold exception (outline, gold text, filled when on). On phones the HUD is a single horizontally scrollable row with a fade at the right edge.
 - **Cards (`.ch`):** `--r2`, 2px top rule in the layer colour, glow and border tint follow `--hit`.
 - **Producer groups:** the Sound tab (many groups) uses masonry columns (`.pgrid.mas`) so short groups never leave holes; other tabs use an auto-fit grid; Presets is one column (`.pgrid.pre`).
+- **Phone transport:** one row (playback, MIDI out with an inset caption, share), hidden MIDI control where the browser has no Web MIDI (iOS Safari).
 - **Status line:** mono 11.5px under a hairline inside the transport bar.
 - **Empty states:** say what will appear and how to make it happen (see `#log:empty`).
 - **Focus:** every focusable element gets a 2px `--o` outline at 2px offset (`:focus-visible`).
