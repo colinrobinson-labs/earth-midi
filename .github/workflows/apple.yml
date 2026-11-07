@@ -53,4 +53,5 @@ jobs:
       - name: Errors
         if: failure()
         working-directory: apps/apple
-        run: grep -E "^/.*: error:" build.log | sed "s#.*/apps/apple/##" | sort -u | head -120 || true
+        run: |
+          grep -E "^/.*: error:" build.log | sed "s#.*/apps/apple/##" | sort -u | head -120 || true
