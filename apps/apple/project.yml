@@ -1,0 +1,84 @@
+# Earth MIDI for Apple platforms. Generate the Xcode project with XcodeGen:
+#   cd apps/apple && xcodegen generate && open EarthMIDI.xcodeproj
+name: EarthMIDI
+options:
+  bundleIdPrefix: com.colinrobinson
+  deploymentTarget:
+    iOS: "17.0"
+    macOS: "14.0"
+    tvOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_HARDENED_RUNTIME: YES
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+targets:
+  EarthMIDI:
+    type: application
+    platform: [iOS, macOS]
+    sources:
+      - path: App
+        excludes: ["Info-*.plist", "*.entitlements", "Bridge.js"]
+      - path: App/Bridge.js
+        buildPhase: resources
+      - Shared/Core
+      - Shared/Intents
+    settings:
+      base:
+        PRODUCT_NAME: EarthMIDI
+        PRODUCT_BUNDLE_IDENTIFIER: com.colinrobinson.earthmidi
+        INFOPLIST_FILE: App/Info-${platform}.plist
+        CODE_SIGN_ENTITLEMENTS: App/EarthMIDI-${platform}.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+    postCompileScripts:
+      - name: Bundle site engine
+        script: '"${SRCROOT}/scripts/sync-web.sh"'
+        basedOnDependencyAnalysis: false
+    dependencies:
+      - target: EarthMIDIWidgets_${platform}
+    scheme: {}
+
+  EarthMIDIWidgets:
+    type: app-extension
+    platform: [iOS, macOS]
+    sources:
+      - path: Widgets
+        excludes: ["Info.plist", "*.entitlements"]
+      - Shared/Core
+      - Shared/Intents
+    settings:
+      base:
+        PRODUCT_NAME: EarthMIDIWidgets
+        PRODUCT_BUNDLE_IDENTIFIER: com.colinrobinson.earthmidi.widgets
+        INFOPLIST_FILE: Widgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Widgets/Widgets-${platform}.entitlements
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) WIDGET_EXTENSION
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+
+  EarthMIDITV:
+    type: application
+    platform: tvOS
+    sources:
+      - path: TV
+        excludes: ["Info.plist"]
+      - Shared/Core
+      - Shared/Synth
+      - Shared/Intents
+    settings:
+      base:
+        PRODUCT_NAME: EarthMIDI
+        PRODUCT_BUNDLE_IDENTIFIER: com.colinrobinson.earthmidi
+        INFOPLIST_FILE: TV/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: App Icon & Top Shelf Image
+        TARGETED_DEVICE_FAMILY: "3"
+    scheme: {}

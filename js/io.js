@@ -128,7 +128,7 @@ async function loadFile(f){try{const j=JSON.parse(await f.text());if(j.app!=="Ea
   if(!j.data)throw new Error("no data in file");Object.assign(S,j.data);S.endT=j.endT;S.frozen=true;CFG=mergeCFG(j.cfg);setStyle(j.style||"ambient");afterCFG();
   $("dataState").innerHTML=`<span class="dot" style="background:var(--s);box-shadow:0 0 8px var(--s)"></span>saved session · ${new Date(j.endT-864e5).toISOString().slice(0,16)} → ${new Date(j.endT).toISOString().slice(0,16)} UTC`;
   if(S.on)startStop();xs("Session loaded. Press PLAY to replay it exactly")}catch(err){xs("Couldn't load: "+err.message)}}
-const shareURL=()=>location.origin+location.pathname+"#s="+btoa(unescape(encodeURIComponent(JSON.stringify({cfg:CFG,style:S.style,mode:+$("mode").value}))));
+const shareURL=()=>(location.protocol==="https:"?location.origin+location.pathname:"https://earthmidi.com/")+"#s="+btoa(unescape(encodeURIComponent(JSON.stringify({cfg:CFG,style:S.style,mode:+$("mode").value}))));
 async function shareLink(){const u=shareURL();history.replaceState(null,"",u.slice(u.indexOf("#")));
   if(navigator.share&&IS_MOBILE){try{await navigator.share({title:"Earth MIDI",text:"The planet as an instrument, with my settings",url:u});return}catch(_){}}
   try{await navigator.clipboard.writeText(u);xs("Link copied: opens with your settings on live data")}catch(_){prompt("Copy this link",u)}}
