@@ -16,13 +16,15 @@ struct EarthMIDIApp: App {
         #if os(macOS)
         .commands {
             CommandMenu("Playback") {
-                Button(hub.isPlaying ? "Stop" : "Play") { hub.toggle() }.keyboardShortcut(.space, modifiers: [])
+                Button(hub.isPlaying ? "Stop" : "Play") { hub.toggle() }.keyboardShortcut(.return, modifiers: [.command])
                 Button("Go Live") { hub.goLive() }.keyboardShortcut("l", modifiers: [.command])
                 Divider()
                 Button("Ambient") { hub.setStyle("ambient") }.keyboardShortcut("1", modifiers: [.command])
                 Button("Pulse") { hub.setStyle("pulse") }.keyboardShortcut("2", modifiers: [.command])
             }
         }
+        #endif
+        #if os(macOS)
         MenuBarExtra {
             MenuBarView().environmentObject(hub)
         } label: {
