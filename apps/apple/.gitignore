@@ -1,0 +1,5 @@
+EarthMIDI.xcodeproj/
+build/
+*.xcarchive
+DerivedData/
+build.log

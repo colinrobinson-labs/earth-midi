@@ -1,0 +1,56 @@
+# Compiles the Apple apps (iPhone/iPad, Mac, Apple TV) on every change under apps/apple.
+# Unsigned build check only; signing + TestFlight happen on Colin's Mac.
+name: Apple apps build
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: ["apps/apple/**", "js/**", "index.html", ".github/workflows/apple.yml"]
+  pull_request:
+    paths: ["apps/apple/**", ".github/workflows/apple.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scheme: EarthMIDI_iOS
+            dest: generic/platform=iOS Simulator
+          - scheme: EarthMIDI_macOS
+            dest: generic/platform=macOS
+          - scheme: EarthMIDITV
+            dest: generic/platform=tvOS Simulator
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode version
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)" || true
+          xcodebuild -version
+      - name: Generate project
+        working-directory: apps/apple
+        run: |
+          brew install xcodegen >/dev/null
+          xcodegen generate
+      - name: Build ${{ matrix.scheme }}
+        working-directory: apps/apple
+        run: |
+          set -o pipefail
+          xcodebuild build -project EarthMIDI.xcodeproj -scheme "${{ matrix.scheme }}" -destination "${{ matrix.dest }}" \
+            -configuration Release CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tee build.log | grep -E "error:|warning: .*(deprecated|never|unused)|BUILD (SUCCEEDED|FAILED)" || true
+          grep -q "BUILD SUCCEEDED" build.log
+      - name: Errors
+        if: failure()
+        working-directory: apps/apple
+        run: grep -n -B2 -A6 "error:" build.log | head -300 || true
