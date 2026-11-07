@@ -47,8 +47,9 @@ function chime(P,n,t,amp,rise){const {ctx,to}=P,inst=CFG.inst.u,s=sc();(rise?[0,
 function soft(P,n,t,amp,dec=.7){const {ctx,to}=P,o=osc(ctx,"triangle",mtof(n),t,dec+.1),g=ctx.createGain();env(ctx,g,t,amp,.005,dec);o.connect(g);g.connect(to)}
 function drum(P,k,t,v){const {ctx,to}=P;
   if(k==="k"){const o=osc(ctx,"sine",150,t,.45),g=ctx.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(44,t+.12);env(ctx,g,t,.5*v,.002,.38);o.connect(g);g.connect(to);return}
+  if(k!=="s"){const g=ctx.createGain();g.gain.value=0;env(ctx,g,t,.2*v,.001,k==="o"?.24:.045);metal().connect(g);g.connect(to);setTimeout(()=>{try{A.metal.disconnect(g)}catch(_){}},800);return}// same metallic hats as the live kit
   const n=ctx.createBufferSource();n.buffer=A.nb;const f=ctx.createBiquadFilter(),g=ctx.createGain();
-  if(k==="s"){f.type="bandpass";f.frequency.value=1900;f.Q.value=.7;env(ctx,g,t,.32*v,.002,.17)}else{f.type="highpass";f.frequency.value=7500;env(ctx,g,t,.16*v,.001,k==="o"?.16:.04)}
+  f.type="highpass";f.frequency.value=900;env(ctx,g,t,.3*v,.0012,.17);soft(P,55,t,.14*v,.1);
   n.connect(f);f.connect(g);g.connect(to);n.start(t,Math.random()*2);n.stop(t+.25)}
 
 /* one preview per kind of pick */
