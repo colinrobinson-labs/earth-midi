@@ -1,20 +1,22 @@
-// Renders every app icon / top shelf image from the site's icon design (icon.svg) with headless Chromium.
+// Renders every app icon / top shelf image from the Earth MIDI "Breach" mark (breach-mark.js) with headless Chromium.
 // Run from the repo root: node apps/apple/scripts/make-icons.js   (needs playwright; output is committed)
 const {chromium}=require('playwright');const fs=require('fs');const path=require('path');
 const A=path.join(__dirname,'..');
-const GRAD=`<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc53d"/><stop offset=".35" stop-color="#7cff9e"/><stop offset=".65" stop-color="#3cc8ff"/><stop offset="1" stop-color="#c77dff"/></linearGradient>`;
-const BG=`<radialGradient id="b" cx=".5" cy=".42" r=".75"><stop offset="0" stop-color="#121820"/><stop offset="1" stop-color="#05070a"/></radialGradient>`;
-const mark=(s=1,tx=0,ty=0)=>`<g transform="translate(${tx} ${ty}) scale(${s})"><circle cx="32" cy="32" r="20" fill="none" stroke="url(#g)" stroke-width="5"/><path d="M14 36c6-6 10 6 16 0s10-12 20-2" fill="none" stroke="#ff5a3c" stroke-width="4" stroke-linecap="round"/></g>`;
-const svg=(w,h,body)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${GRAD}${BG}</defs>${body}</svg>`;
-// iOS: full-bleed square, the system rounds the corners
-const ios=s=>svg(s,s,`<rect width="${s}" height="${s}" fill="url(#b)"/>${mark(s/64*1.08,-s*0.04,-s*0.04)}`);
+const M=require('./breach-mark.js');
+const svg=(w,h,defs,body)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${defs}</defs>${body}</svg>`;
+// iOS: full-bleed square, the system rounds the corners. R = 300/1024 of the canvas.
+const ios=s=>{const R=s*300/1024;return svg(s,s,M.bgDefs('i',s>=64)+M.glowDef('i',R),M.bg('i',0,0,s,s,0,s>=64)+M.mark('i',s/2,s/2,R))};
 // macOS: rounded tile inset on a transparent canvas (Apple's 824/1024 grid)
-const mac=s=>{const i=s*100/1024,w=s-2*i;return svg(s,s,`<rect x="${i}" y="${i}" width="${w}" height="${w}" rx="${w*.225}" fill="url(#b)"/><rect x="${i}" y="${i}" width="${w}" height="${w}" rx="${w*.225}" fill="none" stroke="#ffffff14" stroke-width="${s/256}"/>${mark(w/64*.9,i+w*.05,i+w*.05)}`)};
-// tvOS layered icon: back plate, ring, wave (parallax)
-const tvBack=(w,h)=>svg(w,h,`<rect width="${w}" height="${h}" fill="url(#b)"/>`+[...Array(7)].map((_,k)=>`<line x1="0" x2="${w}" y1="${h*(k+1)/8}" y2="${h*(k+1)/8}" stroke="#ffffff08" stroke-width="${h/200}"/>`).join(''));
-const tvRing=(w,h)=>{const r=h*.36;return svg(w,h,`<circle cx="${w/2}" cy="${h/2}" r="${r}" fill="none" stroke="url(#g)" stroke-width="${h*.09}"/>`)};
-const tvWave=(w,h)=>{const s=h/64*1.1;return svg(w,h,`<g transform="translate(${w/2-32*s} ${h/2-32*s}) scale(${s})"><path d="M14 36c6-6 10 6 16 0s10-12 20-2" fill="none" stroke="#ff5a3c" stroke-width="4" stroke-linecap="round"/></g>`)};
-const shelf=(w,h)=>svg(w,h,`<rect width="${w}" height="${h}" fill="url(#b)"/>${mark(h/64*.55,w*.08,h*.225)}<text x="${w*.08+h*.66}" y="${h*.56}" font-family="Helvetica Neue,Arial" font-weight="700" font-size="${h*.15}" fill="#e8ecf2" letter-spacing="${h*.01}">EARTH MIDI</text><text x="${w*.08+h*.66}" y="${h*.68}" font-family="Menlo,monospace" font-size="${h*.045}" fill="#8a96a3" letter-spacing="${h*.006}">THE PLANET, PLAYED LIVE</text>`);
+const mac=s=>{const i=s*100/1024,w=s-2*i,R=s*300/1024*.805,g=s>=64;
+  return svg(s,s,M.bgDefs('m',g)+M.glowDef('m',R)+`<filter id="ms" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="${s*14/1024}" stdDeviation="${s*16/1024}" flood-color="#000" flood-opacity=".45"/></filter>`,
+    `<g filter="url(#ms)"><rect x="${i}" y="${i}" width="${w}" height="${w}" rx="${w*.225}" fill="#05070a"/></g>${M.bg('m',i,i,w,w,w*.225,g)}<rect x="${i}" y="${i}" width="${w}" height="${w}" rx="${w*.225}" fill="none" stroke="#ffffff17" stroke-width="${Math.max(1,s/256)}"/>${M.mark('m',s/2,s/2,R)}`)};
+// tvOS layered icon (parallax): Back = graphite + grain, Middle = broken spectrum ring, Front = seismogram
+const tvR=h=>.28*h;
+const tvBack=(w,h)=>svg(w,h,M.bgDefs('b',true),M.bg('b',0,0,w,h,0,true));
+const tvRing=(w,h)=>{const R=tvR(h),r=M.ring(w/2,h/2,R);return svg(w,h,M.glowDef('r',R),M.glow('r',r)+r)};
+const tvWave=(w,h)=>{const R=tvR(h),t=M.trace(w/2,h/2,R);return svg(w,h,M.glowDef('t',R),M.glow('t',t)+t)};
+const shelf=(w,h)=>{const R=h*.3;return svg(w,h,M.bgDefs('s',true)+M.glowDef('s',R),M.bg('s',0,0,w,h,0,true)+M.mark('s',w*.08+R*1.42,h/2,R)+
+  `<text x="${w*.08+R*3.1}" y="${h*.56}" font-family="Archivo,Helvetica Neue,Arial" font-stretch="125%" font-weight="900" font-size="${h*.15}" fill="#eceee8" letter-spacing="${h*.004}">EARTH MIDI</text><text x="${w*.08+R*3.1+h*.006}" y="${h*.68}" font-family="IBM Plex Mono,Menlo,monospace" font-size="${h*.045}" fill="#97a1aa" letter-spacing="${h*.008}">THE PLANET, PLAYED LIVE</text>`)};
 const jobs=[];const put=(rel,w,h,s)=>jobs.push({file:path.join(A,rel),w,h,s});
 const AS=path.join(A,'App/Assets.xcassets'),TV=path.join(A,'TV/Assets.xcassets');
 const J=(p,o)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,JSON.stringify(o,null,2))};
@@ -39,8 +41,10 @@ stack('App Icon',400,240,[1,2]);stack('App Icon - App Store',1280,768,[1]);
 const shelfSet=(name,w,h)=>{const d=path.join(BA,name+'.imageset');const imgs=[1,2].map(sc=>{const fn=`shelf-${w}@${sc}x.png`;jobs.push({file:path.join(d,fn),w:w*sc,h:h*sc,s:shelf(w*sc,h*sc)});return {filename:fn,idiom:'tv',scale:`${sc}x`}});J(path.join(d,'Contents.json'),{images:imgs,info:{author:'xcode',version:1}})};
 shelfSet('Top Shelf Image',1920,720);shelfSet('Top Shelf Image Wide',2320,720);
 J(path.join(BA,'Contents.json'),{assets:[{filename:'App Icon - App Store.imagestack',idiom:'tv',role:'primary-app-icon',size:'1280x768'},{filename:'App Icon.imagestack',idiom:'tv',role:'primary-app-icon',size:'400x240'},{filename:'Top Shelf Image Wide.imageset',idiom:'tv',role:'top-shelf-image-wide',size:'2320x720'},{filename:'Top Shelf Image.imageset',idiom:'tv',role:'top-shelf-image',size:'1920x720'}],info:{author:'xcode',version:1}});
+// Top shelf text uses the site faces; falls back to Helvetica/Menlo offline.
+const FONTS='<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,900&family=IBM+Plex+Mono:wght@400&display=block">';
 (async()=>{const b=await chromium.launch();const p=await b.newPage();
-  for(const j of jobs){await p.setViewportSize({width:j.w,height:j.h});await p.setContent(`<html><body style="margin:0;background:transparent">${j.s}</body></html>`);
+  for(const j of jobs){await p.setViewportSize({width:j.w,height:j.h});await p.setContent(`<html><head>${FONTS}</head><body style="margin:0;background:transparent">${j.s}</body></html>`,{waitUntil:'networkidle'});await p.evaluate(()=>document.fonts.ready);
     fs.mkdirSync(path.dirname(j.file),{recursive:true});
     const opaque=!/mac-|front@|middle@/.test(j.file); // App Store / tvOS back layers must be opaque
     await p.screenshot({path:j.file,omitBackground:!opaque,clip:{x:0,y:0,width:j.w,height:j.h}})}
