@@ -106,3 +106,10 @@ Made after "too busy / looks vibe coded" feedback. Nothing was removed; details 
 - **Console:** no captions under section names, no strip icons or VERB labels, neutral Master and Pulse. Channel strips keep their layer colours.
 
 Rule of thumb from here: uppercase mono is for numbers only, a label earns its place only if the control is unclear without it, and colour means data.
+
+## Logo: "Breach" (Nov 7, 2026)
+The planet's ring in the six layer colours, broken at top and bottom where a quake-red seismogram spikes through it, on the graphite background with a soft glow and fine grain. Chosen by Colin from the Mark Lab exploration (Eclipse, Meridian, Breach, Socket, Core, and the old Ring & Trace).
+
+- Geometry: `scripts/breach-mark.js` (a copy lives at `apps/apple/scripts/breach-mark.js`; keep them identical). Reference size R = 300 on a 1024 canvas; ring stroke 0.1R, trace stroke 0.065R, ring gaps ±11° at top and bottom.
+- Site: `node scripts/make-site-icons.js` writes `icon.svg` (favicon: no glow or grain, strokes ×1.45 so it reads at 16 px) and `apple-touch-icon.png`.
+- Apple apps: `node apps/apple/scripts/make-icons.js` (iOS, macOS, tvOS layers: Back = background, Middle = ring, Front = seismogram; Top Shelf).
