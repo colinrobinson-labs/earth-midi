@@ -119,6 +119,7 @@ private struct Pink {
     return 0
 }
 @inline(__always) private func saw(_ ph: Double, _ dt: Double) -> Double { 2 * ph - 1 - polyBlep(ph, dt) }
+@inline(__always) private func softCeil(_ x: Double) -> Double { let a = abs(x); return a <= 0.7 ? x : (x < 0 ? -1 : 1) * (0.7 + 0.28 * tanh((a - 0.7) / 0.28)) }
 @inline(__always) private func panLR(_ p: Double) -> (Double, Double) { let a = (clamp(p, -1, 1) + 1) * .pi / 4; return (cos(a), sin(a)) }
 
 /// One struck voice: FM quake bell, flare bell or sub hit
@@ -129,7 +130,7 @@ private struct Voice {
     var f = 440.0, ratio = 2.0, idx0 = 1.0, idxDur = 1.0, p2 = 4.0
     var amp = 0.1, pl = 0.7, pr = 0.7, wet = 0.4
     var phC = 0.0, phM = 0.0, ph2 = 0.0
-    var lp = Biquad(.lp)
+    var lp = Biquad(.lp), hp = Biquad(.hp)
     var f0 = 0.0, f1 = 0.0
 }
 
@@ -144,7 +145,7 @@ final class SynthDSP {
 
     // pad
     private var padPh = [Double](repeating: 0, count: 8)
-    private var padF = (0..<4).map { _ in Smooth(110, tau: 0.9) }
+    private var padF = (0..<4).map { _ in Smooth(110, tau: 0.12) }
     private var padVG = (0..<4).map { _ in Smooth(0.05, tau: 1) }
     private var padDet: [Double] = ([-7, 7, -7, 7, -7, 7, -7, 7] as [Double]).enumerated().map { i, d in d + Double((i * 37) % 5) - 2 }
     private var padCut = Smooth(800, tau: 1.5), padQ = Smooth(2, tau: 2), padG = Smooth(0, tau: 1), padLfoR = Smooth(0.07, tau: 2)
@@ -163,7 +164,10 @@ final class SynthDSP {
     private var tidePh = [0.0, 0.0], tideLP = Biquad(.lp), tideG = Smooth(0, tau: 1), tideDet = Smooth(0, tau: 1)
     // choir
     private var choirPh = [Double](repeating: 0, count: 10), choirF = (0..<10).map { _ in Smooth(220, tau: 1.2) }
-    private var choirVib = 0.0, choirG = Smooth(0, tau: 1.5)
+    private var choirG = Smooth(0, tau: 1.5)
+    // each city voice has its own vibrato (4.1-5.4 Hz, 3-6 cents) so the chord breathes instead of wobbling in lockstep
+    private var choirVibs = (0..<10).map { Double($0) * 0.137 }
+    private let choirRate = (0..<10).map { 4.1 + Double(($0 * 7) % 10) * 0.14 }, choirDep = (0..<10).map { 3.0 + Double(($0 * 3) % 4) }
     private var formL1 = Biquad(.bp), formL2 = Biquad(.bp), formR1 = Biquad(.bp), formR2 = Biquad(.bp)
     private let choirPan: [Double] = EarthData.cities.map { clamp($0.lon / 180, -1, 1) * 0.8 }
     // struck voices + ping-pong delay for quakes
@@ -200,9 +204,9 @@ final class SynthDSP {
         var list = [v]
         if mag >= 4.5 {
             var s = Voice(); s.on = true; s.kind = 2; s.f0 = Music.mtof(Music.root - 12) * 2.2; s.f1 = Music.mtof(Music.root - 12)
-            s.amp = mapv(mag, 4.5, 8, 0.24, 0.45); s.dur = 1.5 + mag * 0.4; (s.pl, s.pr) = (0.7, 0.7); list.append(s)
+            s.amp = mapv(mag, 4.5, 8, 0.2, 0.34); s.dur = 1.5 + mag * 0.4; (s.pl, s.pr) = (0.7, 0.7); list.append(s)
             var n = Voice(); n.on = true; n.kind = 3; n.amp = mapv(mag, 4.5, 8, 0.35, 0.75); n.dur = mag * 0.9; (n.pl, n.pr) = (0.7, 0.7)
-            n.lp.set(140, 0.707, sr); list.append(n)
+            n.lp.set(160, 0.707, sr); n.hp.set(35, 0.6, sr); list.append(n) // 35-160 Hz: no sub-audible energy eating headroom
         }
         push(list)
     }
@@ -230,7 +234,7 @@ final class SynthDSP {
         }
         let dt = 1 / sr
         let k = { (tau: Double) in 1 - exp(-dt / tau) }
-        let kPad = k(0.9), kPadV = k(1), kCut = k(1.5), kQ = k(2), kG1 = k(1), kG15 = k(1.5), kG12 = k(1.2), kF2 = k(2), kMaster = k(0.3)
+        let kPad = k(0.12), kChoirF = k(0.35), kPadV = k(1), kCut = k(1.5), kQ = k(2), kG1 = k(1), kG15 = k(1.5), kG12 = k(1.2), kF2 = k(2), kMaster = k(0.3)
         for i in 0..<4 { padF[i].target = tg.padFreqs[i]; padVG[i].target = tg.padVoiceGain[i] }
         padCut.target = tg.padCut; padQ.target = tg.padQ; padG.target = tg.mute.contains("s") ? 0 : tg.padGain; padLfoR.target = tg.padLfoRate
         surfG.target = tg.mute.contains("o") ? 0 : tg.surfGain; surfRate.target = tg.surfRate; surfF.target = tg.surfBP
@@ -245,9 +249,11 @@ final class SynthDSP {
         for s in 0..<n {
             // control-rate filter updates every 32 samples
             if ctr & 31 == 0 {
-                let lfo = sin(padLfo * 2 * .pi) * 250
-                padLP.set(padCut.v + lfo, padQ.v, sr); padLP2.set(padCut.v + lfo, padQ.v, sr)
-                surfBP.set(surfF.v, 0.6, sr)
+                // pad filter LFO: ±half an octave (was ±250 Hz, which shut a slow-wind pad almost closed every cycle)
+                let lfo = pow(2, 0.5 * sin(padLfo * 2 * .pi))
+                padLP.set(padCut.v * lfo, padQ.v, sr); padLP2.set(padCut.v * lfo, padQ.v, sr)
+                // surf brightens at the crest of each swell, like a breaking wave
+                surfBP.set(surfF.v * pow(2, 0.58 * sin(surfPh * 2 * .pi)), 0.6, sr)
                 let wl = sin(windLfoPh * 2 * .pi) * 220
                 windBP1.set(windF1.v + wl, 5, sr); windBP2.set(windF2.v + wl, 9, sr)
                 shimBPL.set(shimF.v, 0.7, sr); shimBPR.set(shimF.v, 0.7, sr)
@@ -315,19 +321,18 @@ final class SynthDSP {
 
             // planet chord: a voice per city, pitch = temperature, through two vowel formants
             let cg = choirG.step(kG15)
-            choirVib += 4.6 * dt; if choirVib >= 1 { choirVib -= 1 }
-            let vib = pow(2, 4 * sin(choirVib * 2 * .pi) / 1200)
             if cg > 0.0005 {
                 var cl = 0.0, cr = 0.0
                 for i in 0..<10 {
-                    let inc = choirF[i].step(kG12) * vib * dt
+                    let inc = choirF[i].step(kChoirF) * pow(2, choirDep[i] * sin(choirVibs[i] * 2 * .pi) / 1200) * dt
+                    choirVibs[i] += choirRate[i] * dt; if choirVibs[i] >= 1 { choirVibs[i] -= 1 }
                     choirPh[i] += inc; if choirPh[i] >= 1 { choirPh[i] -= 1 }
                     let x = saw(choirPh[i], inc) * 0.022
                     let (a, b) = panLR(choirPan[i]); cl += x * a; cr += x * b
                 }
                 l += (formL1.run(cl) + formL2.run(cl) + cl * 0.35) * cg
                 r += (formR1.run(cr) + formR2.run(cr) + cr * 0.35) * cg
-            } else { for i in 0..<10 { _ = choirF[i].step(kG12) } }
+            } else { for i in 0..<10 { _ = choirF[i].step(kChoirF) } }
 
             // struck voices
             var ql = 0.0, qr = 0.0
@@ -350,7 +355,7 @@ final class SynthDSP {
                 case 1:
                     let env = t < 0.02 ? v.amp * t / 0.02 : v.amp * pow(0.0003 / v.amp, (t - 0.02) / (v.dur - 0.02))
                     voices[i].phC += v.f * dt; if voices[i].phC >= 1 { voices[i].phC -= 1 }
-                    let p = voices[i].phC; x = (p < 0.5 ? 4 * p - 1 : 3 - 4 * p) * env
+                    let p = voices[i].phC * 2 * .pi; x = (sin(p) - sin(3 * p) / 9) * 0.81 * 1.12 * env // band-limited triangle (first two partials)
                 case 2:
                     let f = t < 0.35 ? v.f0 * pow(v.f1 / v.f0, t / 0.35) : v.f1
                     let env = t < 0.01 ? v.amp * t / 0.01 : v.amp * pow(0.0005 / v.amp, (t - 0.01) / v.dur)
@@ -358,7 +363,7 @@ final class SynthDSP {
                     x = sin(voices[i].phC * 2 * .pi) * env
                 default:
                     let env = t < 0.08 ? v.amp * t / 0.08 : v.amp * pow(0.0005 / v.amp, (t - 0.08) / max(0.1, v.dur - 0.08))
-                    x = voices[i].lp.run(rumble.white()) * env * 2
+                    x = voices[i].lp.run(voices[i].hp.run(rumble.white())) * env * 2.2
                 }
                 if qMuted && v.kind != 1 { continue }
                 ql += x * v.pl; qr += x * v.pr
@@ -371,10 +376,10 @@ final class SynthDSP {
             dIdx += 1; if dIdx >= dLen { dIdx = 0 }
             l += ql + dOutL; r += qr + dOutR
 
-            // master: headroom trim then a soft saturator, then fade
-            let m = master.step(kMaster) * 0.72
-            L[s] = Float(tanh(l * m * 1.1) * 0.9)
-            R[s] = Float(tanh(r * m * 1.1) * 0.9)
+            // master: headroom trim, then a ceiling that is perfectly clean below -3 dBFS and rounds off above it.
+            // (The old tanh on everything coloured even quiet passages.) The peak limiter after this catches the rest.
+            let m = master.step(kMaster) * 0.72 * 0.99 // same quiet-passage level as before
+            L[s] = Float(softCeil(l * m)); R[s] = Float(softCeil(r * m))
         }
     }
 }

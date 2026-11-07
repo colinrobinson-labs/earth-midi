@@ -129,7 +129,7 @@ final class Conductor: ObservableObject {
         g.mute = muted
         if sp.isFinite {
             g.padCut = mapv(sp, 250, 900, 260, 4200) * (bz < -5 ? 0.6 : 1)
-            g.padQ = mapv(de.isFinite ? de : 5, 0, 25, 1, 9)
+            g.padQ = mapv(de.isFinite ? de : 5, 0, 25, 1, 6) // density → resonance; 1…9 made a dense wind whistle (same as the site)
             g.padLfoRate = mapv(bt.isFinite ? bt : 5, 0, 30, 0.04, 0.5)
             g.padGain = mapv(de.isFinite ? de : 5, 0, 20, 0.32, 0.55)
         } else { g.padGain = 0.4 }
