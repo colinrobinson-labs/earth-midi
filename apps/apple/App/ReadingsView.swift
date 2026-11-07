@@ -3,8 +3,10 @@ import MapKit
 
 @MainActor
 final class ReadingsStore: ObservableObject {
-    @Published var data = EarthReadings()
+    @Published var data = EarthData.cached() ?? EarthReadings()
     @Published var loading = false
+    /// Nothing to show yet: no saved snapshot and the first load hasn't finished.
+    var waiting: Bool { data.loadedAt == .distantPast }
     func load() async {
         loading = true
         data = await EarthData.load()
@@ -26,6 +28,10 @@ struct ReadingsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     map
                     if store.data.isDemo { Text("Live feeds unreachable: showing demo data").font(Theme.mono(11)).foregroundStyle(Theme.hex(0xffc53d)) }
+                    if store.waiting {
+                        HStack(spacing: 10) { ProgressView(); Text("Loading live readings…").font(Theme.mono(13)).foregroundStyle(Theme.mute) }
+                            .frame(maxWidth: .infinity, minHeight: 120)
+                    } else {
                     LazyVGrid(columns: cols, spacing: 10) {
                         let d = store.data, kp = d.kpNow
                         Reading(label: "Kp index", value: String(format: "%.1f", kp), sub: "\(Theme.kpWord(kp)) · \(Music.scaleName(kp: kp))", color: Theme.color("g"))
@@ -39,6 +45,7 @@ struct ReadingsView: View {
                     }
                     if !store.data.temps.isEmpty { chord }
                     quakes
+                    }
                     if !hub.events.isEmpty { justPlayed }
                     Text("Every number comes from a public sensor feed or published physics. The note shown is what the engine plays with the default settings: the same reading always makes the same note.")
                         .font(.footnote).foregroundStyle(Theme.mute).padding(.top, 4)

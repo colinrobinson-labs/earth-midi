@@ -117,7 +117,9 @@ enum EarthData {
     /// Snapshot first (one small request, kind to the free public APIs); the sources directly only if it fails;
     /// then the last copy on this device; demo data only if there is nothing at all.
     static func load() async -> EarthReadings {
-        let session = URLSession(configuration: .ephemeral)
+        let cfg = URLSessionConfiguration.ephemeral
+        cfg.timeoutIntervalForRequest = 15
+        let session = URLSession(configuration: cfg)
         if let (data, _) = try? await session.data(from: snapshotURL), let r = parseSnapshot(data), !r.quakes.isEmpty || !r.speed.isEmpty {
             if let c = cacheURL { try? data.write(to: c) }
             return r
@@ -128,6 +130,12 @@ enum EarthData {
         if !r.quakes.isEmpty { r.loadedAt = Date(); return r }
         if let c = cacheURL, let d = try? Data(contentsOf: c), var cached = parseSnapshot(d) { cached.loadedAt = Date(); return cached }
         return demo()
+    }
+
+    /// The last snapshot saved on this device, shown at once while a fresh one loads.
+    static func cached() -> EarthReadings? {
+        guard let c = cacheURL, let d = try? Data(contentsOf: c), let r = parseSnapshot(d), !r.quakes.isEmpty || !r.speed.isEmpty else { return nil }
+        return r
     }
 
     static func parseSnapshot(_ data: Data) -> EarthReadings? {
