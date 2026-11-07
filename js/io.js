@@ -92,7 +92,7 @@ function toggleRec(stems,opt){
   if(REC){stopRec();return}
   opt=opt||{};
   const TM=window.EMTitle?EMTitle.mode:"off",keys=stems?PAN_KEYS.filter(k=>!muted(k)).concat(["fx"],TM==="off"?[]:["ttl"]):["mix"],nch=keys.length*2,merger=A.ctx.createChannelMerger(nch),srcs=[];
-  keys.forEach((k,i)=>{const node=k==="mix"?A.lim:k==="fx"?A.revG:k==="ttl"?EMTitle.node():A.buses[k],sp=A.ctx.createChannelSplitter(2);node.connect(sp);sp.connect(merger,0,i*2);sp.connect(merger,1,i*2+1);srcs.push([node,sp])});
+  keys.forEach((k,i)=>{const node=k==="mix"?A.tap:k==="fx"?A.revG:k==="ttl"?EMTitle.node():A.buses[k],sp=A.ctx.createChannelSplitter(2);node.connect(sp);sp.connect(merger,0,i*2);sp.connect(merger,1,i*2+1);srcs.push([node,sp])});
   const proc=A.ctx.createScriptProcessor(4096,nch,2),data=keys.map(()=>[[],[]]),rate=A.ctx.sampleRate,max=rate*(opt.maxSec||60*(stems?3:20));let n=0;
   proc.onaudioprocess=e=>{const o=e.outputBuffer;o.getChannelData(0).fill(0);o.getChannelData(1).fill(0);if(n>=max){if(REC&&!REC.stopping){REC.stopping=1;setTimeout(stopRec,0)}return}
     for(let i=0;i<keys.length;i++){data[i][0].push(f2i(e.inputBuffer.getChannelData(i*2)));data[i][1].push(f2i(e.inputBuffer.getChannelData(i*2+1)))}n+=4096;

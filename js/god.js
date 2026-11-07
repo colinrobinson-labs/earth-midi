@@ -19,9 +19,12 @@ let GA=null;
 const _initAudio=initAudio;
 initAudio=function(){_initAudio();setupAudio()};
 function setupAudio(){if(!A||GA)return;const ctx=A.ctx;
-  const bus=ctx.createGain();bus.gain.value=.85;
-  const send=ctx.createGain();send.gain.value=.5;const rev=ctx.createConvolver();rev.buffer=genIR(ctx,"cathedral");const revG=ctx.createGain();revG.gain.value=.55;
-  bus.connect(A.hp);bus.connect(send);send.connect(rev);rev.connect(revG);revG.connect(A.hp);
+  // the sandbox has its own glue compressor before the master, so a stack of M9 quakes, booms and flares
+  // stays loud and big without pumping the live layers' limiter into distortion
+  const bus=ctx.createGain();bus.gain.value=.55;const glue=ctx.createDynamicsCompressor();glue.threshold.value=-14;glue.knee.value=10;glue.ratio.value=3;glue.attack.value=.008;glue.release.value=.3;
+  const sub=ctx.createBiquadFilter();sub.type="highpass";sub.frequency.value=28;sub.Q.value=.6;
+  const send=ctx.createGain();send.gain.value=.5;const rhp=ctx.createBiquadFilter();rhp.type="highpass";rhp.frequency.value=180;rhp.Q.value=.6;const rev=ctx.createConvolver();rev.buffer=genIR(ctx,"cathedral");const revG=ctx.createGain();revG.gain.value=.55;
+  bus.connect(sub);sub.connect(glue);glue.connect(A.hp);bus.connect(send);send.connect(rhp);rhp.connect(rev);rev.connect(revG);revG.connect(glue);
   GA={ctx,bus,send};
   // aurora: detuned shimmer pad, tremolo, bandpassed
   {const out=ctx.createGain();out.gain.value=0;const bp=ctx.createBiquadFilter();bp.type="bandpass";bp.frequency.value=2200;bp.Q.value=.8;
@@ -36,12 +39,12 @@ function setupAudio(){if(!A||GA)return;const ctx=A.ctx;
 }
 function ensureAudio(){try{iosUnlock()}catch(_){}if(!A)initAudio();else setupAudio();A.ctx.resume();setMix()}
 function setMix(){if(!A)return;const c=A.ctx.currentTime;A.sum.gain.setTargetAtTime(G.on?.72*G.mix:.72,c,.35)}
-function nz(){const s=GA.ctx.createBufferSource();s.buffer=A.nb;return s}
+function nz(){const s=GA.ctx.createBufferSource();s.buffer=A.nb;s.loop=true;return s}// looped: one-shots longer than the 4 s noise buffer used to cut off dead mid-tail
 function env(g,t,peak,att,dec){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+att);g.gain.exponentialRampToValueAtTime(.0004,t+att+dec)}
 function fadeOut(param,t,tc){try{const v=param.value;param.cancelScheduledValues(t);param.setValueAtTime(v,t)}catch(_){}param.setTargetAtTime(0,t,tc)}
 const panOf=(lon,lat)=>{const[x,,v]=proj(lon,lat);return v>0?clamp(x/cv.width*2-1,-1,1)*.9:clamp(((lon-VIEW.lon+540)%360-180)/90,-1,1)*.9};
 function boom(t,amp){const {ctx,bus}=GA,o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(30,t+.6);env(g,t,amp,.006,1.8);o.connect(g);g.connect(bus);o.start(t);o.stop(t+2);
-  const n=nz(),f=ctx.createBiquadFilter(),ng=ctx.createGain();f.type="lowpass";f.frequency.value=160;env(ng,t,amp*1.1,.02,1.6);n.connect(f);f.connect(ng);ng.connect(bus);n.start(t,Math.random()*3);n.stop(t+1.8)}
+  const n=nz(),f=ctx.createBiquadFilter(),nh=ctx.createBiquadFilter(),ng=ctx.createGain();f.type="lowpass";f.frequency.value=170;nh.type="highpass";nh.frequency.value=38;env(ng,t,amp*1.1,.02,1.6);n.connect(nh);nh.connect(f);f.connect(ng);ng.connect(bus);n.start(t,Math.random()*3);n.stop(t+1.8)}
 function enterSound(on){if(!GA)return;const {ctx,bus,send}=GA,c=ctx.currentTime+.02,sc=scl();
   const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.Q.value=5;const g=ctx.createGain();lp.connect(g);g.connect(bus);g.connect(send);
   if(on){lp.frequency.setValueAtTime(180,c);lp.frequency.exponentialRampToValueAtTime(5600,c+1.1);lp.frequency.exponentialRampToValueAtTime(800,c+4);env(g,c,.2,.9,3.6)}
@@ -58,8 +61,8 @@ function quakeSound(p){if(!GA)return {n:60,vel:100};const {ctx,bus,send}=GA,c=ct
   pan.pan.value=panOf(p.lon,p.lat);pan.connect(bus);pan.connect(send);
   const car=ctx.createOscillator(),mod=ctx.createOscillator(),mg=ctx.createGain(),eg=ctx.createGain();car.frequency.value=f;mod.frequency.value=f*1.41;mg.gain.setValueAtTime(f*map(p.mag,2,9,2,9),c);mg.gain.exponentialRampToValueAtTime(f*.02,c+dec*.6);env(eg,c,amp,.004,dec);mod.connect(mg);mg.connect(car.frequency);car.connect(eg);eg.connect(pan);car.start(c);mod.start(c);car.stop(c+dec+.2);mod.stop(c+dec+.2);
   const cr=nz(),hf=ctx.createBiquadFilter(),cg=ctx.createGain();hf.type="highpass";hf.frequency.value=2200;env(cg,c,amp*.6,.001,.07);cr.connect(hf);hf.connect(cg);cg.connect(pan);cr.start(c,Math.random()*3);cr.stop(c+.12);
-  const s=ctx.createOscillator(),sg=ctx.createGain();s.frequency.setValueAtTime(mtof(ROOT-12)*2,c);s.frequency.exponentialRampToValueAtTime(mtof(ROOT-24),c+.4);env(sg,c,map(p.mag,2,9,.15,.85),.008,1+p.mag*.45);s.connect(sg);sg.connect(bus);s.start(c);s.stop(c+5+p.mag*.5);
-  if(p.mag>=4){const r=nz(),rf=ctx.createBiquadFilter(),rg=ctx.createGain();rf.type="lowpass";rf.frequency.value=150;rf.Q.value=2;rg.gain.setValueAtTime(0,c);rg.gain.linearRampToValueAtTime(map(p.mag,4,9,.3,1.3),c+.12);rg.gain.exponentialRampToValueAtTime(.0004,c+p.mag*.8);r.connect(rf);rf.connect(rg);rg.connect(bus);r.start(c,Math.random()*3);r.stop(c+p.mag*.8+.1)}
+  const s=ctx.createOscillator(),sg=ctx.createGain();s.frequency.setValueAtTime(mtof(ROOT-12)*2,c);s.frequency.exponentialRampToValueAtTime(mtof(ROOT-24),c+.4);env(sg,c,map(p.mag,2,9,.14,.6),.008,1+p.mag*.45);s.connect(sg);sg.connect(bus);s.start(c);s.stop(c+5+p.mag*.5);
+  if(p.mag>=4){const r=nz(),rf=ctx.createBiquadFilter(),rh=ctx.createBiquadFilter(),rg=ctx.createGain();rf.type="lowpass";rf.frequency.value=160;rf.Q.value=1.2;rh.type="highpass";rh.frequency.value=38;rg.gain.setValueAtTime(0,c);rg.gain.linearRampToValueAtTime(map(p.mag,4,9,.3,1),c+.12);rg.gain.exponentialRampToValueAtTime(.0004,c+p.mag*.8);r.connect(rh);rh.connect(rf);rf.connect(rg);rg.connect(bus);r.start(c,Math.random()*3);r.stop(c+p.mag*.8+.1)}
   return {n,vel,dec}}
 function flareSound(k){if(!GA)return [];const {ctx,bus,send}=GA,c=ctx.currentTime+.01,sc=scl(),len=2+k*4;
   const n=nz(),bp=ctx.createBiquadFilter(),g=ctx.createGain();bp.type="bandpass";bp.Q.value=1.4;bp.frequency.setValueAtTime(9500,c);bp.frequency.exponentialRampToValueAtTime(600,c+len*.7);env(g,c,.18+k*.3,.02,len);n.connect(bp);bp.connect(g);g.connect(bus);g.connect(send);n.start(c,Math.random()*2);n.stop(c+len+.2);

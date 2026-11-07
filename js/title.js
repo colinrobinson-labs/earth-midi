@@ -33,7 +33,7 @@ function ensure(){
   const lim=ctx.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.001;lim.release.value=.1;
   bus.connect(comp);mrg.connect(comp);comp.connect(lim);
   const toMix=ctx.createGain(),toOut=ctx.createGain();lim.connect(toMix);lim.connect(toOut);
-  toMix.connect(A.lim);toOut.connect(A.out); // A.lim feeds every recorder; A.out is just the speakers
+  toMix.connect(A.mixIn);toOut.connect(A.out); // A.mixIn → safety ceiling → A.tap feeds every recorder; A.out is just the speakers
   T={ctx,bus,lim,toMix,toOut,dl,dr,voices:new Map(),played:0};route(true);return T}
 function route(now){if(!T)return;const c=T.ctx.currentTime,inMix=MODE==="mix";
   T.toMix.gain.setTargetAtTime(inMix?1:0,c,now?.001:.03);T.toOut.gain.setTargetAtTime(inMix?0:1,c,now?.001:.03)}
