@@ -336,6 +336,9 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  .status{display:block;flex:1 1 100%;font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:5px 2px 0;margin:0}
  .status>span{display:inline}#xState{display:block;white-space:normal;margin:2px 0 0}#xState:empty{display:none}
  .mapwrap{touch-action:pan-y}
+ /* Globe view: the globe is an instrument, so a drag on it only spins it and never drags the page (it used to do both).
+    Flat view has nothing to drag, so a swipe there still scrolls the page. */
+ body:not(.flat) #map{touch-action:none}
  #map{aspect-ratio:1/1}
  body.flat #map{aspect-ratio:2/1}
  .hud{font-size:10px}.hud .hint2{display:none}
