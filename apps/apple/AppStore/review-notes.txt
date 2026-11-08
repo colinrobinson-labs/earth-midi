@@ -16,7 +16,7 @@ Earth MIDI turns live public science data into music. Earthquakes ring bells pit
 - Widgets: long-press the Home Screen, add Earth MIDI widgets (space weather, biggest quake, play button).
 - Siri / Shortcuts: "Play Earth MIDI", "What's the space weather on Earth MIDI".
 - Record / Export: saves WAV or MIDI through the share sheet.
-The sound engine is HTML/JavaScript bundled inside the app and run by WebKit; it does not load remote code.
+The sound engine is HTML/JavaScript bundled inside the app and run by WebKit. Only two small open-source helpers load from public CDNs: topojson-client (draws the globe outline) and JSZip (only when exporting stems).
 
 4. EXTERNAL SERVICES (read-only public data, no accounts, no personal data sent)
 - earthmidi.com (our own site): a cached snapshot of the feeds below, refreshed every 10 minutes
@@ -27,7 +27,8 @@ The sound engine is HTML/JavaScript bundled inside the app and run by WebKit; it
 - Open-Meteo (api / marine-api / air-quality-api.open-meteo.com): weather, ocean swell (Copernicus data), air quality
 - Where The ISS At (api.wheretheiss.at) and CelesTrak (celestrak.org): space station position
 - Apple MapKit: the Readings map
-No analytics, no tracking, no AI services. No AI runs in the app: every note comes from a data reading through the same rule every time. No authentication or payment services.
+- Google Fonts (typefaces); jsDelivr and cdnjs (world map outline, topojson-client, JSZip)
+No analytics, no tracking, no AI services. (The page footer in this build may still show the website's privacy line mentioning the GoatCounter visit counter; that counter is removed from the app and never runs in it. The next update replaces that line.) No AI runs in the app: every note comes from a data reading through the same rule every time. No authentication or payment services.
 
 5. REGIONS
 The app works the same in every region. The data is global and identical for all users; there is no region-specific content or features. Only the device's language and time zone affect formatting.
