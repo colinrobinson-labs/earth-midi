@@ -1,0 +1,14 @@
+Hello App Review team,
+
+Thank you for the review. We've added all the requested information to the Notes field in App Review Information:
+
+1. A screen recording on a physical iPhone running the latest iOS, starting from launch (linked in the Notes and attached here)
+2. The app's purpose and audience
+3. How to use it (no login, account or setup needed)
+4. Every external service the app uses. All are public, read-only science data feeds; there are no AI, analytics, authentication or payment services.
+5. Confirmation that the app works the same in every region
+6. Data rights: USGS, NOAA and NASA data are U.S. public domain, Open-Meteo is CC BY 4.0, and every source is credited in the app.
+
+We tested this build on physical devices before resubmitting. Please let us know if you need anything else.
+
+Colin Robinson

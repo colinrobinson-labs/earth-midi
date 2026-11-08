@@ -1,0 +1,38 @@
+Thank you for reviewing Earth MIDI. Free app: no login, no account, no in-app purchases, no ads, no user-generated content.
+
+1. SCREEN RECORDING
+Recorded on a physical iPhone running the latest iOS, starting from app launch:
+https://earthmidi.com/review/earth-midi-ios-demo.mp4
+(also attached to our reply in App Review)
+
+2. PURPOSE AND AUDIENCE
+Earth MIDI turns live public science data into music. Earthquakes ring bells pitched by depth and struck by magnitude, the solar wind sweeps a synth pad, ocean swell and tides shape drones, and city temperatures tune a chord. Audience: musicians and producers who want a living, generative source of melody and MIDI; listeners who want ambient sound for focus or sleep; teachers and curious people who want to hear what the planet is doing right now. The problem it solves: raw earthquake and space-weather data is hard to feel; Earth MIDI makes it audible in real time and lets producers route it into their DAW as MIDI.
+
+3. HOW TO USE (no setup or credentials needed)
+- Launch. On the welcome card tap Ambient (or Pulse for beats). Sound starts.
+- PLAY/STOP button starts and stops sound at any time.
+- Bottom bar: Readings (native map plus live values, quake list with the note each one played), MIDI (virtual CoreMIDI port "Earth MIDI": open GarageBand or any MIDI app and choose it as input; Bluetooth and Network MIDI also supported), AirPlay, Settings.
+- Lock the phone while playing: Lock Screen controls and a Live Activity / Dynamic Island appear.
+- Widgets: long-press the Home Screen, add Earth MIDI widgets (space weather, biggest quake, play button).
+- Siri / Shortcuts: "Play Earth MIDI", "What's the space weather on Earth MIDI".
+- Record / Export: saves WAV or MIDI through the share sheet.
+The sound engine is HTML/JavaScript bundled inside the app and run by WebKit; it does not load remote code.
+
+4. EXTERNAL SERVICES (read-only public data, no accounts, no personal data sent)
+- earthmidi.com (our own site): a cached snapshot of the feeds below, refreshed every 10 minutes
+- USGS Earthquake Hazards Program (earthquake.usgs.gov): earthquakes
+- NOAA Space Weather Prediction Center (services.swpc.noaa.gov): solar wind, Kp index, X-ray flares
+- NOAA Tides and Currents (api.tidesandcurrents.noaa.gov): tides
+- NASA EONET (eonet.gsfc.nasa.gov): wildfires and storms
+- Open-Meteo (api / marine-api / air-quality-api.open-meteo.com): weather, ocean swell (Copernicus data), air quality
+- Where The ISS At (api.wheretheiss.at) and CelesTrak (celestrak.org): space station position
+- Apple MapKit: the Readings map
+No analytics, no tracking, no AI services. No AI runs in the app: every note comes from a data reading through the same rule every time. No authentication or payment services.
+
+5. REGIONS
+The app works the same in every region. The data is global and identical for all users; there is no region-specific content or features. Only the device's language and time zone affect formatting.
+
+6. DATA RIGHTS
+All data is public. USGS, NOAA and NASA data are U.S. Government works in the public domain. Open-Meteo data is licensed CC BY 4.0 (Copernicus data within it is free to use with attribution); ISS position data is public. The app credits every source in Settings > How it works and at earthmidi.com. No copyrighted media, no regulated industry.
+
+Contact: Colin Robinson, developer. Website and privacy policy: https://earthmidi.com and https://earthmidi.com/privacy.html
