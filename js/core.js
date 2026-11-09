@@ -1,4 +1,4 @@
-/* Earth MIDI v0.6 · core: helpers, settings, state, live data, astronomy.
+/* Earth MIDI v1.0 · core: helpers, settings, state, live data, astronomy.
    Every number here is either fetched from a public sensor feed or computed
    from published physics. Nothing is generated or guessed by a model. */
 "use strict";
@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,map=(v,a,b,c,d)=>lerp(c,d,clamp((v-a)/(b-a),0,1));
 let DPR=window.FX?FX.dpr():Math.min(2,window.devicePixelRatio||1);
 addEventListener("fxchange",()=>{DPR=FX.dpr();dispatchEvent(new Event("resize"))});
-const VERSION="0.6";
+const VERSION="1.0";
 const IS_MOBILE=matchMedia("(max-width:700px)").matches;
 
 /* ================= layers ================= */
@@ -106,11 +106,8 @@ async function loadSun(){
     const P=p.filter(r=>r.active&&Number.isFinite(r.proton_speed)).map(r=>({t:Date.parse(r.time_tag+"Z"),sp:r.proton_speed,de:r.proton_density})).sort((a,b)=>a.t-b.t),M=m.filter(r=>r.active&&Number.isFinite(r.bz_gsm)).map(r=>({t:Date.parse(r.time_tag+"Z"),bz:r.bz_gsm,bt:r.bt})).sort((a,b)=>a.t-b.t);
     if(P.length<10||M.length<10)throw 0;
     S.sun.t=P.map(r=>r.t);S.sun.speed=P.map(r=>r.sp);S.sun.density=P.map(r=>Number.isFinite(r.de)?r.de:NaN);S.sun.mt=M.map(r=>r.t);S.sun.bz=M.map(r=>r.bz);S.sun.bt=M.map(r=>r.bt);S.demo.s=false;
-  }catch(e0){try{const [p,m]=await Promise.all([getJSON(FEED.plasma),getJSON(FEED.mag)]);
-    const P=rows(p).filter(r=>Number.isFinite(num(r.speed))),M=rows(m).filter(r=>Number.isFinite(num(r.bz_gsm??r.bz)));
-    S.sun.t=P.map(r=>swpcT(r.time_tag));S.sun.speed=P.map(r=>num(r.speed));S.sun.density=P.map(r=>num(r.density));
-    S.sun.mt=M.map(r=>swpcT(r.time_tag));S.sun.bz=M.map(r=>num(r.bz_gsm??r.bz));S.sun.bt=M.map(r=>num(r.bt));S.demo.s=false;
-  }catch(e){if(!S.sun.speed.length){const n=288,t0=Date.now()-864e5;S.sun.t=S.sun.mt=[...Array(n)].map((_,i)=>t0+i*3e5);S.sun.speed=wave(n,430,60);S.sun.density=wave(n,5,3).map(v=>Math.max(.5,v));S.sun.bz=wave(n,-1,5);S.sun.bt=wave(n,6,2);S.demo.s=true}}}
+  }catch(e0){// NOAA retired the old solar-wind product files, so RTSW is the only source; keep the last real data, demo only if there has never been any
+    {if(!S.sun.speed.length){const n=288,t0=Date.now()-864e5;S.sun.t=S.sun.mt=[...Array(n)].map((_,i)=>t0+i*3e5);S.sun.speed=wave(n,430,60);S.sun.density=wave(n,5,3).map(v=>Math.max(.5,v));S.sun.bz=wave(n,-1,5);S.sun.bt=wave(n,6,2);S.demo.s=true}}}
   try{const k=rows(await getJSON(FEED.kp));S.kp=k.map(r=>({t:swpcT(r.time_tag),v:num(r.Kp??r.kp_index??r.kp)})).filter(r=>Number.isFinite(r.v)&&Number.isFinite(r.t));S.demo.k=false}
   catch(e){if(!S.kp.length){S.kp=[...Array(8)].map((_,i)=>({t:Date.now()-(8-i)*108e5,v:2+Math.sin(i)}));S.demo.k=true}}
 }
@@ -186,7 +183,7 @@ function issAt(t){const o=S.iss;if(!o)return null;const mu=398600.4418,Re=6378.1
   let lon=Math.atan2(y,x)/D2R-gmst;lon=((lon+540)%360)-180;const lat=Math.atan2(z,Math.hypot(x,y))/D2R;return {lat,lon,alt:r-Re}}
 function gcKm(a,b,c,d){const p1=a*D2R,p2=c*D2R,dl=(d-b)*D2R;return 6371*Math.acos(clamp(Math.sin(p1)*Math.sin(p2)+Math.cos(p1)*Math.cos(p2)*Math.cos(dl),-1,1))}
 
-async function loadLand(){try{const w=await getJSON("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json");S.land=topojson.feature(w,w.objects.land);if(window.onLand)onLand()}catch(_){}}
+async function loadLand(){try{const w=await getJSON("vendor/land-110m.json");S.land=topojson.feature(w,w.objects.land);if(window.onLand)onLand()}catch(_){}}
 
 const DEMO_NAMES={q:"quakes",s:"solar wind",k:"Kp",x:"X-rays",o:"ocean",w:"jet stream",c:"city temps",t:"tides",dst:"Dst",p:"protons",a:"air quality",e:"NASA events",i:"ISS orbit"};
 let lastRefresh=0;

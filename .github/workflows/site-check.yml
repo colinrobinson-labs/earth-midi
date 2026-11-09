@@ -1,0 +1,43 @@
+# Opens every page on a phone and a desktop in a real browser, presses Play, and fails on script errors
+# or serious accessibility problems. Runs on every pull request and every push to a work branch.
+name: Site check
+
+on:
+  pull_request:
+  push:
+    branches: ["claude/**"]
+    paths-ignore: ["apps/apple/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: for f in js/*.js scripts/*.mjs tests/*.mjs; do node --check "$f" || exit 1; done
+      - name: Install browser
+        run: |
+          npm i --no-save playwright@1.49.1 axe-core@4.10.2
+          npx playwright install --with-deps chromium
+      - name: Build the site like the deploy does
+        run: |
+          mkdir _site && git archive HEAD | tar -x -C _site
+          rm -rf _site/.github _site/scripts _site/docs _site/tests _site/apps
+          node scripts/stamp.mjs _site
+      - name: Smoke test
+        run: |
+          (cd _site && python3 -m http.server 8765 >/dev/null 2>&1 &)
+          sleep 1
+          node tests/smoke.mjs

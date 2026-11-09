@@ -1,0 +1,54 @@
+# Keeps the live data snapshot fresh. GitHub runs scheduled workflows only every few hours when it's busy,
+# so this one long run starts "Deploy site + live data" every 10 minutes for almost six hours, and the
+# hourly schedule queues the next run before this one ends. It also checks the published snapshot and
+# opens a GitHub issue (which emails the repo owner) when data stops updating, then closes it once data is back.
+name: Keep live data fresh
+
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+# one keeper at a time; the next one waits in line, so there's no gap between runs
+concurrency:
+  group: keeper
+  cancel-in-progress: false
+
+jobs:
+  keep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: 22
+      - name: Refresh every 10 minutes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          end=$(( $(date +%s) + 345*60 ))
+          while [ "$(date +%s)" -lt "$end" ]; do
+            gh workflow run pages.yml --repo "$REPO" --ref main || echo "dispatch failed, trying again next round"
+            sleep 300
+            node scripts/health.mjs > health.txt || true
+            if [ -s health.txt ]; then
+              echo "::warning::$(head -1 health.txt)"
+              n=$(gh issue list --repo "$REPO" --label data-alert --state open --json number --jq '.[0].number' || true)
+              if [ -z "$n" ]; then
+                gh label create data-alert --repo "$REPO" --color d93f0b --description "Live data stopped updating" 2>/dev/null || true
+                gh issue create --repo "$REPO" --label data-alert --title "Live data stopped updating" --body-file health.txt || true
+              fi
+            else
+              for n in $(gh issue list --repo "$REPO" --label data-alert --state open --json number --jq '.[].number' || true); do
+                gh issue close "$n" --repo "$REPO" --comment "Data is updating again ($(date -u +%H:%M) UTC). Closed automatically." || true
+              done
+            fi
+            sleep 300
+          done

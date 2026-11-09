@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- Connection policy: the browser only lets this page talk to the data sources below (plus the anonymous visit counter). Any other host, AI services included, is refused by the browser itself. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://earthmidi.goatcounter.com; media-src 'self' data: blob:; connect-src 'self' data: blob: https://earthquake.usgs.gov https://services.swpc.noaa.gov https://api.tidesandcurrents.noaa.gov https://api.open-meteo.com https://marine-api.open-meteo.com https://air-quality-api.open-meteo.com https://eonet.gsfc.nasa.gov https://api.wheretheiss.at https://celestrak.org https://earthmidi.goatcounter.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Earth MIDI · the planet as a live instrument</title>
 <meta name="description" content="The planet as an instrument. 14 live feeds (earthquakes, solar wind, flares, ocean swell, tides, jet stream, city temperatures, the ISS, NASA fires and storms, the magnetosphere, air quality, sunrise over 42 cities) played as sound and sent as MIDI. Raw data run through the same rule every time, synthesized live in your browser.">
@@ -23,9 +25,15 @@
 <link rel="icon" href="icon.svg?v=2" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
 <meta name="apple-mobile-web-app-title" content="Earth MIDI">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@125,500..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script>try{if(location.hash==="#simple"||localStorage.getItem("em.simple")==="1")document.documentElement.classList.add("simple")}catch(_){}</script>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- App Store banner: switched off until the iOS app is approved. To turn on, uncomment the next line and remove "hidden" from #getApp in the footer.
+<meta name="apple-itunes-app" content="app-id=6832020441">
+-->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Earth MIDI","url":"https://earthmidi.com/","description":"The planet as a live instrument: earthquakes, solar wind, ocean swell, tides, the ISS and more, played as sound and sent as MIDI in the browser.","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser), iOS, iPadOS, macOS, tvOS","browserRequirements":"Requires JavaScript and Web Audio","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://earthmidi.com/og.png?v=2","isAccessibleForFree":true}</script>
+<link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="fonts/plex-sans-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
+<script>try{if(location.hash==="#embed")document.documentElement.classList.add("simple","embed");else if(location.hash==="#simple"||localStorage.getItem("em.simple")==="1")document.documentElement.classList.add("simple")}catch(_){}</script>
 <style>
 :root{
  /* Earth MIDI design tokens (docs/design-system.md). Chrome is neutral graphite; the 13 layer hues are data colours. */
@@ -113,7 +121,7 @@ body.imm .hud2{top:calc(10px + env(safe-area-inset-top,0px))}
 .howgrid h5,.onlyai h5{margin:0 0 6px;font:600 10.5px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--mute)}
 .onlyai{font-size:13px;color:var(--mute)}.onlyai b{color:var(--fg);font-weight:500}
 .led{margin-top:10px;font:12px var(--mono);color:var(--mute)}
-.led summary{cursor:pointer;padding:4px 0}
+.led summary{cursor:pointer;padding:4px 0}.loudsel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font:12px var(--mono);color:var(--mute)}.loudsel select{height:34px}.cspnote{margin:8px 0 0;font:12px/1.5 var(--body);color:var(--mute)}
 #ledger{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:1fr;gap:4px 14px}
 #ledger li{display:grid;grid-template-columns:1fr auto auto;gap:2px 8px;border-bottom:1px solid var(--line);padding:4px 0;animation:li .5s}
 #ledger li b{color:var(--fg);font-weight:500}#ledger li span{grid-column:1;grid-row:2;font-size:10.5px}
@@ -130,7 +138,7 @@ button:hover,.btnlike:hover{border-color:var(--line3);background:var(--sf3)}butt
 body:not(.playing) .go{animation:goCall 2.4s ease-in-out infinite}
 @keyframes goCall{0%,100%{box-shadow:0 0 0 0 rgba(230,237,243,.55),0 0 18px rgba(230,237,243,.25)}60%{box-shadow:0 0 0 10px rgba(230,237,243,0),0 0 28px rgba(230,237,243,.4)}}
 @media (prefers-reduced-motion:reduce){body:not(.playing) .go{animation:none;box-shadow:0 0 0 3px rgba(230,237,243,.35)}}
-.go.on{background:var(--q);border-color:var(--q);color:#fff;box-shadow:0 0 calc(14px + var(--glow)*40px) rgba(255,90,60,.55)}
+.go.on{background:#d93a22;border-color:#d93a22;color:#fff;box-shadow:0 0 calc(14px + var(--glow)*40px) rgba(255,90,60,.55)}
 .go.on i{border:0;width:11px;height:11px;background:currentColor;border-radius:2px}
 .ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
 .cap{font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
@@ -185,8 +193,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
 #tl{display:block;width:100%;height:64px;border-top:1px solid var(--line);cursor:pointer;touch-action:none;background:rgba(5,7,10,.6)}
 .livebtn{display:inline-flex;align-items:center;gap:6px;font:700 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:3px 10px 3px 8px;margin:-3px 0;cursor:pointer;border:1px solid var(--q);background:rgba(255,90,60,.12);color:#ffb3a3;transition:background .15s,color .15s}
 .tlh .livebtn i{width:7px;height:7px;border-radius:50%;background:var(--q);flex:none;margin:0;vertical-align:0}
-.livebtn:hover{background:var(--q);color:#fff}
-.livebtn[data-st="live"]{cursor:default;background:var(--q);color:#fff;box-shadow:0 0 12px rgba(255,90,60,.45)}
+.livebtn:hover{background:#d93a22;color:#fff}
+.livebtn[data-st="live"]{cursor:default;background:#d93a22;color:#fff;box-shadow:0 0 12px rgba(255,90,60,.45)}
 .tlh .livebtn[data-st="live"] i{background:#fff;animation:liveDot 1.4s ease-in-out infinite}
 .livebtn[data-st="behind"]{animation:liveNudge 2.2s ease-in-out infinite}
 @keyframes liveDot{50%{opacity:.25}}@keyframes liveNudge{50%{box-shadow:0 0 0 4px rgba(255,90,60,.18)}}
@@ -574,6 +582,36 @@ html.simple .how{margin-top:16px}
  html.simple #mFull{display:flex}
  html.simple header{margin-bottom:14px}
 }
+
+/* v1.0 pass: bigger tap areas without changing the look, links that don't rely on colour, full Reduce Motion */
+.chow{padding-block:8px;margin-block:-8px}
+.livebtn{position:relative}.livebtn::after{content:"";position:absolute;inset:-8px -4px}
+.dsrc summary{padding-block:6px}
+footer a{text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent);text-underline-offset:2px;padding-block:6px}
+footer .links a,.fxpick a{display:inline-block;padding:6px 2px;margin:-6px 0}
+footer .links{margin-top:14px;font-size:12px}
+.sheet-head{min-height:24px}
+@media (prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-iteration-count:1!important;animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+/* now playing line (js/extras.js) */
+#nowLine{flex:1 1 100%;min-width:0;margin:2px 0 0;font:12px/1.45 var(--mono);color:var(--fg2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nowLine:empty{display:none}#nowLine b{color:var(--fg);font-weight:500}#nowLine i{font-style:normal;color:var(--dim);padding:0 6px}
+#nowLine{order:99}@media (max-width:700px){#nowLine{font-size:10.5px;margin-top:4px}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Moon: a slim strip across the grid, since it shapes the reverb instead of playing notes */
+#cm{grid-column:1/-1;display:grid;grid-template-columns:auto auto 1fr minmax(120px,260px) auto;align-items:center;gap:4px 18px;padding-block:10px;min-height:0}
+#cm h3,#cm .vrow{margin:0}#cm .big{font-size:20px}#cm .sub{margin:0;grid-column:auto}#cm .spark{height:26px;margin:0;width:100%}#cm .chow{margin:0}#cm .map{grid-column:1/-1}
+@media (max-width:700px){#cm{grid-template-columns:auto 1fr;gap:4px 12px}#cm .spark,#cm .sub{grid-column:1/-1}}
+
+/* resume pill after an interruption (js/extras.js) */
+.resumepill{position:fixed;left:50%;bottom:calc(var(--dock,0px) + 18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);font:700 14px var(--body);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+/* embed mode: earthmidi.com/#embed shows the globe, Play and a credit link */
+html.embed header,html.embed .refs,html.embed .sback,html.embed footer,html.embed .grid,html.embed .side,html.embed .stag,html.embed #homeBtn,html.embed .dock [data-jump],html.embed .dock #mFull,html.embed .dock #mRec,html.embed #godBtn,html.embed .godbtn,html.embed #viewSw,html.embed .procta,html.embed #nowLine,html.embed .bar .tools,html.embed .bar .status,html.embed .ctl-mode,html.embed .ctl-midi{display:none!important}
+html.embed .bar{padding-right:min(330px,40vw)}
+html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
+.embcred{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));z-index:60;font:12px var(--mono);color:var(--fg2);background:rgba(12,15,18,.85);border:1px solid var(--line2);border-radius:999px;padding:6px 12px;text-decoration:none}
+.embcred b{color:var(--fg)}
 </style>
 </head>
 <body>
@@ -622,7 +660,7 @@ html.simple .how{margin-top:16px}
       <div class="row"><select id="dpBpm" aria-label="Tempo"><option>90</option><option>100</option><option selected>120</option><option>124</option><option>128</option><option>140</option><option>170</option></select>
       <select id="dpBars" aria-label="Length"><option value="32">24h → 32 bars</option><option value="64" selected>24h → 64 bars</option><option value="128">24h → 128 bars</option><option value="256">24h → 256 bars</option><option value="1440">24h → 1440 bars</option></select>
       <button class="primary" id="bPack"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Data pack (.zip)</button><button id="bPackMid"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>.mid only</button></div></div>
-    <div class="pgrp" style="--ac:#ff2d55"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" class="f"/></svg></span>Record</h5><p>WAV and stems start on press and stop on the next press. Video and compressed audio open the recorder, with sharing built in. Playing the EARTH MIDI title follows the “Playing the EARTH MIDI title” choice in the recorder: in the mix, its own file (or its own stem), or not recorded.</p><div class="row"><button id="bRec"><i class="rdot"></i>WAV master</button><button id="bStems"><i class="rdot"></i>Stems (WAV, 3 min)</button><button id="bAac"><i class="rdot"></i>Small audio (M4A)</button><button id="bVid"><i class="rdot"></i>Video for socials</button></div></div>
+    <div class="pgrp" style="--ac:#ff2d55"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" class="f"/></svg></span>Record</h5><p>WAV and stems start on press and stop on the next press. Video and compressed audio open the recorder, with sharing built in. Playing the EARTH MIDI title follows the “Playing the EARTH MIDI title” choice in the recorder: in the mix, its own file (or its own stem), or not recorded.</p><div class="row"><button id="bRec"><i class="rdot"></i>WAV master</button><button id="bStems"><i class="rdot"></i>Stems (WAV, 3 min)</button><button id="bAac"><i class="rdot"></i>Small audio (M4A)</button><button id="bVid"><i class="rdot"></i>Video for socials</button></div><label class="loudsel">WAV master loudness <select id="loudSel" aria-label="WAV master loudness"><option value="raw">Raw (as played)</option><option value="socials">Socials · −14 LUFS</option><option value="streaming">Streaming · −16 LUFS</option></select></label></div>
     <div class="pgrp" style="--ac:var(--o)"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="7.2" cy="12" r="1.2" class="f"/><circle cx="16.8" cy="12" r="1.2" class="f"/><circle cx="8.6" cy="8.4" r="1.2" class="f"/><circle cx="15.4" cy="8.4" r="1.2" class="f"/><circle cx="12" cy="7" r="1.2" class="f"/><path d="M10 18h4"/></svg></span>MIDI + data from your session</h5><p>Everything that played since you hit PLAY.</p><div class="row"><button id="bMid"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Performance MIDI</button><button id="bCsv"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8.5 9h7M8.5 13h7M8.5 17h4"/></svg>Event log CSV</button></div></div>
     <div class="pgrp" style="--ac:var(--s)"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7M8.5 12h7"/></svg></span>Save + import</h5><p>A session freezes the exact data so it replays identically, anywhere.</p><div class="row"><button id="bSave"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7M8.5 12h7"/></svg>Save session</button><label class="btnlike"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5V4.5m0 0L7.5 9M12 4.5L16.5 9M5 19.5h14"/></svg>Import session or preset<input type="file" id="fLoad" accept=".json,application/json" hidden></label></div></div>
     <div class="pgrp" style="--ac:var(--c)"><h5><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg></span>Credit</h5><p>Free to use, commercial included. Credit required.</p><div class="row"><button id="bCredit"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Copy credit line</button></div></div>
@@ -705,7 +743,7 @@ html.simple .how{margin-top:16px}
     <tr><td>Exports</td><td class="ai0">No</td><td>WAV, stems, MIDI and data files are written byte by byte by this page's code.</td></tr>
     <tr><td>Building the site</td><td>Before, not now</td><td>Claude (an AI) helped design and write the code, including the rules that map each sensor to pitch, filters and rhythm. Once written, the rules don't change.</td></tr></table></div>
     <div><div class="onlyai"><h5>Where AI was used: building, not playing</h5><div><b>Claude (an AI) helped Colin design and build this site, including the rules that turn each reading into sound.</b> That all happened before you got here. No AI runs while you listen: no model picks a note, makes a sound or changes a rule. Don't take our word for it: the ledger below lists every server this page talks to, live, and <a href="https://github.com/colinrobinson-labs/earth-midi">the code is public</a>.</div></div>
-    <details class="led"><summary>Live network ledger · <span id="reqs">0</span> requests to <span id="hosts">0</span> servers · AI services: <b class="ai0" id="aiHits2">0</b></summary><ul id="ledger"></ul></details></div>
+    <details class="led"><summary>Live network ledger · <span id="reqs">0</span> requests to <span id="hosts">0</span> servers · AI services: <b class="ai0" id="aiHits2">0</b></summary><ul id="ledger"></ul><p class="cspnote">This page carries a security policy that lets your browser connect only to the data sources above and the anonymous visit counter. The browser itself refuses every other host, so the page can't reach an AI service even if it tried.</p></details></div>
   </div>
   </div>
 </details>
@@ -716,9 +754,10 @@ html.simple .how{margin-top:16px}
 </div>
 <p class="sback">Prefer the full instrument? <button type="button" id="bFull">Show everything</button></p>
 <footer>
-  <p><b>Earth MIDI by Colin Robinson</b> · v0.6 · earthmidi.com · © 2026 Colin Robinson. Site, code and sound design all rights reserved; what you record or export is yours to use under the credit license above. <a href="https://github.com/colinrobinson-labs/earth-midi/blob/main/LICENSE.md">Full notice</a>.</p>
-  <p id="privacy"><b>Privacy:</b> no accounts, cookies or ads. Visits are counted anonymously with <a href="https://www.goatcounter.com" target="_blank" rel="noopener">GoatCounter</a>, with no cookies and nothing that identifies you. Your settings and presets stay in this browser. Your browser fetches data straight from the public sources below, and fonts from Google Fonts; like any website, they see your IP address.</p>
+  <p><b>Earth MIDI by Colin Robinson</b> · <a href="whats-new.html">v1.0</a> · earthmidi.com · © 2026 Colin Robinson. Site, code and sound design all rights reserved; what you record or export is yours to use under the credit license above. <a href="https://github.com/colinrobinson-labs/earth-midi/blob/main/LICENSE.md">Full notice</a>.</p>
+  <p id="privacy"><b>Privacy:</b> no accounts, cookies or ads. Visits and a few button presses are counted anonymously with <a href="https://www.goatcounter.com" target="_blank" rel="noopener">GoatCounter</a>, with no cookies and nothing that identifies you. Your settings and presets stay in this browser. Fonts and code are served from earthmidi.com; your browser fetches live data from the public sources below, which see your IP address like any website. <a href="privacy.html">Privacy policy</a>.</p>
   <p><b>Data:</b> <a href="https://earthquake.usgs.gov/earthquakes/feed/">USGS</a>, <a href="https://www.swpc.noaa.gov/">NOAA SWPC</a>, <a href="https://tidesandcurrents.noaa.gov/">NOAA CO-OPS</a>, <a href="https://eonet.gsfc.nasa.gov/">NASA EONET</a> (public domain) · <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>); air quality contains modified Copernicus Atmosphere Monitoring Service information · ISS: <a href="https://wheretheiss.at/">wheretheiss.at</a> / <a href="https://celestrak.org/">CelesTrak</a> · land: <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain) via world-atlas · code libraries: topojson-client (ISC), JSZip (MIT) · type: Archivo, IBM Plex (SIL Open Font License). Not affiliated with or endorsed by any of these agencies.</p>
+  <p class="links"><a href="support.html">Support &amp; contact</a> · <a href="press.html">Press kit</a> · <a href="whats-new.html">What's new</a> · <a href="privacy.html">Privacy</a><span id="getApp" hidden> · <a href="https://apps.apple.com/app/id6832020441">Get the app</a></span></p>
   <p class="keys">keys: space = play, g/f = globe/flat, p = pulse · <a href="#welcome" data-welcome>welcome screen</a></p>
 </footer>
 </div>
@@ -735,32 +774,33 @@ html.simple .how{margin-top:16px}
   </div>
 </nav>
 
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="js/fx.js?v=1"></script>
-<script src="js/feeds.js?v=1"></script>
-<script src="js/core.js?v=24"></script>
-<script src="js/audio.js?v=24"></script>
-<script src="js/visuals.js?v=25"></script>
-<script src="js/weather.js?v=21"></script>
-<script src="js/groove.js?v=1"></script>
-<script src="js/studio.js?v=5"></script>
-<script src="js/focus.js?v=19"></script>
-<script src="js/io.js?v=21"></script>
-<script src="js/god.js?v=5"></script>
-<script src="js/reset.js?v=1"></script>
-<script src="js/ui.js?v=27"></script>
-<script src="js/audition.js?v=2"></script>
-<script src="js/zones.js?v=5"></script>
-<script src="js/sheet.js?v=22"></script>
-<script src="js/title.js?v=2"></script>
-<script src="js/record.js?v=6"></script>
-<script src="js/welcome.js?v=7"></script>
+<script src="vendor/topojson-client-3.1.0.min.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/feeds.js"></script>
+<script src="js/core.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/visuals.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/groove.js"></script>
+<script src="js/studio.js"></script>
+<script src="js/focus.js"></script>
+<script src="js/io.js"></script>
+<script src="js/god.js"></script>
+<script src="js/reset.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/audition.js"></script>
+<script src="js/zones.js"></script>
+<script src="js/sheet.js"></script>
+<script src="js/title.js"></script>
+<script src="js/record.js"></script>
+<script src="js/welcome.js"></script>
 <script data-goatcounter="https://earthmidi.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-<script src="js/procta.js?v=3"></script>
-<script src="js/beat.js?v=2"></script>
-<script src="js/home.js?v=2"></script>
-<script src="js/simple.js?v=1"></script>
-<script src="js/console.js?v=6"></script>
-<script src="js/tidy.js?v=1"></script>
+<script src="js/procta.js"></script>
+<script src="js/beat.js"></script>
+<script src="js/home.js"></script>
+<script src="js/simple.js"></script>
+<script src="js/console.js"></script>
+<script src="js/tidy.js"></script>
+<script src="js/extras.js"></script>
 </body>
 </html>
