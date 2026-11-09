@@ -1,4 +1,4 @@
-/* Earth MIDI v0.6 · sound engine + MIDI.
+/* Earth MIDI v1.0 · sound engine + MIDI.
    Pure Web Audio: oscillators, filters, noise and convolution, built live.
    No samples, no neural nets, no generated audio. */
 "use strict";
@@ -290,8 +290,11 @@ function quakeNote(q){const sc=scaleFor(kpAt(q.time)),steps=sc.length*3;let i;
   return {note:degree(sc,i,ROOT+12*CFG.qoct),step:i,steps,sc}}
 function quakePan(q){return clamp(CFG.qpan==="lat"?q.lat/90:q.lon/180,-1,1)*.85}
 const QINST={bell:{r:2,r2:1.4,idx:[1.5,6],dec:1,p:4.007},marimba:{r:4,r2:4,idx:[2,4],dec:.35,p:10},glass:{r:3.5,r2:2.71,idx:[.6,2.5],dec:1.6,p:5.4},gong:{r:1.41,r2:1.18,idx:[2,7],dec:1.9,p:2.3},pluck:{r:1,r2:1,idx:[3,8],dec:.4,p:3}};
+/* VOICE_AT / MIDI_AT: when a quake is snapped to the Pulse grid, its sound and MIDI are scheduled on the audio clock at the exact step
+   instead of waiting on a page timer, so it lands on the beat even on a busy phone. 0 = play now. */
+let VOICE_AT=0,MIDI_AT=0;
 function quakeVoice(q){
-  const {ctx}=A,c=ctx.currentTime+.01,{note}=quakeNote(q),I=QINST[CFG.inst.q]||QINST.bell;
+  const {ctx}=A,c=Math.max(ctx.currentTime+.01,VOICE_AT||0),{note}=quakeNote(q),I=QINST[CFG.inst.q]||QINST.bell;
   const vel=velOf(q.mag),fg=FOCUS.gain(q.lat,q.lon)*ZN.w("q",q.lat,q.lon),amp=Math.pow(vel/127,1.6)*.55*fg,dec=(1.2+q.mag*.9)*CFG.len*I.dec,f=mtof(note);
   const car=ctx.createOscillator(),mod=ctx.createOscillator(),mg=ctx.createGain(),eg=ctx.createGain(),lp=ctx.createBiquadFilter(),pan=ctx.createStereoPanner();
   if(CFG.inst.q==="pluck")car.type="triangle";
@@ -330,7 +333,7 @@ function fillPorts(){const s=$("midiOut"),v=s.value;s.innerHTML='<option value="
   if(!midi.outputs.size)$("midiState").textContent="no MIDI ports (see “Use it in your DAW”)";
   midi.inputs.forEach(i=>i.onmidimessage=onMidiIn)}
 function tx(b,when){if(out)try{out.send(b,when)}catch(_){}if(S.on&&MREC.length<400000&&b[0]<0xF0)MREC.push([when||performance.now(),b])}
-function midiNote(ch,n,v,ms){n=clamp(Math.round(n),0,127);tx([0x90+ch-1,n,clamp(Math.round(v),1,127)]);tx([0x80+ch-1,n,0],performance.now()+ms)}
+function midiNote(ch,n,v,ms){n=clamp(Math.round(n),0,127);const t0=MIDI_AT>performance.now()?MIDI_AT:0;tx([0x90+ch-1,n,clamp(Math.round(v),1,127)],t0||undefined);tx([0x80+ch-1,n,0],(t0||performance.now())+ms)}
 function midiOn(ch,n,v){tx([0x90+ch-1,n&127,v])}
 function midiOff(ch,n){tx([0x80+ch-1,n&127,0])}
 function midiPB(ch,x){if(!Number.isFinite(x))return;const v=Math.round(8192+clamp(x,-1,1)*8191*.25);if(lastCC['pb'+ch]===v)return;lastCC['pb'+ch]=v;tx([0xE0+ch-1,v&127,v>>7])}

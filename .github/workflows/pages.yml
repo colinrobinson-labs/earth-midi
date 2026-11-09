@@ -1,5 +1,6 @@
 # Deploys earthmidi.com and refreshes the live data snapshot.
-# Runs on every push to main, every 10 minutes, and on demand (Actions tab → Run workflow).
+# Runs on every push to main, on demand, and every ~10 minutes: GitHub throttles the schedule below to every few hours,
+# so .github/workflows/keeper.yml starts this workflow every 10 minutes instead.
 # Needs Settings → Pages → Source set to "GitHub Actions". Until then every step after the
 # check is skipped and the site keeps serving from the branch as before.
 name: Deploy site + live data
@@ -39,10 +40,10 @@ jobs:
           echo "Pages build type: $mode"
           echo "ready=$([ "$mode" = workflow ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
         if: steps.mode.outputs.ready == 'true'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4.1.0
         if: steps.mode.outputs.ready == 'true'
         with:
           node-version: 22
@@ -52,7 +53,11 @@ jobs:
         run: |
           mkdir _site
           git archive HEAD | tar -x -C _site
-          rm -rf _site/.github _site/scripts _site/docs
+          rm -rf _site/.github _site/scripts _site/docs _site/tests _site/apps
+
+      - name: Fingerprint scripts and styles
+        if: steps.mode.outputs.ready == 'true'
+        run: node scripts/stamp.mjs _site
 
       - name: Fetch live data snapshot
         if: steps.mode.outputs.ready == 'true'
@@ -61,14 +66,14 @@ jobs:
         timeout-minutes: 4
         run: node scripts/snapshot.mjs _site
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v5.0.0
         if: steps.mode.outputs.ready == 'true'
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3.0.1
         if: steps.mode.outputs.ready == 'true'
         with:
           path: _site
 
       - id: deployment
         if: steps.mode.outputs.ready == 'true'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5

@@ -1,4 +1,4 @@
-/* Earth MIDI v0.6 · visuals. Every mark is placed from a measurement or computed astronomy. */
+/* Earth MIDI v1.0 · visuals. Every mark is placed from a measurement or computed astronomy. */
 "use strict";
 const cv=$("map"),cx=cv.getContext("2d");
 const VIEW={lon:-110,lat:18,zoom:1,drag:null,lastInteract:0};
@@ -12,6 +12,7 @@ window.onLand=()=>{const W=720,H=360,oc=document.createElement("canvas");oc.widt
 for(let i=0;i<260;i++)STARS.push([Math.random(),Math.random(),Math.random()*1.2+.2,Math.random()*6]);
 
 /* projection: flat equirectangular or orthographic globe */
+const RMQ=matchMedia("(prefers-reduced-motion: reduce)");// Reduce Motion: the idle globe turns at a third of the speed
 function proj(lon,lat){const W=cv.width,H=cv.height;
   if(CFG.mapView==="flat"){return [(lon+180)/360*W,(90-lat)/180*H,1]}
   const R=Math.min(W,H)*.46*VIEW.zoom*(1+(window.BEATG||0)),cxp=W/2,cyp=H/2,l=(lon-VIEW.lon)*D2R,p=lat*D2R,p0=VIEW.lat*D2R;
@@ -24,7 +25,7 @@ let parts=[];S.flashes=[];
 function drawMap(now){
   const W=cv.width,H=cv.height,t=realNow(),globe=CFG.mapView!=="flat";cx.clearRect(0,0,W,H);
   const fk=drawMap.t?clamp((now-drawMap.t)/16.7,.25,4):1;drawMap.t=now; // per-frame motion scaled to real time, so 30 fps looks the same speed
-  if(globe&&CFG.spin&&!VIEW.drag&&!(typeof MOTION!=="undefined"&&MOTION.inertia)&&now-VIEW.lastInteract>4000)VIEW.lon=((VIEW.lon+.03*fk+540)%360)-180;
+  if(globe&&CFG.spin&&!VIEW.drag&&!(typeof MOTION!=="undefined"&&MOTION.inertia)&&now-VIEW.lastInteract>4000)VIEW.lon=((VIEW.lon+.03*fk*(RMQ.matches?.35:1)+540)%360)-180;
   const sp=sunPos(t),c=S.cur||{};
   // solar wind particles (background): count from density, speed from wind speed, colour from Bz
   const spd=Number.isFinite(c.sp)?c.sp:400,den=Number.isFinite(c.de)?c.de:4,bz=Number.isFinite(c.bz)?c.bz:0;
@@ -169,22 +170,27 @@ function drawSparks(){
   if(S.air.length){const ts=S.air[0].t;spark("ka",ts,ts.map(x=>airAt(x).pm),COLS.a,t,0,60)}
   {const ts=[...Array(97)].map((_,i)=>t-12*36e5+i*15*6e4),sp0=x=>{const sp=sunPos(x);return SUN_CITIES.filter(cc=>sunElev(cc[1],cc[2],sp)>0).reduce((a,cc)=>a+cc[3],0)};spark("ku",ts,ts.map(sp0),COLS.u,t,0,320)}
   const T=(id,h)=>{const e=$(id);if(e&&e._h!==h){e.innerHTML=h;e._h=h}},Tt=(id,s)=>{const e=$(id);if(e&&e.textContent!==s)e.textContent=s};
-  T("vs",Number.isFinite(c.sp)?`${Math.round(c.sp)}<small>km/s</small>`:"–");
-  Tt("ss",Number.isFinite(c.sp)?`density ${c.de?.toFixed(1)} p/cm³ · Bz ${c.bz?.toFixed(1)} nT · Kp ${c.kp?.toFixed(1)} → ${c.kp>=5?"storm":c.kp>=4?"unsettled":"quiet"}`:"");
+  // a late feed shows its last real reading and how old it is; a dash only when there has never been one
+  const ago=ms=>{const m=Math.round(ms/6e4);return m<15?"":m<90?` · ${m} min ago`:m<2880?` · ${Math.round(m/60)} h ago`:` · ${Math.round(m/1440)} d ago`};
+  const lastFin=(ts,vs)=>{for(let i=vs.length-1;i>=0;i--)if(Number.isFinite(vs[i])&&ts[i]<=Date.now())return [vs[i],ts[i]];return null};
+  if(Number.isFinite(c.sp)){T("vs",`${Math.round(c.sp)}<small>km/s</small>`);Tt("ss",`density ${c.de?.toFixed(1)} p/cm³ · Bz ${c.bz?.toFixed(1)} nT · Kp ${c.kp?.toFixed(1)} → ${c.kp>=5?"storm":c.kp>=4?"unsettled":"quiet"}`)}
+  else{const L=lastFin(S.sun.t,S.sun.speed);T("vs",L?`${Math.round(L[0])}<small>km/s${ago(Date.now()-L[1])}</small>`:"–");Tt("ss",!L?"waiting for NOAA":ago(Date.now()-L[1])?"NOAA is late · showing the last reading":"")}
   T("vo",S.ocean.length&&Number.isFinite(c.oh)?`${c.oh.toFixed(1)}<small>m avg${Number.isFinite(c.op)?` · ${c.op.toFixed(1)} s`:""}</small>`:"–");
   const big=S.ocean.slice().sort((a,b)=>b.h-a.h)[0];Tt("so",big?`biggest: ${big.name} ${big.h.toFixed(1)} m every ${big.p.toFixed(0)} s`:"");
   if(Number.isFinite(c.jv)){T("vw",`${Math.round(c.jv)}<small>km/h avg</small>`);const fast=S.jet.map(p=>[p.name,tsAt(p,t)]).sort((a,b)=>b[1]-a[1])[0];Tt("sw",`fastest: ${fast[0]} ${Math.round(fast[1])} km/h`)}
+  else if(S.jet.length){const ts=S.jet[0].t,L=lastFin(ts,ts.map(x=>jetAvg(x)));if(L){T("vw",`${Math.round(L[0])}<small>km/h avg${ago(Date.now()-L[1])}</small>`);Tt("sw",ago(Date.now()-L[1])?"Open-Meteo is late · showing the last reading":"")}}
   if(S.tides.length){const o=S.tides[0],v=tsAt(o,t),prev=tsAt(o,t-6e5);T("vt",`${v.toFixed(2)}<small>m · ${v>=prev?"rising":"falling"}</small>`);Tt("st",S.tides.map(x=>`${x.name} ${tsAt(x,t).toFixed(2)} m`).join(" · ")+(S.demo.t?" (demo)":""))}
   if(S.temps.length){const ts=S.temps.map(o=>[o.name,tsAt(o,t)]).filter(x=>Number.isFinite(x[1])).sort((a,b)=>a[1]-b[1]);if(ts.length){T("vc",`${Math.round(ts[0][1])}…${Math.round(ts[ts.length-1][1])}<small>°C</small>`);Tt("sc",`coldest ${ts[0][0]}, hottest ${ts[ts.length-1][0]}`)}}
-  if(c.mo){T("vm",`${Math.round(c.mo.illum*100)}%<small>${c.mo.name}</small>`);Tt("sm",`day ${c.mo.age.toFixed(1)} of 29.5 · reverb ${CFG.rev>=0?Math.round(CFG.rev*100)+"% (manual)":Math.round(map(c.mo.illum,0,1,38,85))+"%"}`)}
-  T("vx",Number.isFinite(c.xf)?`${flareClass(c.xf)}<small>class</small>`:"–");
+  {const mo=c.mo||moon(t);if(mo){T("vm",`${Math.round(mo.illum*100)}%<small>${mo.name}</small>`);Tt("sm",`day ${mo.age.toFixed(1)} of 29.5 · sets the reverb to ${CFG.rev>=0?Math.round(CFG.rev*100)+"% (manual)":Math.round(map(mo.illum,0,1,38,85))+"%"}`)}}
+  if(Number.isFinite(c.xf))T("vx",`${flareClass(c.xf)}<small>class</small>`);else{const L=lastFin(S.xray.map(x=>x.t),S.xray.map(x=>x.v));T("vx",L?`${flareClass(L[0])}<small>class${ago(Date.now()-L[1])}</small>`:"–")}
   const pk=S.xray.reduce((a,b)=>b.v>a.v?b:a,{v:0});Tt("sx",pk.v?`24h peak ${flareClass(pk.v)} at ${new Date(pk.t).toISOString().slice(11,16)} UTC`:"");
   if(S.iss){const p=c.iss||issAt(t);if(p){T("vi",`${Math.abs(p.lat).toFixed(1)}°${p.lat>=0?"N":"S"} ${Math.abs(p.lon).toFixed(1)}°${p.lon>=0?"E":"W"}<small>${Math.round(p.alt)} km</small>`);
     Tt("si",(S.iss.fix?`orbit model vs live fix: ${Math.round(S.iss.fix.err)} km apart · `:"")+(S.demo.i?"demo orbit":S.cur.issLit?"in sunlight":"in Earth's shadow"))}}
   if(S.events.length){T("ve",`${c.fires??0}<small>fires · ${c.storms??0} storms · ${c.vols??0} volcanoes</small>`);const nw=S.events.slice().sort((a,b)=>b.start-a.start)[0];Tt("se",nw?`newest: ${nw.title}`:"")}
-  if(Number.isFinite(c.dst))T("vg",`${Math.round(c.dst)}<small>nT Dst · ${Number.isFinite(c.pf)?c.pf.toFixed(2):"–"} pfu</small>`);
+  if(Number.isFinite(c.dst))T("vg",`${Math.round(c.dst)}<small>nT Dst · ${Number.isFinite(c.pf)?c.pf.toFixed(2):"–"} pfu</small>`);else{const L=lastFin(S.dst.map(d=>d.t),S.dst.map(d=>d.v));T("vg",L?`${Math.round(L[0])}<small>nT Dst${ago(Date.now()-L[1])}</small>`:"–")}
   Tt("sg",Number.isFinite(c.dst)?(c.dst<-100?"intense geomagnetic storm":c.dst<-50?"moderate storm":c.dst<-30?"weak storm":"quiet ring current")+(c.pf>=10?" · solar radiation storm":""):"");
   if(c.air&&Number.isFinite(c.air.pm)){T("va",`${c.air.pm.toFixed(0)}<small>µg/m³ PM2.5 · UV ${c.air.uv.toFixed(1)}</small>`);Tt("sa",c.air.worst&&c.air.worst[0]?`haziest: ${c.air.worst[0]} ${Math.round(c.air.worst[1])} µg/m³`:"")}
+  else if(S.air.length){const ts=S.air[0].t,L=lastFin(ts,ts.map(x=>airAt(x).pm));if(L){T("va",`${L[0].toFixed(0)}<small>µg/m³ PM2.5${ago(Date.now()-L[1])}</small>`);Tt("sa",ago(Date.now()-L[1])?"air data is late · showing the last reading":"")}}
   {const sp=sunPos(t),up=SUN_CITIES.filter(cc=>sunElev(cc[1],cc[2],sp)>0);T("vu",`${up.length}<small>of ${SUN_CITIES.length} cities in daylight</small>`);Tt("su",`${Math.round(up.reduce((a,cc)=>a+cc[3],0))} M people under the sun${S.lastSun?` · last: ${S.lastSun}`:""}`)}
   if(S.style==="pulse"&&S.bpm)Tt("bpmLbl",`♩ ${Math.round(S.bpm)} bpm${typeof tempoWord==="function"&&tempoWord()?" · "+tempoWord():""}`);else Tt("bpmLbl","");
   if(!S.on){if(S.quakes.length){T("vq",`${S.quakes.length}<small>quakes in 24h</small>`);Tt("sq",`largest M${Math.max(...S.quakes.map(q=>q.mag)).toFixed(1)}`)}}

@@ -1,4 +1,4 @@
-/* Earth MIDI v0.6 · layers drawer on phones: drag between peek, half and full; glow rows with their layer's level */
+/* Earth MIDI v1.0 · layers drawer on phones: drag between peek, half and full; glow rows with their layer's level */
 "use strict";
 (()=>{
   const side=$("side"),head=$("sheetHead"),mq=matchMedia("(max-width:700px)");

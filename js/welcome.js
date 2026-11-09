@@ -62,7 +62,6 @@
   <button class="wlc-x" data-c="silent" aria-label="Close and enter silently">×</button>
   <h2 class="wlc-h" id="wlcH" aria-label="Earth MIDI">${title}</h2>
   <p class="wlc-p">The planet, played live. Earthquakes, solar wind, ocean swell, tides, the ISS and more, turned into sound and MIDI as they happen.</p>
-  <p class="wlc-fine">AI helped design and build this site, including the rules that turn data into sound. But no AI runs while you listen: every note comes from a live sensor reading through the same rule every time.</p>
   <details class="wlc-why"><summary>What turns a reading into sound?</summary><p>Plain code, like a synth patch, written once. An M5.1 quake becomes a bell at velocity 93, pitched by its depth, panned by its longitude. Nothing listens, learns or improvises. <a href="#how" data-c="how">See the rules</a></p></details>
   <p class="wlc-live" id="wlcLive" aria-live="polite"></p>
   <div class="wlc-opts">

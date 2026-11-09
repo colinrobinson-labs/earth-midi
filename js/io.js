@@ -1,4 +1,4 @@
-/* Earth MIDI v0.6 · export, import, save, share, credit, network ledger */
+/* Earth MIDI v1.0 · export, import, save, share, credit, network ledger */
 "use strict";
 const CREDIT="Planetary data sonified with Earth MIDI by Colin Robinson · earthmidi.com";
 const SOURCES="Data: USGS/ANSS earthquakes; NOAA SWPC real-time solar wind (DSCOVR/ACE/IMAP), Kp, Dst, GOES X-rays and protons; NOAA CO-OPS tides (all public domain); NASA EONET natural events (public domain); ISS orbital elements (NORAD via wheretheiss.at / CelesTrak); Open-Meteo weather, upper-air, marine and air quality (CC BY 4.0, open-meteo.com); air quality contains modified Copernicus Atmosphere Monitoring Service information; land outlines from Natural Earth (public domain).";
@@ -6,7 +6,7 @@ const LICENSE="Free to use in music and media, commercial included. Credit requi
 function xs(m){const e=$("xState");if(!e)return;e.textContent=m;e.classList.add("on");clearTimeout(xs.t);xs.t=setTimeout(()=>{e.textContent="";e.classList.remove("on")},4500)}
 const stamp=()=>new Date().toISOString().slice(0,16).replace(/[-:T]/g,"").replace(/(\d{8})(\d{4})/,"$1-$2");
 function download(name,blob){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
-let JSZipP=null;function zipLib(){return JSZipP||(JSZipP=new Promise((res,rej)=>{if(window.JSZip)return res(window.JSZip);const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";s.onload=()=>res(window.JSZip);s.onerror=rej;document.head.appendChild(s)}))}
+let JSZipP=null;function zipLib(){return JSZipP||(JSZipP=new Promise((res,rej)=>{if(window.JSZip)return res(window.JSZip);const s=document.createElement("script");s.src="vendor/jszip-3.10.1.min.js";s.onload=()=>res(window.JSZip);s.onerror=rej;document.head.appendChild(s)}))}
 const README_CREDIT=`CREDIT (required)\n${CREDIT}\n\nLICENSE\n${LICENSE}\n\n${SOURCES}\n`;
 
 /* ================= Standard MIDI File writer (type 1) ================= */
@@ -85,6 +85,31 @@ function encodeWav(chunksL,chunksR,rate,title){
   W("LIST");U32(listLen);W("INFO");chunks.forEach(([id,b])=>{W(id);U32(b.length);new Uint8Array(buf,o,b.length).set(b);o+=b.length});
   W("data");U32(dataLen);for(let i=0;i<chunksL.length;i++){const a=chunksL[i],b=chunksR[i];for(let j=0;j<a.length;j++){v.setInt16(o,a[j],true);v.setInt16(o+2,b[j],true);o+=4}}
   return new Blob([buf],{type:"audio/wav"})}
+
+/* Loudness presets for the WAV master (Record → Loudness). Measures integrated loudness the ITU-R BS.1770 way
+   (K-weighting, 400 ms blocks, -70 LUFS absolute and -10 LU relative gates), then applies one gain so the file
+   lands on the target, capped so peaks stay under -1 dBFS. "Raw" leaves the file untouched. Stems are never changed. */
+const LOUD={raw:null,socials:-14,streaming:-16};
+function loudPref(){try{return localStorage.getItem("em.loud")||"raw"}catch(_){return "raw"}}
+function kCoef(fs){// BS.1770 high-shelf pre-filter + RLB high-pass, recomputed for this sample rate
+  const sh=(f0,G,Q)=>{const K=Math.tan(Math.PI*f0/fs),Vh=10**(G/20),Vb=Vh**.4996667741545416,a0=1+K/Q+K*K;return [[(Vh+Vb*K/Q+K*K)/a0,2*(K*K-Vh)/a0,(Vh-Vb*K/Q+K*K)/a0],[1,2*(K*K-1)/a0,(1-K/Q+K*K)/a0]]};
+  const hp=(f0,Q)=>{const K=Math.tan(Math.PI*f0/fs),a0=1+K/Q+K*K;return [[1,-2,1],[1,2*(K*K-1)/a0,(1-K/Q+K*K)/a0]]};
+  return [sh(1681.974450955533,3.999843853973347,.7071752369554196),hp(38.13547087602444,.5003270373238773)]}
+function measureLUFS(chL,chR,fs){
+  const [f1,f2]=kCoef(fs),blk=Math.round(fs*.4),hop=Math.round(fs*.1),ms=[];
+  const filt=ch=>{const out=new Float32Array(ch.reduce((a,b)=>a+b.length,0));let o=0,x1=0,x2=0,y1=0,y2=0,u1=0,u2=0,z1=0,z2=0;const [b,a]=f1,[d,c]=f2;
+    for(const part of ch)for(let i=0;i<part.length;i++){const x=part[i]/32768,y=b[0]*x+b[1]*x1+b[2]*x2-a[1]*y1-a[2]*y2;x2=x1;x1=x;y2=y1;y1=y;
+      const z=d[0]*y+d[1]*u1+d[2]*u2-c[1]*z1-c[2]*z2;u2=u1;u1=y;z2=z1;z1=z;out[o++]=z}return out};
+  const L=filt(chL),R=filt(chR),n=L.length;let peak=0;for(const part of chL)for(const v of part)peak=Math.max(peak,Math.abs(v));for(const part of chR)for(const v of part)peak=Math.max(peak,Math.abs(v));
+  for(let s=0;s+blk<=n;s+=hop){let e=0;for(let i=s;i<s+blk;i++)e+=L[i]*L[i]+R[i]*R[i];ms.push(e/blk)}
+  const lk=z=>-.691+10*Math.log10(z),abs=ms.filter(z=>lk(z)>-70);if(!abs.length)return {lufs:-Infinity,peak:peak/32768};
+  const rel=lk(abs.reduce((a,b)=>a+b,0)/abs.length)-10,g=abs.filter(z=>lk(z)>rel);
+  return {lufs:lk(g.reduce((a,b)=>a+b,0)/g.length),peak:peak/32768}}
+function loudnessMatch(chL,chR,fs){const target=LOUD[loudPref()];if(target==null)return {L:chL,R:chR,note:""};
+  const m=measureLUFS(chL,chR,fs);if(!Number.isFinite(m.lufs))return {L:chL,R:chR,note:""};
+  let gdb=target-m.lufs;const ceil=-1-20*Math.log10(Math.max(m.peak,1e-6));const capped=gdb>ceil;if(capped)gdb=ceil;const g=10**(gdb/20);
+  const sc=ch=>ch.map(part=>{const o=new Int16Array(part.length);for(let i=0;i<part.length;i++)o[i]=clamp(Math.round(part[i]*g),-32767,32767);return o});
+  const got=m.lufs+gdb;return {L:sc(chL),R:sc(chR),note:` · ${got.toFixed(1)} LUFS${capped?" (peak-limited)":""}`}}
 const f2i=a=>{const o=new Int16Array(a.length);for(let i=0;i<a.length;i++)o[i]=clamp(a[i],-1,1)*32767;return o};
 let REC=null;
 function toggleRec(stems,opt){
@@ -104,8 +129,8 @@ function toggleRec(stems,opt){
 }
 async function stopRec(){const R=REC;if(!R)return;REC=null;R.proc.disconnect();R.srcs.forEach(([n,sp])=>{try{n.disconnect(sp)}catch(_){}});R.btn.classList.remove("on");R.btn.textContent=R.label;document.body.classList.remove("recording");
   const title=`Earth MIDI ${new Date(R.start).toISOString().slice(0,16)} UTC`,st=stamp();
-  if(!R.stems){const w=encodeWav(R.data[0][0],R.data[0][1],R.rate,title);if(R.onDone){R.onDone(w,`earth-midi_${st}.wav`);return}download(`earth-midi_${st}.wav`,w);
-    const tt=window.EMTitle&&EMTitle.capStop();if(tt&&tt.blob){setTimeout(()=>download(tt.name,tt.blob),400);xs("Saved the WAV, plus your title playing as its own WAV")}else xs(`Saved ${(w.size/1048576).toFixed(1)} MB WAV with credit metadata`);return}
+  if(!R.stems){const lm=R.onDone?{L:R.data[0][0],R:R.data[0][1],note:""}:loudnessMatch(R.data[0][0],R.data[0][1],R.rate),w=encodeWav(lm.L,lm.R,R.rate,title);if(R.onDone){R.onDone(w,`earth-midi_${st}.wav`);return}download(`earth-midi_${st}.wav`,w);
+    const tt=window.EMTitle&&EMTitle.capStop();if(tt&&tt.blob){setTimeout(()=>download(tt.name,tt.blob),400);xs("Saved the WAV, plus your title playing as its own WAV")}else xs(`Saved ${(w.size/1048576).toFixed(1)} MB WAV with credit metadata${lm.note}`);return}
   xs("Packing stems…");try{const JSZip=await zipLib(),z=new JSZip(),f=z.folder(`earth-midi-stems_${st}`);
     R.keys.forEach((k,i)=>f.file(`${String(i+1).padStart(2,"0")}_${k==="fx"?"reverb-return":k==="ttl"?"title-playing":(LNAME[k]||k).toLowerCase().replace(/[^a-z0-9]+/g,"-")}.wav`,encodeWav(R.data[i][0],R.data[i][1],R.rate,`${title} · ${k==="fx"?"reverb return":k==="ttl"?"title playing":LNAME[k]}`)));
     f.file("CREDIT.txt",README_CREDIT+"\nStems are each layer's own bus before the master chain; the shared reverb is its own stem. Line them up at 0:00.\n");

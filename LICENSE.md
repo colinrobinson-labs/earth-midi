@@ -2,7 +2,7 @@
 
 © 2026 Colin Robinson. All rights reserved.
 
-The Earth MIDI website, its code, visual design and sound design are the work of Colin Robinson. The source is public so anyone can check what the page does (including that no AI service makes the sound), but it is not open-source licensed: please don't republish or host copies of the site.
+The Earth MIDI website, its code, visual design and sound design are the work of Colin Robinson. The source is public so anyone can check what the page does (including that no AI runs while you listen), but it is not open-source licensed: please don't republish or host copies of the site.
 
 ## What you make with it: free, credit required
 
@@ -28,8 +28,12 @@ Earth MIDI is not affiliated with or endorsed by any of these organisations.
 
 - topojson-client, ISC license (Mike Bostock)
 - JSZip, MIT license (Stuart Knightley and contributors)
-- Syne and IBM Plex fonts, SIL Open Font License 1.1, served by Google Fonts
+- Archivo and IBM Plex fonts, SIL Open Font License 1.1, served from earthmidi.com
 
 ## Privacy
 
-No accounts, cookies, analytics or ads. Settings and presets are stored only in your own browser (localStorage). Your browser fetches data directly from the sources above, the libraries from jsDelivr and cdnjs, and fonts from Google Fonts; those services see your IP address as with any website.
+No accounts, cookies or ads. Visits and a few button presses (such as Play or Export) are counted anonymously with GoatCounter, with no cookies and nothing that identifies you. Settings and presets are stored only in your own browser (localStorage). Your browser fetches data from the sources above; like any website, they see your IP address. The apps for iPhone, iPad, Mac and Apple TV collect no data at all. Full policy: https://earthmidi.com/privacy.html
+
+## Contact
+
+hello@earthmidi.com · https://earthmidi.com/support

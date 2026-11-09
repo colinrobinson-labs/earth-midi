@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090b">
+<link rel="icon" href="icon.svg?v=2" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/page.css">
+<title>Earth MIDI · Support</title>
+<meta name="description" content="Help with Earth MIDI on the web, iPhone, iPad, Mac and Apple TV, and how to get in touch.">
+<link rel="canonical" href="https://earthmidi.com/support.html">
+</head>
+<body><main>
+<a class="back" href="./"><img src="icon.svg?v=2" alt="" width="22" height="22">Earth MIDI</a>
+<div class="spec" aria-hidden="true"></div>
+<h1>Support</h1>
+<p>Help with Earth MIDI on the web and on iPhone, iPad, Mac and Apple TV. If your question isn't here, write to us below.</p>
+
+<h2>Common questions</h2>
+<div class="faq">
+<details><summary>I pressed Play and hear nothing</summary><p>Turn the volume up and check the master slider next to Play. On iPhone, Earth MIDI plays through the silent switch, but Bluetooth speakers sometimes hold the audio: disconnect and tap Play again. If a phone call or Siri interrupted playback, tap Play once more. Some layers are quiet by nature; an hour with no earthquakes is a calm hour.</p></details>
+<details><summary>Why are some readings delayed?</summary><p>Each layer comes from a public agency (USGS, NOAA, NASA, Open-Meteo). When one of them is slow, the card shows the last real reading and how old it is. Earth MIDI never fills a gap with invented data.</p></details>
+<details><summary>How do I send MIDI to my DAW?</summary><p>On the web, use Chrome or Edge on a computer, pick an output in the MIDI menu, and choose that port as an input in your DAW. Safari doesn't support Web MIDI. In the iPhone, iPad and Mac apps, Earth MIDI appears as its own MIDI source in GarageBand, Logic, Ableton Live, AUM and others. Each layer has its own MIDI channel, and MIDI clock follows the planet's tempo.</p></details>
+<details><summary>Can I use recordings in my music?</summary><p>Yes, free, including released and commercial work. The one condition is this credit wherever you credit samples or collaborators:</p><p class="credit">Planetary data sonified with Earth MIDI by Colin Robinson · earthmidi.com</p></details>
+<details><summary>Is AI making the sound?</summary><p>No active AI. AI helped design and build Earth MIDI, including the rules that turn data into sound. No AI runs while you listen: every note comes from a published sensor reading through the same rule every time. Same reading, same note.</p></details>
+<details><summary>What data do you collect?</summary><p>None that identifies you. See the <a href="privacy.html">privacy policy</a>.</p></details>
+</div>
+
+<h2>Contact</h2>
+<div class="card">
+<p style="margin-top:0">Email <span class="mail">hello@earthmidi.com</span>, or fill this in and it opens in your mail app, ready to send.</p>
+<form id="cf" novalidate>
+ <div class="row">
+  <label for="cfName">Your name<input id="cfName" name="name" autocomplete="name"></label>
+  <label for="cfTopic">Topic<select id="cfTopic" name="topic"><option>Help with the website</option><option>Help with an app</option><option>MIDI or DAW setup</option><option>Using Earth MIDI in my music</option><option>Press or collaboration</option><option>Something else</option></select></label>
+ </div>
+ <label for="cfDevice">Device and browser or app (optional)<input id="cfDevice" name="device" placeholder="e.g. iPhone 15, Safari"></label>
+ <label for="cfMsg">Message<textarea id="cfMsg" name="message" required></textarea></label>
+ <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button class="btn pri" type="submit">Write the email</button><button class="btn" type="button" id="cfCopy">Copy address</button><small id="cfNote" role="status"></small></div>
+</form>
+</div>
+<footer><a href="./">earthmidi.com</a> · <a href="support.html">Support</a> · <a href="press.html">Press</a> · <a href="whats-new.html">What&#39;s new</a> · <a href="privacy.html">Privacy</a></footer>
+</main>
+<script>
+(function(){var TO="hello@earthmidi.com",f=document.getElementById("cf"),n=document.getElementById("cfNote");
+f.addEventListener("submit",function(e){e.preventDefault();var m=f.message.value.trim();if(!m){n.textContent="Add a message first.";f.message.focus();return}
+ var body=m+"\n\n"+(f.name.value.trim()?"From: "+f.name.value.trim()+"\n":"")+(f.device.value.trim()?"Device: "+f.device.value.trim()+"\n":"")+"Sent from earthmidi.com/support";
+ location.href="mailto:"+TO+"?subject="+encodeURIComponent("Earth MIDI: "+f.topic.value)+"&body="+encodeURIComponent(body);
+ n.textContent="Your mail app should open now. If it doesn't, write to "+TO+".";});
+document.getElementById("cfCopy").addEventListener("click",function(){(navigator.clipboard?navigator.clipboard.writeText(TO):Promise.reject()).then(function(){n.textContent="Copied."},function(){n.textContent=TO})});
+})();
+</script>
+</body></html>

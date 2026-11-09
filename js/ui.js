@@ -1,4 +1,4 @@
-/* Earth MIDI v0.6 · UI, transport, playback loop, boot */
+/* Earth MIDI v1.0 · UI, transport, playback loop, boot */
 "use strict";
 /* ---------- cards ---------- */
 const CARDS=[
@@ -132,10 +132,12 @@ function afterCFG(soft){setRoot();if(+CFG.bpmMax<+CFG.bpmMin)CFG.bpmMax=CFG.bpmM
 function setStyle(v){S.style=v;document.querySelectorAll("[data-style]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.style===v));seq={next:0,step:0,fill:false}}
 
 /* ---------- playback loop ---------- */
-function playQuake(q){
+function playQuake(q,at){
   S.played.add(q.id);const qn=quakeNote(q);let r={note:qn.note,vel:velOf(q.mag),dur:(1.2+q.mag*.9)*CFG.len};
-  if(A&&!muted("q"))r=quakeVoice(q);
-  midiNote(CH("q"),r.note,r.vel,Math.round(r.dur*400));
+  // at: audio-clock time of the Pulse step this quake is snapped to (0 = now)
+  const lead=at&&A?Math.max(0,(at-A.ctx.currentTime)*1000):0;VOICE_AT=at||0;MIDI_AT=lead?performance.now()+lead:0;
+  try{if(A&&!muted("q"))r=quakeVoice(q);
+  midiNote(CH("q"),r.note,r.vel,Math.round(r.dur*400))}finally{VOICE_AT=0;MIDI_AT=0}
   S.rings.push({lat:q.lat,lon:q.lon,mag:q.mag,t:performance.now(),depth:q.depth});
   pushNote(r.note,"q",r.vel,r.dur);S.hit.q=Math.min(1,S.hit.q+map(q.mag,1,6,.25,1));
   const kp=kpAt(q.time);
@@ -160,7 +162,7 @@ function tick(){
     if(!passQ(q)){S.played.add(q.id);continue}
     if(S.recent.length>=CFG.dens){S.played.add(q.id);continue}
     S.recent.push(nowMs);
-    if(CFG.quant&&S.style==="pulse"&&A){S.played.add(q.id);const d=Math.max(0,(seq.next-A.ctx.currentTime)*1000);setTimeout(()=>playQuake(q),d)}else playQuake(q)}
+    if(CFG.quant&&S.style==="pulse"&&A&&seq.next>A.ctx.currentTime)playQuake(q,seq.next);else playQuake(q)}
   const xf=xrayAt(t),xc=flareClass(xf)[0];if(lastX&&"CMX".includes(xc)&&"ABCMX".indexOf(xc)>"ABCMX".indexOf(lastX))flareBell(flareClass(xf),xf);lastX=xc;
   let oh=S.cur.oh||0,op=S.cur.op||8;const oZ=ZN.has("o");if(oZ){const v=viewOcean(t);if(Number.isFinite(v.h))oh=v.h;if(Number.isFinite(v.p))op=v.p||op}
   if(nowMs-lastOceanNote>op*1000&&!(oZ&&ZN.bus("o")<.02)){lastOceanNote=nowMs;const n=degree(scaleFor(S.cur.kp||2),Math.round(map(oh,0,6,2,8)),ROOT-12);midiNote(CH("o"),n,Math.round(map(oh,0,6,30,110)),op*600);pushNote(n,"o",map(oh,0,6,30,110),op*.6);S.hit.o=.7}

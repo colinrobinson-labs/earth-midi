@@ -50,7 +50,7 @@ const TRIM={
     return {type:"FeatureCollection",metadata:pick(j.metadata||{},["generated","count"]),features:j.features.map(f=>({id:f.id,properties:pick(f.properties||{},["mag","place","time","url","tsunami","felt"]),geometry:{coordinates:f.geometry?.coordinates}}))}},
   rtswWind:j=>{need(Array.isArray(j),"not a list");const a=j.filter(r=>r.active&&Date.parse(r.time_tag+"Z")>since(26)).map(r=>pick(r,["time_tag","active","proton_speed","proton_density"]));need(a.length>=10,"too few rows");return a},
   rtswMag:j=>{need(Array.isArray(j),"not a list");const a=j.filter(r=>r.active&&Date.parse(r.time_tag+"Z")>since(26)).map(r=>pick(r,["time_tag","active","bz_gsm","bt"]));need(a.length>=10,"too few rows");return a},
-  plasma:j=>table(j,26),mag:j=>table(j,26),
+
   kp:j=>{need(Array.isArray(j)&&j.length>1,"empty");return j},
   dst:j=>table(j,50),
   xray:j=>{need(Array.isArray(j),"not a list");const a=j.filter(r=>r.energy==="0.1-0.8nm").map(r=>pick(r,["time_tag","energy","flux"]));need(a.length>=10,"too few rows");return a},

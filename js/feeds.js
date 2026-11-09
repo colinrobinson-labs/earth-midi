@@ -22,8 +22,6 @@ const FEEDS=[
  {id:"quakes",name:"quakes",url:"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",every:5*MIN,ttl:20*MIN},
  {id:"rtswWind",name:"solar wind",url:"https://services.swpc.noaa.gov/json/rtsw/rtsw_wind_1m.json",every:5*MIN,ttl:20*MIN},
  {id:"rtswMag",name:"solar wind",url:"https://services.swpc.noaa.gov/json/rtsw/rtsw_mag_1m.json",every:5*MIN,ttl:20*MIN},
- {id:"plasma",name:"solar wind",url:"https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json",every:5*MIN,ttl:20*MIN},
- {id:"mag",name:"solar wind",url:"https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json",every:5*MIN,ttl:20*MIN},
  {id:"kp",name:"Kp",url:"https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json",every:15*MIN,ttl:3*HR},
  {id:"xray",name:"X-rays",url:"https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json",every:5*MIN,ttl:20*MIN},
  {id:"dst",name:"Dst",url:"https://services.swpc.noaa.gov/products/kyoto-dst.json",every:15*MIN,ttl:2*HR},
@@ -38,7 +36,7 @@ const FEEDS=[
  {id:"issTleCt",name:"ISS orbit",url:"https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE",every:2*HR,ttl:24*HR,text:true},
  {id:"issFix",name:"ISS fix",url:"https://api.wheretheiss.at/v1/satellites/25544",every:5*MIN,ttl:20*MIN},
  // the weather grid is big and hourly, so it lives in its own file and is fetched rarely (Open-Meteo counts each point as a call)
- {id:"wx0",name:"weather",url:wxURL(WX_PTS.slice(0,204)),every:110*MIN,ttl:4*HR,file:"wx"},
- {id:"wx1",name:"weather",url:wxURL(WX_PTS.slice(204)),every:110*MIN,ttl:4*HR,file:"wx"}];
+ {id:"wx0",name:"weather",url:wxURL(WX_PTS.slice(0,204)),every:110*MIN,ttl:6*HR,file:"wx"},
+ {id:"wx1",name:"weather",url:wxURL(WX_PTS.slice(204)),every:110*MIN,ttl:6*HR,file:"wx"}];
 const FEED=Object.fromEntries(FEEDS.map(f=>[f.id,f.url]));
 if(typeof module!=="undefined")module.exports={FEEDS,FEED,WX_N};

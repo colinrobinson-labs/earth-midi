@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /data/
+Disallow: /review/
+Disallow: /apps/
+
+Sitemap: https://earthmidi.com/sitemap.xml
