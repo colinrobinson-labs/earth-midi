@@ -86,7 +86,13 @@
     }
     // In the app: no visit counter runs, so say so
     var pv = document.getElementById("privacy");
-    if (pv) pv.innerHTML = "<b>Privacy:</b> no accounts, ads, tracking or analytics in the app. Your settings and presets stay on this device. The app reads public sensor data through earthmidi.com and the sources below; like any app that goes online, they see your IP address.";
+    if (pv) pv.innerHTML = "<b>Privacy:</b> no accounts, ads, tracking or analytics in the app. Your settings and presets stay on this device. The app reads public sensor data through earthmidi.com and the sources below; like any app that goes online, they see your IP address. <a href=\"https://earthmidi.com/privacy.html\">Privacy policy</a>.";
+    // Footer pages (support, press, what's new, privacy) live on earthmidi.com, not inside the app
+    var links = document.querySelectorAll("footer a[href$='.html']");
+    for (var i = 0; i < links.length; i++) {
+      var h = links[i].getAttribute("href") || "";
+      if (!/^[a-z]+:/i.test(h)) { links[i].href = "https://earthmidi.com/" + h.replace(/^\.?\//, ""); links[i].target = "_blank"; links[i].rel = "noopener" }
+    }
     if (navigator.mediaSession) {
       try {
         navigator.mediaSession.setActionHandler("play", function () { window.EMNative.play() });

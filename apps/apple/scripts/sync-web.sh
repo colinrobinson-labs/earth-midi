@@ -10,6 +10,7 @@ cp "$REPO"/js/*.js "$DEST/js/"
 # self-hosted fonts, styles and libraries, so the app needs no CDN or Google Fonts
 for d in css fonts vendor; do if [ -d "$REPO/$d" ]; then cp -R "$REPO/$d" "$DEST/"; fi; done
 for f in icon.svg apple-touch-icon.png og.png; do [ -f "$REPO/$f" ] && cp "$REPO/$f" "$DEST/"; done
-# no visit counter inside the app
-grep -v 'goatcounter' "$REPO/index.html" > "$DEST/index.html"
+# No visit counter inside the app: drop only the GoatCounter script tag, and the web CSP meta
+# (the app serves the page from its own earthmidi:// scheme). Everything else stays as on the site.
+grep -v -e 'gc.zgo.at/count.js' -e 'http-equiv="Content-Security-Policy"' "$REPO/index.html" > "$DEST/index.html"
 echo "Bundled site engine: $(ls "$DEST/js" | wc -l | tr -d ' ') scripts"

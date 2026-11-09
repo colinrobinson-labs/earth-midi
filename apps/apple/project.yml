@@ -24,8 +24,10 @@ targets:
     platform: [iOS, macOS]
     sources:
       - path: App
-        excludes: ["Info-*.plist", "*.entitlements", "Bridge.js"]
+        excludes: ["Info-*.plist", "*.entitlements", "Bridge.js", "PrivacyInfo.xcprivacy"]
       - path: App/Bridge.js
+        buildPhase: resources
+      - path: App/PrivacyInfo.xcprivacy
         buildPhase: resources
       - Shared/Core
       - Shared/Intents
@@ -52,7 +54,9 @@ targets:
     platform: [iOS, macOS]
     sources:
       - path: Widgets
-        excludes: ["Info.plist", "*.entitlements"]
+        excludes: ["Info.plist", "*.entitlements", "PrivacyInfo.xcprivacy"]
+      - path: Widgets/PrivacyInfo.xcprivacy
+        buildPhase: resources
       - Shared/Core
       - Shared/Intents
     settings:
@@ -70,7 +74,9 @@ targets:
     platform: tvOS
     sources:
       - path: TV
-        excludes: ["Info.plist"]
+        excludes: ["Info.plist", "PrivacyInfo.xcprivacy"]
+      - path: TV/PrivacyInfo.xcprivacy
+        buildPhase: resources
       - Shared/Core
       - Shared/Synth
       - Shared/Intents
