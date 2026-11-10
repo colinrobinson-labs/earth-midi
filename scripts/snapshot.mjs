@@ -10,12 +10,17 @@
    the previous snapshot unchanged, and the page falls back to calling the sources itself.
    No values are invented or altered here. Trimming only drops fields and rows the page doesn't use.
 
+   Weather switch: with WEATHER_SOURCE=weatherkit (a GitHub Actions variable) and the WeatherKit secrets set,
+   the feeds marked `wk` in js/feeds.js come from Apple WeatherKit instead, rewritten into the same shape
+   (scripts/weatherkit.mjs). Each copy records its source (src), and the files say which source is live (wsrc).
+
    Usage: node scripts/snapshot.mjs <outDir>
    Env:   SNAPSHOT_PREV  base URL of the published snapshot (default https://earthmidi.com/data/)
           SNAPSHOT_FAKE  path to a JSON map {url: response} for offline tests */
 import {createRequire} from "node:module";
 import {mkdirSync,writeFileSync,readFileSync} from "node:fs";
 import {join} from "node:path";
+import {wkConfig,wkFeed,wkAttribution,CALLS,LEGAL_DEFAULT} from "./weatherkit.mjs";
 
 const require=createRequire(import.meta.url);
 const {FEEDS}=require("../js/feeds.js");
@@ -24,6 +29,9 @@ const PREV=(process.env.SNAPSHOT_PREV||"https://earthmidi.com/data/").replace(/\
 const FAKE=process.env.SNAPSHOT_FAKE?JSON.parse(readFileSync(process.env.SNAPSHOT_FAKE,"utf8")):null;
 const UA="earthmidi.com live-data snapshot (+https://github.com/colinrobinson-labs/earth-midi)";
 const NOW=Date.now(),KEEP_MAX=48*36e5;// never republish a copy older than two days
+const WK=FAKE&&process.env.SNAPSHOT_WK_FAKE?{on:true,want:true,ready:true,fake:true}:wkConfig();
+const WSRC=WK.on?"weatherkit":"open-meteo",srcOf=f=>f.wk&&WK.on?"weatherkit":undefined;
+if(WK.want&&!WK.ready)console.log(`! WEATHER_SOURCE=weatherkit but ${WK.missing.join(", ")} not set: staying on Open-Meteo`);
 
 async function get(url,ms=25000,text=false){
   if(FAKE){if(!(url in FAKE))throw new Error("no fake");const v=FAKE[url];if(v&&v.__status)throw new Error(String(v.__status));return text?String(v):structuredClone(v)}
@@ -75,22 +83,31 @@ async function prevFile(name){
 const prev={live:await prevFile("live"),wx:await prevFile("wx")};
 const files={live:{},wx:{}},status={};
 const host=u=>new URL(u).host,byHost={};
-FEEDS.forEach(f=>(byHost[host(f.url)]??=[]).push(f));
+FEEDS.forEach(f=>(byHost[srcOf(f)||host(f.url)]??=[]).push(f));
 // one request at a time per host, hosts in parallel: polite to the sources, still done in seconds
 await Promise.all(Object.values(byHost).map(async list=>{for(const f of list){
   const file=f.file||"live",old=prev[file][f.url],t0=Date.now();
-  if(old&&NOW-old.at<f.every-9e4){files[file][f.url]={...old,ttl:f.ttl};status[f.id]={ok:true,at:old.at,kept:"not due"};continue}
-  try{const raw=await get(f.url,f.id==="events"?45000:f.file?40000:25000,!!f.text);
-    const data=trimFor(f)(raw,f);files[file][f.url]={at:NOW,ttl:f.ttl,data};status[f.id]={ok:true,at:NOW,ms:Date.now()-t0}}
+  const src=srcOf(f),tag=src?{src}:{};
+  // a copy from the other weather source is never "not due": flipping the switch refetches at once
+  if(old&&NOW-old.at<f.every-9e4&&old.src===src){files[file][f.url]={...old,ttl:f.ttl};status[f.id]={ok:true,at:old.at,kept:"not due",...tag};continue}
+  try{const data=src?(WK.fake?FAKE["wk:"+f.id]:await wkFeed(WK,f)):trimFor(f)(await get(f.url,f.id==="events"?45000:f.file?40000:25000,!!f.text),f);
+    if(src)need(Array.isArray(data)&&data.length===f.wk.pts.length,"WeatherKit: wrong point count");
+    files[file][f.url]={at:NOW,ttl:f.ttl,data,...tag};status[f.id]={ok:true,at:NOW,ms:Date.now()-t0,...tag}}
   catch(e){const err=String(e&&e.message||e);
-    if(old&&NOW-old.at<KEEP_MAX){files[file][f.url]={...old,ttl:f.ttl};status[f.id]={ok:false,at:old.at,err,kept:"last good copy"}}
-    else status[f.id]={ok:false,err};
+    if(old&&NOW-old.at<KEEP_MAX){files[file][f.url]={...old,ttl:f.ttl};status[f.id]={ok:false,at:old.at,err,kept:"last good copy",...tag}}
+    else status[f.id]={ok:false,err,...tag};
     console.log(`! ${f.id}: ${err}`)}}}));
 
 mkdirSync(join(OUT,"data"),{recursive:true});
+// Apple's attribution (logo + legal page) travels with the data, so the page and the apps can show it whenever WeatherKit data is on screen
+let wk;
+if(WK.on){const a=WK.fake?{name:"Apple Weather",legal:LEGAL_DEFAULT,logos:{}}:await wkAttribution();wk={name:a.name,legal:a.legal,logo:{}};
+  for(const [k,b] of Object.entries(a.logos)){writeFileSync(join(OUT,"data",`apple-weather-${k}.png`),b);wk.logo[k]=`apple-weather-${k}.png`}
+  if(a.err)console.log("! WeatherKit attribution: "+a.err+" (using the default legal link)")}
 for(const [name,feeds] of Object.entries(files)){
-  const body=JSON.stringify({v:1,at:NOW,feeds});writeFileSync(join(OUT,"data",name+".json"),body);
+  const body=JSON.stringify({v:1,at:NOW,wsrc:WSRC,...(wk?{wk}:{}),feeds});writeFileSync(join(OUT,"data",name+".json"),body);
   console.log(`${name}.json: ${Object.keys(feeds).length} feeds, ${(body.length/1024).toFixed(0)} KB`)}
-writeFileSync(join(OUT,"data","status.json"),JSON.stringify({v:1,at:NOW,feeds:status},null,1));
+writeFileSync(join(OUT,"data","status.json"),JSON.stringify({v:1,at:NOW,weather:{source:WSRC,requested:WK.want?"weatherkit":"open-meteo",...(WK.want&&!WK.ready?{missing:WK.missing}:{}),...(WK.on?{weatherkitCalls:CALLS.n}:{})},feeds:status},null,1));
 const bad=Object.entries(status).filter(([,s])=>!s.ok);
+console.log(`weather source: ${WSRC}${WK.on?` (${CALLS.n} WeatherKit calls this run)`:""}`);
 console.log(`${FEEDS.length-bad.length}/${FEEDS.length} feeds current${bad.length?" · stale or missing: "+bad.map(([k])=>k).join(", "):""}`);

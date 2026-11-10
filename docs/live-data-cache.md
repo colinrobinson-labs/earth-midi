@@ -12,6 +12,8 @@ Earth MIDI reads about 22 public data feeds (USGS, NOAA SWPC, NOAA tides, Open-M
 | `js/core.js` (`viaSnap`) | Page reads the snapshot first. If a feed's copy is older than its `ttl`, it calls the source directly. If the source fails too, it plays the last real copy (up to 48 h old) and the status line shows a quiet "… delayed" note with a hover listing each feed's age. Only with no copy at all does it fall back to labelled demo data, as before. |
 | Browser cache | Pages serves `data/*.json` with a 10-minute cache, so a listener downloads `live.json` about once every 10 minutes. The last snapshot is also kept in `localStorage` (`em.snap.live`) for offline/outage starts. The weather grid keeps its own 90-minute `localStorage` cache. |
 
+**Weather switch:** the weather grid and city temperatures can come from Apple WeatherKit instead of Open-Meteo with one Actions variable (`WEATHER_SOURCE=weatherkit`). See [weatherkit.md](weatherkit.md).
+
 Upstream load is now roughly constant (one fetcher) no matter how many people are listening. The weather-tap lookup (one point, on click) still goes direct, since it can't be precomputed.
 
 ## Requirements and limits

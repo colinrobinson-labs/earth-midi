@@ -83,6 +83,7 @@ struct ReadingsView: View {
                 let T = c.series.at(store.data.now)
                 return T.isFinite ? "\(c.place.name) \(Int(T.rounded()))° \(Music.noteName(Music.chordNote(tempC: T, kp: kp)))" : c.place.name
             })
+            AppleWeatherMark(data: store.data)
         }
     }
 

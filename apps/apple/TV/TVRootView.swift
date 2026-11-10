@@ -75,6 +75,7 @@ struct TVRootView: View {
                 }
             }
             .frame(height: 110, alignment: .top)
+            AppleWeatherMark(data: c.data, size: 18)
             if c.data.isDemo { Text("Live feeds unreachable: playing demo data").font(Theme.mono(18)).foregroundStyle(Theme.color("s")) }
         }
         .padding(30)

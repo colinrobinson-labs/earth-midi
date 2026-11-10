@@ -60,6 +60,12 @@ struct EarthReadings: Sendable {
     var tides: [PlaceSeries] = []
     var temps: [PlaceSeries] = []
     var snapshotAt: Date?
+    /// Where weather and city temperatures came from: "open-meteo" or "weatherkit" (the switch in docs/weatherkit.md).
+    /// The snapshot job does the WeatherKit calls; the apps only read the result, so no key ships in the app.
+    var weatherSource = "open-meteo"
+    var weatherLegal = URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
+    var weatherLogo: URL?
+    var isAppleWeather: Bool { weatherSource == "weatherkit" && !temps.isEmpty }
     var loadedAt = Date.distantPast
     var isDemo = false
 
@@ -141,12 +147,18 @@ enum EarthData {
     static func parseSnapshot(_ data: Data) -> EarthReadings? {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let feeds = root["feeds"] as? [String: Any] else { return nil }
-        func feed(_ match: String) -> Any? {
-            for (url, v) in feeds where url.contains(match) { return (v as? [String: Any])?["data"] }
+        func feedEntry(_ match: String) -> [String: Any]? {
+            for (url, v) in feeds where url.contains(match) { return v as? [String: Any] }
             return nil
         }
+        func feed(_ match: String) -> Any? { feedEntry(match)?["data"] }
         var r = EarthReadings()
         if let at = root["at"] as? Double { r.snapshotAt = Date(timeIntervalSince1970: at / 1000) }
+        if let tf = feedEntry("hourly=temperature_2m&past_days"), let src = tf["src"] as? String { r.weatherSource = src }
+        if let wk = root["wk"] as? [String: Any] {
+            if let l = wk["legal"] as? String, let u = URL(string: l) { r.weatherLegal = u }
+            if let logo = (wk["logo"] as? [String: Any])?["dark"] as? String { r.weatherLogo = URL(string: logo, relativeTo: snapshotURL)?.absoluteURL }
+        }
         if let j = feed("all_day.geojson") { r.quakes = parseQuakes(j) }
         if let p = feed("rtsw_wind_1m") as? [[String: Any]] {
             let rows = p.filter { ($0["active"] as? Bool) == true }.compactMap { row -> (Double, Double, Double)? in

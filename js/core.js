@@ -62,7 +62,16 @@ const SUN_CITIES=[["Tokyo",35.68,139.69,37],["Delhi",28.61,77.21,33],["Shanghai"
    Same upstream readings either way, just cached. */
 const SNAP={feeds:{},files:{},last:{}},FEED_BY_URL=Object.fromEntries(FEEDS.map(f=>[f.url,f]));
 const LATE=new Map();// feed name -> reading time, for feeds playing an older copy this round
-function snapMerge(j){if(j&&j.v===1&&j.feeds)for(const [u,f] of Object.entries(j.feeds)){const o=SNAP.feeds[u];if(!o||f.at>o.at)SNAP.feeds[u]=f}}
+function snapMerge(j){if(j&&j.v===1&&j.feeds){for(const [u,f] of Object.entries(j.feeds)){const o=SNAP.feeds[u];if(!o||f.at>o.at)SNAP.feeds[u]=f}
+  // which weather source the snapshot job is on (docs/weatherkit.md), and Apple's attribution when it's WeatherKit
+  if(j.wsrc&&!(SNAP.wAt>j.at)){SNAP.wsrc=j.wsrc;SNAP.wk=j.wk||null;SNAP.wAt=j.at}}}
+/* Weather source per feed, as last played: "weatherkit" or "open-meteo". With WeatherKit on, the page never calls
+   Open-Meteo for those feeds itself; it plays the snapshot copy (or the last one, marked delayed). */
+const WSRC={};
+const wkOn=id=>WSRC[id]==="weatherkit";
+function wkMark(){const a=SNAP.wk||{},legal=a.legal||"https://weatherkit.apple.com/legal-attribution.html",logo=a.logo&&a.logo.dark;
+  return `<span class="wkm"><a href="${legal}" target="_blank" rel="noopener" aria-label="Apple Weather, data sources and legal attribution">${logo?`<img src="data/${logo}" alt="Apple Weather" height="12" onerror="this.replaceWith('Apple Weather')">`:"Apple Weather"}</a> · <a href="${legal}" target="_blank" rel="noopener">Other data sources</a></span>`}
+function wkSync(){const on=wkOn("temps")||wkOn("wx0");document.querySelectorAll("[data-wk]").forEach(e=>{if(e.hidden===!on&&e._on===on)return;e.hidden=!on;e._on=on;if(on)e.innerHTML=(e.dataset.wk||"")+wkMark()})}
 async function loadSnap(file="live",every=6e4){
   if(Date.now()-(SNAP.last[file]||0)<every)return SNAP.files[file];
   if(SNAP.files[file]instanceof Promise)return SNAP.files[file];
@@ -78,8 +87,14 @@ async function viaSnap(u,ms,text){const def=FEED_BY_URL[u];
   if(!def)return direct(u,ms,text);
   await loadSnap(def.file||"live",def.file?30*6e4:6e4);
   const s=SNAP.feeds[u];
+  if(def.wk){WSRC[def.id]=s&&s.src||"open-meteo";
+    if(SNAP.wsrc==="weatherkit"){WSRC[def.id]=s&&s.src||"weatherkit";setTimeout(wkSync,0);
+      if(s&&Date.now()-s.at<def.ttl)return s.data;
+      if(s&&Date.now()-s.at<1728e5){LATE.set(def.name,Math.min(LATE.get(def.name)||Infinity,s.at));return s.data}
+      throw new Error("weather snapshot missing")}
+    setTimeout(wkSync,0)}
   if(s&&Date.now()-s.at<def.ttl)return s.data;
-  try{const d=await direct(u,ms,text);SNAP.feeds[u]={at:Date.now(),data:d};return d}
+  try{const d=await direct(u,ms,text);SNAP.feeds[u]={at:Date.now(),data:d};if(def.wk)WSRC[def.id]="open-meteo";return d}
   catch(e){if(s&&Date.now()-s.at<1728e5){LATE.set(def.name,Math.min(LATE.get(def.name)||Infinity,s.at));return s.data}throw e}}
 async function direct(u,ms=20000,text){const ac=new AbortController(),to=setTimeout(()=>ac.abort(),ms);try{const r=await fetch(u,{cache:"no-store",signal:ac.signal});if(!r.ok)throw new Error(r.status);return await(text?r.text():r.json())}finally{clearTimeout(to)}}
 const getJSON=(u,ms)=>viaSnap(u,ms,false),getText=(u,ms)=>viaSnap(u,ms,true);
