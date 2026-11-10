@@ -64,6 +64,14 @@ jobs:
         # never blocks the deploy: on any failure the page calls the sources itself
         continue-on-error: true
         timeout-minutes: 4
+        # Weather switch (docs/weatherkit.md): repo variable WEATHER_SOURCE=weatherkit moves weather + city temps to
+        # Apple WeatherKit. Off (Open-Meteo) when unset. The key stays here in Actions; browsers and apps never see it.
+        env:
+          WEATHER_SOURCE: ${{ vars.WEATHER_SOURCE }}
+          WEATHERKIT_TEAM_ID: ${{ vars.WEATHERKIT_TEAM_ID }}
+          WEATHERKIT_KEY: ${{ secrets.WEATHERKIT_KEY }}
+          WEATHERKIT_KEY_ID: ${{ secrets.WEATHERKIT_KEY_ID }}
+          WEATHERKIT_SERVICE_ID: ${{ secrets.WEATHERKIT_SERVICE_ID }}
         run: node scripts/snapshot.mjs _site
 
       - uses: actions/configure-pages@v5.0.0

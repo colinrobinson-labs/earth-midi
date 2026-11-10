@@ -16,7 +16,7 @@ const CARDS=[
  ["u","Sunrise chorus","notes","<b>the sun rising or setting over 42 big cities → a chime</b> · up for sunrise, down for sunset · <b>population → velocity</b>"],
  ["m","Moon","CC 9","<b>illumination → reverb size</b> · computed from orbital mechanics, not fetched"]];
 function buildCards(){$("grid").innerHTML=CARDS.map(([k,n,midi,m])=>`<div class="ch" id="c${k}" style="--c:${COLS[k]}"><h3><span>${n}</span><small>ch ${CH(k==="m"?"m":k)} · ${midi}</small></h3>
-  <div class="vrow"><div class="big" id="v${k}">–</div>${k!=="m"?`<canvas class="vu" id="vu${k}"></canvas>`:""}</div><div class="sub" id="s${k}"></div><canvas class="spark" id="k${k}"></canvas>
+  <div class="vrow"><div class="big" id="v${k}">–</div>${k!=="m"?`<canvas class="vu" id="vu${k}"></canvas>`:""}</div><div class="sub" id="s${k}"></div>${k==="c"?`<div class="sub wka" data-wk hidden></div>`:""}<canvas class="spark" id="k${k}"></canvas>
   <button type="button" class="chow" aria-expanded="false" aria-controls="c${k}">How it sounds</button><div class="map">${m}</div>${k!=="m"?`<div class="ms"><button data-m="${k}" aria-pressed="false">Mute</button><button data-s="${k}" aria-pressed="false">Solo</button></div>`:""}</div>`).join("");
   document.querySelectorAll("#grid .chow").forEach(b=>b.onclick=()=>{const c=b.closest(".ch"),o=c.classList.toggle("open");b.setAttribute("aria-expanded",String(o))});
   bindMS()}

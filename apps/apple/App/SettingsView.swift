@@ -27,7 +27,7 @@ struct SettingsView: View {
                             .font(.footnote).foregroundStyle(Theme.mute)
                     }
                     group("How it works") {
-                        Text("Earth MIDI turns live readings from public sensors into sound: earthquakes from USGS, solar wind, X-rays and the magnetosphere from NOAA, ocean swell, the jet stream, city temperatures and air quality from Open-Meteo, tides from NOAA, natural events from NASA, and the space station's orbit.")
+                        Text("Earth MIDI turns live readings from public sensors into sound: earthquakes from USGS, solar wind, X-rays and the magnetosphere from NOAA, ocean swell, the jet stream, city temperatures and air quality from Open-Meteo (city temperatures from Apple Weather when its logo shows), tides from NOAA, natural events from NASA, and the space station's orbit.")
                             .font(.subheadline).foregroundStyle(Theme.fg2)
                         Text("AI helped design and build this app, including the rules that turn data into sound. But no AI runs while you listen: every note comes from a live sensor reading through the same rule every time.")
                             .font(.footnote).foregroundStyle(Theme.mute)

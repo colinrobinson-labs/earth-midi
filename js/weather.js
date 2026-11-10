@@ -1,10 +1,12 @@
 /* Earth MIDI · live weather on the globe and the flat map.
-   Source: Open-Meteo forecast model (CC BY 4.0), a 15° × 10° global grid of 408 points, hourly,
+   Source: Open-Meteo forecast model (CC BY 4.0), or Apple WeatherKit when the weather switch is on
+   (docs/weatherkit.md: same points, hours and fields, so the sound is the same), a 15° × 10° global grid of 408 points, hourly,
    from 24 h ago to the end of today (UTC). Wind at 10 m, cloud cover, precipitation, air temperature and sea-level pressure.
    Values are interpolated in space (bilinear) and time (linear), so the weather follows the replay clock.
    Wind particles are pushed by the measured wind field. Cloud and rain shading come from the measured
    fractions; the fine cloud texture is a fixed pattern that gives the 15° cells some grain, nothing more.
-   Tap anywhere on the map: the exact point is fetched from the same model and played on the Jet stream bus. */
+   Tap anywhere on the map: the exact point is fetched from the same model and played on the Jet stream bus
+   (with WeatherKit on, the tap plays the grid value only: WeatherKit is never called from the browser). */
 "use strict";
 // grid (WX_LON, WX_LAT, WX_N) and request URLs live in feeds.js, shared with the snapshot job
 const WX={t:[],u:null,v:null,c:null,p:null,T:null,f:{u:new Float32Array(WX_N),v:new Float32Array(WX_N),c:new Float32Array(WX_N),p:new Float32Array(WX_N),T:new Float32Array(WX_N),P:new Float32Array(WX_N)},
@@ -24,13 +26,13 @@ async function loadWX(force){
     if(!d){const res=(await Promise.all([FEED.wx0,FEED.wx1].map(u=>getJSON(u,30000)))).flatMap(arr);
       if(res.length!==WX_N||!res[0].hourly)throw new Error("grid");
       const R=a=>a.map(v=>v==null?null:Math.round(v*10)/10);
-      d={v:2,at:Date.now(),P:res.map(x=>R(x.hourly.pressure_msl)),time:res[0].hourly.time,T:res.map(x=>R(x.hourly.temperature_2m)),p:res.map(x=>R(x.hourly.precipitation)),c:res.map(x=>x.hourly.cloud_cover),s:res.map(x=>R(x.hourly.wind_speed_10m)),d:res.map(x=>x.hourly.wind_direction_10m)};
+      d={v:2,at:Date.now(),src:WSRC.wx0||"open-meteo",P:res.map(x=>R(x.hourly.pressure_msl)),time:res[0].hourly.time,T:res.map(x=>R(x.hourly.temperature_2m)),p:res.map(x=>R(x.hourly.precipitation)),c:res.map(x=>x.hourly.cloud_cover),s:res.map(x=>R(x.hourly.wind_speed_10m)),d:res.map(x=>x.hourly.wind_direction_10m)};
       try{localStorage.setItem("em.wx",JSON.stringify(d))}catch(_){}}
     const nT=d.time.length,P=(src,fn)=>{const o=new Float32Array(nT*WX_N);for(let k=0;k<WX_N;k++)for(let i=0;i<nT;i++){const v=fn?fn(k,i):src[k][i];o[i*WX_N+k]=v==null?NaN:v}return o};
     WX.t=omTimes(d.time);WX.T=P(d.T);WX.p=P(d.p);WX.c=P(d.c);WX.P=P(d.P);
     // meteorological direction is where the wind comes FROM: u east, v north
     WX.u=P(0,(k,i)=>d.s[k][i]==null?null:-d.s[k][i]*Math.sin(d.d[k][i]*D2R));WX.v=P(0,(k,i)=>d.s[k][i]==null?null:-d.s[k][i]*Math.cos(d.d[k][i]*D2R));
-    WX.ok=true;WX.err="";WX.at=d.at;WX.fT=NaN;WX.texT=NaN;
+    WX.ok=true;WX.err="";WX.at=d.at;WX.fT=NaN;WX.texT=NaN;WX.src=d.src||"open-meteo";WSRC.wx0=WX.src;
   }catch(e){if(!WX.ok)WX.err=String(e&&e.message||e)==="429"?"weather feed busy, retrying":"weather feed unreachable, retrying"}
   finally{WX.loading=false;wxLegend(true)}
 }
@@ -136,8 +138,8 @@ const WMO={0:"clear sky",1:"mainly clear",2:"partly cloudy",3:"overcast",45:"fog
 const fmtLL=(lo,la)=>`${Math.abs(la).toFixed(1)}°${la>=0?"N":"S"} ${Math.abs(lo).toFixed(1)}°${lo>=0?"E":"W"}`;
 const overLand=(lo,la)=>{const px=window.LANDPX;if(!px)return null;const x=clamp(Math.floor((lo+180)/360*720),0,719),y=clamp(Math.floor((90-la)/180*360),0,359);return px[(y*720+x)*4]>128};
 function wxLegend(force){const el=$("wxl");if(!el)return;el.hidden=!CFG.weather;if(!CFG.weather)return;
-  const h=WX.ok?`<div class="wxg"><i></i><span>wind 0</span><span>25</span><span>45+ km/h</span></div><div class="wxk"><span><i class="c"></i>cloud</span><span><i class="r"></i>rain</span><span><i class="h"></i>heavy</span></div><div class="wxs">Open-Meteo model · 15° grid · ${new Date(WX.at).toISOString().slice(11,16)} UTC</div><div class="wxh" id="wxh"></div>`
-    :`<div class="wxs">${WX.err||"loading live weather…"}</div>`;if(force||el._h!==h){el.innerHTML=h;el._h=h}}
+  const h=WX.ok?`<div class="wxg"><i></i><span>wind 0</span><span>25</span><span>45+ km/h</span></div><div class="wxk"><span><i class="c"></i>cloud</span><span><i class="r"></i>rain</span><span><i class="h"></i>heavy</span></div><div class="wxs">${WX.src==="weatherkit"?"Apple Weather":"Open-Meteo model"} · 15° grid · ${new Date(WX.at).toISOString().slice(11,16)} UTC</div><div class="wxa" data-wk hidden></div><div class="wxh" id="wxh"></div>`
+    :`<div class="wxs">${WX.err||"loading live weather…"}</div>`;if(force||el._h!==h){el.innerHTML=h;el._h=h;wkSync()}}
 function wxLine(s){return `wind ${Math.round(s.ws)} km/h from ${dirName(s.wd)} · cloud ${Math.round(s.c)}% · ${s.p>=.05?`rain ${s.p.toFixed(1)} mm/h`:"dry"} · ${Math.round(s.T)}°C`}
 
 /* ---------- sound: one gust, one tone, rain drops, on the Jet stream bus + MIDI ---------- */
@@ -166,10 +168,12 @@ window.wxTap=function(e,r){if(!CFG.weather||!WX.ok)return false;const ll=invProj
   WX.pins.push({lon,lat,t:performance.now(),u:s.u,v:s.v,ws:s.ws});const n=wxVoice(s,lon);
   const head=`<b style="color:#9ad1ff">${fmtLL(lon,lat)}</b>${land==null?"":land?" · over land":" · over ocean"}`;
   const body=(x,lbl)=>`${head}<br>${wxLine(x)}<br><small>${lbl} → ${noteName(n)}</small>`;
-  tip.innerHTML=body(s,`model grid at ${new Date(t).toISOString().slice(11,16)} UTC`);tip.style.display="block";
+  const wk=WX.src==="weatherkit"||SNAP.wsrc==="weatherkit";
+  tip.innerHTML=body(s,`${wk?"Apple Weather grid":"model grid"} at ${new Date(t).toISOString().slice(11,16)} UTC`)+(wk?`<br><small>${wkMark()}</small>`:"");tip.style.display="block";
   tip.style.left=Math.min(Math.max(4,e.clientX-r.left-110),r.width-254)+"px";tip.style.top=Math.max(4,e.clientY-r.top-92)+"px";
-  logEv(`weather ${fmtLL(lon,lat)} · ${wxLine(s)} → ${noteName(n)}`,"w",null,[["Sensor","Open-Meteo forecast model (CC BY 4.0), 15°×10° global grid, hourly"],["Raw reading",wxLine(s)],["Formula","temperature −30…45 °C → scale step\nwind 0…70 km/h → gust level, brightness, velocity\ncloud 0…100% → low-pass 4.2 kHz…520 Hz\nrain → one drop per 0.25 mm/h"],["Sound + MIDI",`Jet stream bus · MIDI ch ${CH("w")} · ${noteName(n)} vel ${Math.round(map(s.ws,0,70,55,120))}`],["AI running","none"]]);
-  // exact point, current conditions, from the same model
+  logEv(`weather ${fmtLL(lon,lat)} · ${wxLine(s)} → ${noteName(n)}`,"w",null,[["Sensor",wk?"Apple Weather (WeatherKit), 15°×10° global grid, hourly":"Open-Meteo forecast model (CC BY 4.0), 15°×10° global grid, hourly"],["Raw reading",wxLine(s)],["Formula","temperature −30…45 °C → scale step\nwind 0…70 km/h → gust level, brightness, velocity\ncloud 0…100% → low-pass 4.2 kHz…520 Hz\nrain → one drop per 0.25 mm/h"],["Sound + MIDI",`Jet stream bus · MIDI ch ${CH("w")} · ${noteName(n)} vel ${Math.round(map(s.ws,0,70,55,120))}`],["AI running","none"]]);
+  // exact point, current conditions, from the same model (Open-Meteo only; WeatherKit stays server-side)
+  if(wk)return true;
   getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lon.toFixed(2)}&current=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&timezone=GMT`,12000).then(j=>{
     if(id!==wxReq||tip.style.display==="none")return;const c=j.current;if(!c)return;const x={ws:c.wind_speed_10m,wd:c.wind_direction_10m,c:c.cloud_cover,p:c.precipitation,T:c.temperature_2m};
     const nowL=`<b>${WMO[c.weather_code]||"now"}</b>${Number.isFinite(c.wind_gusts_10m)?` · gusts ${Math.round(c.wind_gusts_10m)} km/h`:""}<br>${wxLine(x)}`;

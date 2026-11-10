@@ -1,0 +1,28 @@
+# Tests the WeatherKit key end to end WITHOUT flipping the weather switch: fetches the full WeatherKit set once
+# (10 cities + 408-point grid, about 420 calls), compares it with Open-Meteo, and writes a report on the run page.
+# Publishes nothing. Run it from Actions → "WeatherKit check" → Run workflow. See docs/weatherkit.md.
+name: WeatherKit check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.1.0
+        with:
+          node-version: 22
+      - name: Fetch from WeatherKit and compare
+        env:
+          WEATHER_SOURCE: ${{ vars.WEATHER_SOURCE }}
+          WEATHERKIT_TEAM_ID: ${{ vars.WEATHERKIT_TEAM_ID }}
+          WEATHERKIT_KEY: ${{ secrets.WEATHERKIT_KEY }}
+          WEATHERKIT_KEY_ID: ${{ secrets.WEATHERKIT_KEY_ID }}
+          WEATHERKIT_SERVICE_ID: ${{ secrets.WEATHERKIT_SERVICE_ID }}
+        run: node scripts/weatherkit.mjs check
