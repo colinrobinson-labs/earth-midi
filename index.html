@@ -52,7 +52,8 @@
 .ldots{display:none}
 html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--body);-webkit-font-smoothing:antialiased}
 html,body{overflow-x:hidden;overflow-x:clip}
-body{padding:0 max(16px,env(safe-area-inset-left,0px)) var(--dock)}
+/* both side insets: on a folding phone's outer screen the camera sits on a side edge */
+body{padding:0 max(16px,env(safe-area-inset-right,0px)) var(--dock) max(16px,env(safe-area-inset-left,0px))}
 body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(50% 32% at 50% -6%,rgba(255,120,80,calc(.025 + var(--glow)*.1)),transparent 70%);transition:background .2s}
 .wrap{max-width:1360px;margin:0 auto;padding:18px 0 60px}
 a{color:var(--o)}
@@ -166,7 +167,9 @@ select:disabled{opacity:.55;cursor:not-allowed}
 
 /* stage + side column */
 .main{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
-@media (min-width:1100px){.main{grid-template-columns:minmax(0,1fr) 370px;align-items:start}}
+/* two panes from 900px: iPad landscape, a folding phone opened flat, a half-width laptop window */
+@media (min-width:900px){.main{grid-template-columns:minmax(0,1fr) 340px;align-items:start}}
+@media (min-width:1100px){.main{grid-template-columns:minmax(0,1fr) 370px}}
 .stage{position:relative;border:1px solid var(--line);border-radius:var(--r3);overflow:hidden;background:radial-gradient(120% 120% at 50% 0%,#0b1420 0%,var(--bg) 70%)}
 .mapwrap{position:relative;touch-action:none}
 #map{display:block;width:100%;aspect-ratio:16/9;cursor:grab}
@@ -229,7 +232,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .lrow.off .lname,.lrow.off .lvl{opacity:.38}.lrow.off .lname i{box-shadow:none;background:transparent;border:1px solid var(--c)}
 .lrow.solo{background:color-mix(in srgb,var(--c) 16%,transparent)}
 .hint{font:11px var(--mono);color:var(--mute);margin:6px 0 0}
-@media (min-width:1100px){.side{position:sticky;top:124px;max-height:calc(100vh - 136px);overflow:auto}#pads{grid-template-columns:1fr}.shint{margin-left:0;flex-basis:100%}}
+@media (min-width:900px){.side{position:sticky;top:124px;max-height:calc(100vh - 136px);overflow:auto}#pads{grid-template-columns:1fr}.shint{margin-left:0;flex-basis:100%}}
 
 /* cards */
 .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));margin-top:12px}
@@ -328,7 +331,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  header{grid-template-columns:1fr}
  h1{font-size:calc((100vw - 32px)/7.55)}
  .tag{justify-self:start;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;cursor:pointer}.tag.open{-webkit-line-clamp:unset}
- .stage{margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)));border-radius:0;border-left:0;border-right:0}
+ .stage{margin:0 calc(-1*max(16px,env(safe-area-inset-right,0px))) 0 calc(-1*max(16px,env(safe-area-inset-left,0px)));border-radius:0;border-left:0;border-right:0}
  .immb{bottom:10px;right:10px}
  body.imm .mapwrap{bottom:calc(var(--dock) + var(--peek))}
  .pipe{grid-template-columns:1fr 1fr}.pipe li{font-size:11.5px}
@@ -382,7 +385,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  .pgrid{grid-template-columns:1fr}.mixer{grid-template-columns:1fr 1fr}
  .pc{margin:10px 0}.pc input[type=range]{height:28px}
  .pro{scroll-margin-top:12px}
- .dock{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;z-index:50;padding:9px max(12px,env(safe-area-inset-left,0px)) calc(9px + env(safe-area-inset-bottom,0px));background:rgba(8,12,17,.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line2);box-shadow:0 -10px 30px rgba(0,0,0,.45)}
+ .dock{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;z-index:50;padding:9px max(12px,env(safe-area-inset-right,0px)) calc(9px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:rgba(8,12,17,.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line2);box-shadow:0 -10px 30px rgba(0,0,0,.45)}
  .drow{display:flex;gap:6px;align-items:center;justify-content:center;max-width:460px;width:100%;margin:0 auto}
  .dock .go{width:56px;height:56px;min-width:0;flex:0 0 56px;padding:0;border-radius:50%;justify-content:center;gap:0;box-shadow:0 0 18px rgba(232,240,248,.25)}
  .dock .go span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -800,6 +803,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
 <script src="js/home.js"></script>
 <script src="js/simple.js"></script>
 <script src="js/console.js"></script>
+<script src="js/fold.js"></script>
 <script src="js/tidy.js"></script>
 <script src="js/extras.js"></script>
 </body>

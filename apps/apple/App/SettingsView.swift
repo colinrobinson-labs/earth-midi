@@ -22,6 +22,11 @@ struct SettingsView: View {
                         #if os(iOS)
                         Toggle("Feel quakes (haptics, M2.5+)", isOn: $hub.haptics).tint(Theme.hex(0x3cc8ff))
                         Toggle("Live Activity on the Lock Screen", isOn: $hub.liveActivity).tint(Theme.hex(0x3cc8ff))
+                        HStack {
+                            Text("Play on AirPlay speakers").foregroundStyle(Theme.fg)
+                            Spacer()
+                            RoutePicker().frame(width: 30, height: 26).accessibilityLabel("AirPlay")
+                        }
                         #endif
                         Text("Keeps playing in the background and with the screen locked. Control it from the Lock Screen, Control Center, AirPlay speakers, widgets or Siri (“Play Earth MIDI”).")
                             .font(.footnote).foregroundStyle(Theme.mute)

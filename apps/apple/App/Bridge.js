@@ -44,7 +44,9 @@
     toggle: function () { ready(function () { startStop() }) },
     goLive: function () { ready(function () { goLive() }) },
     setStyle: function (s) { ready(function () { setStyle(s) }) },
-    state: function () { sendState() }
+    state: function () { sendState() },
+    // folding phones: where the hinge is, in this view's CSS px, or null when flat (see js/fold.js)
+    fold: function (f) { ready(function () { if (typeof FOLD !== "undefined") FOLD.set(f) }) }
   };
 
   /* ---------- page → native ---------- */

@@ -10,7 +10,7 @@ struct RootView: View {
     var body: some View {
         content
             .sheet(item: $sheet) { s in
-                Group {
+                SheetChrome {
                     switch s {
                     case .readings: ReadingsView()
                     case .midi: MIDIView()
@@ -27,11 +27,30 @@ struct RootView: View {
 
     @ViewBuilder private var content: some View {
         #if os(iOS)
-        VStack(spacing: 0) {
-            WebEngineView(engine: hub.web)
-            bar
+        // System bars, not a hand-built strip: on iPhone Duo they move to a vertical rail on the outer
+        // display and in landscape on the inner display. Every item has a symbol and a title.
+        NavigationStack {
+            FoldAwareWeb(engine: hub.web)
+                .background(Theme.bg.ignoresSafeArea())
+                .toolbar(.hidden, for: .navigationBar)
+                .toolbar {
+                    ToolbarItemGroup(placement: .bottomBar) {
+                        railButton(hub.isPlaying ? "Stop" : "Play", hub.isPlaying ? "stop.fill" : "play.fill", primary: true) { hub.toggle() }
+                        Spacer()
+                        railButton("Readings", "globe.americas") { sheet = .readings }
+                        Spacer()
+                        railButton("MIDI", "pianokeys") { sheet = .midi }
+                        Spacer()
+                        // AirPlay is a system custom view, so a vertical rail can't show it; it is also in Settings.
+                        RoutePicker().frame(width: 28, height: 24).accessibilityLabel("AirPlay")
+                        Spacer()
+                        railButton("Settings", "slider.horizontal.3") { sheet = .settings }
+                    }
+                }
+                .toolbarBackground(Theme.sf0, for: .bottomBar)
+                .toolbarBackground(.visible, for: .bottomBar)
+                .toolbarColorScheme(.dark, for: .bottomBar)
         }
-        .background(Theme.bg.ignoresSafeArea())
         #else
         WebEngineView(engine: hub.web)
             .background(Theme.bg)
@@ -47,36 +66,53 @@ struct RootView: View {
     }
 
     #if os(iOS)
-    private var bar: some View {
-        HStack(spacing: 0) {
-            barButton("Readings", "globe.americas") { sheet = .readings }
-            barButton("MIDI", "pianokeys") { sheet = .midi }
-            VStack(spacing: 3) {
-                RoutePicker().frame(width: 26, height: 22)
-                Text("AIRPLAY").font(Theme.caps(9)).foregroundStyle(Theme.mute)
-            }.frame(maxWidth: .infinity)
-            barButton("Settings", "slider.horizontal.3") { sheet = .settings }
-        }
-        .padding(.top, 8).padding(.bottom, 2)
-        .background(Theme.sf0.overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 1) }.ignoresSafeArea(edges: .bottom))
-    }
-    private func barButton(_ t: String, _ icon: String, _ a: @escaping () -> Void) -> some View {
-        Button(action: a) {
-            VStack(spacing: 3) {
-                Image(systemName: icon).font(.system(size: 18, weight: .regular)).frame(height: 22)
-                Text(t.uppercased()).font(Theme.caps(9))
-            }
-            .foregroundStyle(Theme.fg2)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(t)
+    @ViewBuilder private func railButton(_ title: String, _ icon: String, primary: Bool = false, _ action: @escaping () -> Void) -> some View {
+        let b = Button(action: action) { Label(title, systemImage: icon) }
+            .tint(primary ? Theme.hex(0x3cc8ff) : Theme.fg2)
+        #if DUO_SDK
+        // ⚠️ iOS 27.1 SDK: keep Play and Readings on the rail longest when it overflows
+        b.visibilityPriority(primary || title == "Readings" ? .high : .automatic)
+        #else
+        b
+        #endif
     }
     #endif
 }
 
 #if os(iOS)
+/// The site's engine, told where the fold is when the phone is partly folded (iPhone Duo book or tent pose),
+/// so the page can lay out around the hinge: js/fold.js (Book = globe + Console, Tent = Planet Clock).
+struct FoldAwareWeb: View {
+    let engine: WebEngine
+    @State private var lastFold = ""
+    var body: some View {
+        #if DUO_SDK
+        // ⚠️ iOS 27.1 SDK. API names follow Apple's iPhone Duo docs; confirm labels in Xcode before turning DUO_SDK on.
+        GeometryReader { proxy in
+            let folds = proxy.reservedRegions(kind: .division, options: [])
+            let fold = folds.first(where: { $0.isActive })?.frame
+            WebEngineView(engine: engine)
+                .onChange(of: fold, initial: true) { _, f in send(f) }
+        }
+        #else
+        WebEngineView(engine: engine)
+        #endif
+    }
+
+    /// Sends {axis, a, w} in the web view's own points (= CSS px), or null when the screen is flat or closed.
+    private func send(_ f: CGRect?) {
+        var js = "null"
+        if let f, f.width > 0, f.height > 0 {
+            js = f.height >= f.width
+                ? "{axis:'v',a:\(Int(f.minX.rounded())),w:\(Int(f.width.rounded()))}"
+                : "{axis:'h',a:\(Int(f.minY.rounded())),w:\(Int(f.height.rounded()))}"
+        }
+        guard js != lastFold else { return }
+        lastFold = js
+        engine.call("EMNative.fold(\(js))")
+    }
+}
+
 struct WebEngineView: UIViewRepresentable {
     let engine: WebEngine
     func makeUIView(context: Context) -> WKWebView { engine.webView }
@@ -118,10 +154,38 @@ struct Reading: View {
     }
 }
 
+/// iOS: wraps a sheet in a NavigationStack with a system Close button (cancellationAction), so the bar follows
+/// the system on every display, including iPhone Duo's vertical bars. macOS: the sheet as it was.
+struct SheetChrome<Content: View>: View {
+    @ViewBuilder let content: Content
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        #if os(iOS)
+        NavigationStack {
+            content
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(Theme.bg, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close", systemImage: "xmark") { dismiss() }
+                    }
+                }
+        }
+        #else
+        content
+        #endif
+    }
+}
+
 struct SheetHeader: View {
     let title: String
     @Environment(\.dismiss) private var dismiss
     var body: some View {
+        #if os(iOS)
+        Color.clear.frame(height: 0).navigationTitle(title)
+        #else
         HStack {
             Text(title).font(Theme.title(22)).foregroundStyle(Theme.fg)
             Spacer()
@@ -129,5 +193,6 @@ struct SheetHeader: View {
                 .buttonStyle(.plain).foregroundStyle(Theme.fg2).accessibilityLabel("Close")
         }
         .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 8)
+        #endif
     }
 }

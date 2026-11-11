@@ -7,7 +7,12 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t,map=(v,a,
 let DPR=window.FX?FX.dpr():Math.min(2,window.devicePixelRatio||1);
 addEventListener("fxchange",()=>{DPR=FX.dpr();dispatchEvent(new Event("resize"))});
 const VERSION="1.0";
-const IS_MOBILE=matchMedia("(max-width:700px)").matches;
+/* Phone or desktop tuning (tap radius, particle counts, share sheet…). Re-checked whenever the window changes size,
+   so a folding phone, iPad Split View or a resized window gets the right one without a reload. */
+const MQ_MOBILE=matchMedia("(max-width:700px)");
+let IS_MOBILE=MQ_MOBILE.matches;
+{const f=()=>{if(IS_MOBILE===MQ_MOBILE.matches)return;IS_MOBILE=MQ_MOBILE.matches;dispatchEvent(new Event("mobilechange"))};
+ MQ_MOBILE.addEventListener?MQ_MOBILE.addEventListener("change",f):MQ_MOBILE.addListener(f)}
 
 /* ================= layers ================= */
 // key, name, colour, what it measures
