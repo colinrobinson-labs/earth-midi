@@ -432,7 +432,7 @@ addEventListener("hashchange",()=>{if(location.hash==="#console")open()});
 document.querySelectorAll("#viewSw button").forEach(b=>b.onclick=()=>{if(b.dataset.vw==="console")return open();close();if(window.SIMPLE)SIMPLE.set(b.dataset.vw==="simple")});
 const ph=document.querySelector("#pro h2");if(ph){const b=document.createElement("button");b.type="button";b.className="cns-go";b.innerHTML=`${ic("mixer")}Console`;b.title="Open the full-screen mixing console";b.onclick=open;ph.insertBefore(b,$("pstat"))}
 const ipadOS=/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1;
-const tablet=(matchMedia("(pointer:coarse)").matches||ipadOS)&&Math.min(screen.width,screen.height)>=700&&Math.min(innerWidth,innerHeight)>=600;
+const tablet=(matchMedia("(pointer:coarse)").matches||ipadOS)&&Math.max(innerWidth,innerHeight)>=900&&Math.min(innerWidth,innerHeight)>=600;
 let seen=false;try{seen=!!localStorage.getItem(SEEN)}catch(_){}
 let tip=null;
 function tipHide(){if(tip){tip.remove();tip=null}try{localStorage.setItem(SEEN,"1")}catch(_){}}
