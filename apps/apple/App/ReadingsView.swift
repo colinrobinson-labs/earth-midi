@@ -21,44 +21,67 @@ struct ReadingsView: View {
     @State private var camera: MapCameraPosition = .camera(MapCamera(centerCoordinate: CLLocationCoordinate2D(latitude: 20, longitude: -160), distance: 28_000_000))
     private let cols = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var hSize
+    private var wide: Bool { hSize == .regular }
+    #else
+    private var wide: Bool { false }
+    #endif
+
     var body: some View {
         VStack(spacing: 0) {
             SheetHeader(title: "The planet right now")
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    map
-                    if store.data.isDemo { Text("Live feeds unreachable: showing demo data").font(Theme.mono(11)).foregroundStyle(Theme.hex(0xffc53d)) }
-                    if store.waiting {
-                        HStack(spacing: 10) { ProgressView(); Text("Loading live readings…").font(Theme.mono(13)).foregroundStyle(Theme.mute) }
-                            .frame(maxWidth: .infinity, minHeight: 120)
-                    } else {
-                    LazyVGrid(columns: cols, spacing: 10) {
-                        let d = store.data, kp = d.kpNow
-                        Reading(label: "Kp index", value: String(format: "%.1f", kp), sub: "\(Theme.kpWord(kp)) · \(Music.scaleName(kp: kp))", color: Theme.color("g"))
-                        Reading(label: "Solar wind", value: d.speedNow.isFinite ? "\(Int(d.speedNow)) km/s" : "–", sub: d.bzNow.isFinite ? String(format: "Bz %.1f nT · %.1f p/cm³", d.bzNow, d.densityNow) : "", color: Theme.color("s"))
-                        Reading(label: "X-rays", value: Music.flareClass(d.xrayNow), sub: "GOES 0.1–0.8 nm", color: Theme.color("x"))
-                        let oc = d.ocean(at: d.now)
-                        Reading(label: "Ocean swell", value: String(format: "%.1f m", oc.h), sub: String(format: "%.0f s period · 10 buoys", oc.p), color: Theme.color("o"))
-                        let jv = d.jet(at: d.now)
-                        Reading(label: "Jet stream", value: jv.isFinite ? "\(Int(jv)) km/h" : "–", sub: "250 hPa, 6 points", color: Theme.color("w"))
-                        Reading(label: "Tide · La Jolla", value: String(format: "%+.2f", d.tideNorm(at: d.now)), sub: "−1 low … +1 high", color: Theme.color("t"))
-                    }
-                    if !store.data.temps.isEmpty { chord }
-                    quakes
-                    }
-                    if !hub.events.isEmpty { justPlayed }
-                    Text("Every number comes from a public sensor feed or published physics. The note shown is what the engine plays with the default settings: the same reading always makes the same note.")
-                        .font(.footnote).foregroundStyle(Theme.mute).padding(.top, 4)
+            if wide {
+                // Wide (iPhone Duo opened, big windows): map on one side, the numbers on the other.
+                HStack(alignment: .top, spacing: 16) {
+                    map(fill: true).padding(.bottom, 16)
+                    ScrollView { details.padding(.bottom, 24) }
+                        .refreshable { await store.load() }
                 }
-                .padding(.horizontal, 16).padding(.bottom, 24)
+                .padding(.horizontal, 16)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        map(fill: false)
+                        details
+                    }
+                    .padding(.horizontal, 16).padding(.bottom, 24)
+                }
+                .refreshable { await store.load() }
             }
-            .refreshable { await store.load() }
         }
         .background(Theme.bg)
         .task { await store.load() }
     }
 
-    private var map: some View {
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if store.data.isDemo { Text("Live feeds unreachable: showing demo data").font(Theme.mono(11)).foregroundStyle(Theme.hex(0xffc53d)) }
+            if store.waiting {
+                HStack(spacing: 10) { ProgressView(); Text("Loading live readings…").font(Theme.mono(13)).foregroundStyle(Theme.mute) }
+                    .frame(maxWidth: .infinity, minHeight: 120)
+            } else {
+                LazyVGrid(columns: cols, spacing: 10) {
+                    let d = store.data, kp = d.kpNow
+                    Reading(label: "Kp index", value: String(format: "%.1f", kp), sub: "\(Theme.kpWord(kp)) · \(Music.scaleName(kp: kp))", color: Theme.color("g"))
+                    Reading(label: "Solar wind", value: d.speedNow.isFinite ? "\(Int(d.speedNow)) km/s" : "–", sub: d.bzNow.isFinite ? String(format: "Bz %.1f nT · %.1f p/cm³", d.bzNow, d.densityNow) : "", color: Theme.color("s"))
+                    Reading(label: "X-rays", value: Music.flareClass(d.xrayNow), sub: "GOES 0.1–0.8 nm", color: Theme.color("x"))
+                    let oc = d.ocean(at: d.now)
+                    Reading(label: "Ocean swell", value: String(format: "%.1f m", oc.h), sub: String(format: "%.0f s period · 10 buoys", oc.p), color: Theme.color("o"))
+                    let jv = d.jet(at: d.now)
+                    Reading(label: "Jet stream", value: jv.isFinite ? "\(Int(jv)) km/h" : "–", sub: "250 hPa, 6 points", color: Theme.color("w"))
+                    Reading(label: "Tide · La Jolla", value: String(format: "%+.2f", d.tideNorm(at: d.now)), sub: "−1 low … +1 high", color: Theme.color("t"))
+                }
+                if !store.data.temps.isEmpty { chord }
+                quakes
+            }
+            if !hub.events.isEmpty { justPlayed }
+            Text("Every number comes from a public sensor feed or published physics. The note shown is what the engine plays with the default settings: the same reading always makes the same note.")
+                .font(.footnote).foregroundStyle(Theme.mute).padding(.top, 4)
+        }
+    }
+
+    private func map(fill: Bool) -> some View {
         Map(position: $camera, interactionModes: [.pan, .zoom, .rotate]) {
             ForEach(store.data.quakes24h) { q in
                 Annotation("", coordinate: CLLocationCoordinate2D(latitude: q.lat, longitude: q.lon), anchor: .center) {
@@ -68,7 +91,8 @@ struct ReadingsView: View {
             }
         }
         .mapStyle(.imagery(elevation: .realistic))
-        .frame(height: 300)
+        .frame(height: fill ? nil : 300)
+        .frame(maxHeight: fill ? .infinity : nil)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(alignment: .bottomLeading) {
             Text("\(store.data.quakes24h.count) QUAKES · 24 H").font(Theme.caps(10)).padding(6).background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 6)).padding(8).foregroundStyle(Theme.fg)
