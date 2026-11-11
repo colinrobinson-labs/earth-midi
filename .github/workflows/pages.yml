@@ -40,7 +40,7 @@ jobs:
           echo "Pages build type: $mode"
           echo "ready=$([ "$mode" = workflow ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
         if: steps.mode.outputs.ready == 'true'
 
       - uses: actions/setup-node@v4.1.0

@@ -37,7 +37,7 @@ jobs:
           - scheme: EarthMIDITV
             dest: generic/platform=tvOS Simulator
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
       - name: Xcode version
         run: |
           # Normal runs: Xcode 16 compile check. Manual "duo" runs: newest Xcode 27 (iOS 27.1+ SDK) if the runner has one.
