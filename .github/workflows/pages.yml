@@ -84,4 +84,4 @@ jobs:
 
       - id: deployment
         if: steps.mode.outputs.ready == 'true'
-        uses: actions/deploy-pages@v4.0.5
+        uses: actions/deploy-pages@v5.0.1
