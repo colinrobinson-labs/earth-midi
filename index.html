@@ -27,10 +27,9 @@
 <meta name="apple-mobile-web-app-title" content="Earth MIDI">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- App Store banner: switched off until the iOS app is approved. To turn on, uncomment the next line and remove "hidden" from #getApp in the footer.
+<!-- App Store banner in Safari on iPhone and iPad (the app went live 14 Nov 2026). The footer and welcome card link to it too; both hide inside the app. -->
 <meta name="apple-itunes-app" content="app-id=6832020441">
--->
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Earth MIDI","url":"https://earthmidi.com/","description":"The planet as a live instrument: earthquakes, solar wind, ocean swell, tides, the ISS and more, played as sound and sent as MIDI in the browser.","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser), iOS, iPadOS, macOS, tvOS","browserRequirements":"Requires JavaScript and Web Audio","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://earthmidi.com/og.png?v=2","isAccessibleForFree":true}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Earth MIDI","url":"https://earthmidi.com/","description":"The planet as a live instrument: earthquakes, solar wind, ocean swell, tides, the ISS and more, played as sound and sent as MIDI in the browser.","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser), iOS, iPadOS, macOS, tvOS","browserRequirements":"Requires JavaScript and Web Audio","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://earthmidi.com/og.png?v=2","isAccessibleForFree":true,"downloadUrl":"https://apps.apple.com/app/id6832020441"}</script>
 <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="fonts/plex-sans-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/fonts.css">
 <script>try{if(location.hash==="#embed")document.documentElement.classList.add("simple","embed");else if(location.hash==="#simple"||localStorage.getItem("em.simple")==="1")document.documentElement.classList.add("simple")}catch(_){}</script>
@@ -587,7 +586,8 @@ html.simple .how{margin-top:16px}
 }
 
 /* v1.0 pass: bigger tap areas without changing the look, links that don't rely on colour, full Reduce Motion */
-.chow{padding-block:8px;margin-block:-8px}
+.ch .chow{padding-block:8px;margin-block:0 -8px}
+.in-app .getapp{display:none}
 .livebtn{position:relative}.livebtn::after{content:"";position:absolute;inset:-8px -4px}
 .dsrc summary{padding-block:6px}
 footer a{text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent);text-underline-offset:2px;padding-block:6px}
@@ -618,7 +618,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" role="main">
 <header>
   <div class="brand">
     <h1 id="title" aria-label="Earth MIDI">EARTH MIDI</h1>
@@ -760,7 +760,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
   <p><b>Earth MIDI by Colin Robinson</b> · <a href="whats-new.html">v1.0</a> · earthmidi.com · © 2026 Colin Robinson. Site, code and sound design all rights reserved; what you record or export is yours to use under the credit license above. <a href="https://github.com/colinrobinson-labs/earth-midi/blob/main/LICENSE.md">Full notice</a>.</p>
   <p id="privacy"><b>Privacy:</b> no accounts, cookies or ads. Visits and a few button presses are counted anonymously with <a href="https://www.goatcounter.com" target="_blank" rel="noopener">GoatCounter</a>, with no cookies and nothing that identifies you. Your settings and presets stay in this browser. Fonts and code are served from earthmidi.com; your browser fetches live data from the public sources below, which see your IP address like any website. <a href="privacy.html">Privacy policy</a>.</p>
   <p><b>Data:</b> <a href="https://earthquake.usgs.gov/earthquakes/feed/">USGS</a>, <a href="https://www.swpc.noaa.gov/">NOAA SWPC</a>, <a href="https://tidesandcurrents.noaa.gov/">NOAA CO-OPS</a>, <a href="https://eonet.gsfc.nasa.gov/">NASA EONET</a> (public domain)<span data-wk=" · Weather and city temperatures: " hidden></span> · <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>); air quality contains modified Copernicus Atmosphere Monitoring Service information · ISS: <a href="https://wheretheiss.at/">wheretheiss.at</a> / <a href="https://celestrak.org/">CelesTrak</a> · land: <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain) via world-atlas · code libraries: topojson-client (ISC), JSZip (MIT) · type: Archivo, IBM Plex (SIL Open Font License). Not affiliated with or endorsed by any of these agencies.</p>
-  <p class="links"><a href="support.html">Support &amp; contact</a> · <a href="press.html">Press kit</a> · <a href="whats-new.html">What's new</a> · <a href="privacy.html">Privacy</a><span id="getApp" hidden> · <a href="https://apps.apple.com/app/id6832020441">Get the app</a></span></p>
+  <p class="links"><a href="support.html">Support &amp; contact</a> · <a href="press.html">Press kit</a> · <a href="whats-new.html">What's new</a> · <a href="privacy.html">Privacy</a><span id="getApp" class="getapp"> · <a href="https://apps.apple.com/app/id6832020441" target="_blank" rel="noopener">Get the app (iPhone, iPad, Apple TV)</a></span></p>
   <p class="keys">keys: space = play, g/f = globe/flat, p = pulse · <a href="#welcome" data-welcome>welcome screen</a></p>
 </footer>
 </div>
@@ -773,7 +773,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
     <button class="db" id="mRec" aria-label="Record video or audio"><b>●</b>Record</button>
     <button class="db" data-jump="exp" aria-label="Export"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Export</button>
     <button class="db" data-jump="pro" aria-label="Producer controls"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4v16M12 4v16M19 4v16"/><circle cx="5" cy="14" r="2.2"/><circle cx="12" cy="8" r="2.2"/><circle cx="19" cy="16" r="2.2"/></svg>Producer</button>
-    <button class="db" id="mFull" type="button" aria-label="Show everything"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>Show all</button>
+    <button class="db" id="mFull" type="button" aria-label="Show all controls"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>Show all</button>
   </div>
 </nav>
 

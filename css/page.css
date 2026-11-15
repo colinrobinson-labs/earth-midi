@@ -42,5 +42,5 @@ textarea{min-height:140px;resize:vertical}
 .log article{border-left:2px solid var(--line2);padding-left:16px}
 .log time{font:12px var(--mono);color:var(--mute)}
 footer{border-top:1px solid var(--line);margin-top:56px;padding-top:16px;font:12px var(--mono);color:var(--mute)}
-footer a{color:var(--mute)}
+footer a{color:var(--mute);display:inline-block;padding:6px 2px}
 :focus-visible{outline:2px solid var(--o);outline-offset:2px}

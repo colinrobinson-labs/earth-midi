@@ -325,9 +325,14 @@ function flareBell(cls,f){if(ZN.has("x")&&ZN.bus("x")<.02)return;// zoned X-rays
 /* ================= MIDI out / in ================= */
 let midi=null,out=null;
 const MREC=[];const lastCC={};
-async function initMIDI(){
+async function initMIDI(ask){
   if(!navigator.requestMIDIAccess){$("midiState").textContent=IS_MOBILE?"":(!window.isSecureContext?"MIDI out needs the https:// address":"MIDI out needs Chrome or Edge (Safari has no Web MIDI). Use Export → MIDI instead");return}
-  try{midi=await navigator.requestMIDIAccess();fillPorts();midi.onstatechange=fillPorts}catch(e){$("midiState").textContent="MIDI permission denied"}
+  if(midi)return;
+  /* Browsers ask the visitor for permission before a page may use MIDI. Pressing Play must not raise that prompt:
+     only ask (ask=true) when someone reaches for MIDI: the MIDI menu, MIDI learn, MIDI clock or Play along.
+     On Play, connect quietly if MIDI was already allowed. The apps answer through their own bridge, with no prompt. */
+  if(!ask&&!window.EMNative){try{if((await navigator.permissions.query({name:"midi"})).state!=="granted")return}catch(_){return}}
+  try{midi=await navigator.requestMIDIAccess();fillPorts();midi.onstatechange=fillPorts}catch(e){$("midiState").textContent="MIDI is blocked for this site in your browser settings"}
 }
 function fillPorts(){const s=$("midiOut"),v=s.value;s.innerHTML='<option value="">Off</option>';midi.outputs.forEach(o=>{const op=document.createElement("option");op.value=o.id;op.textContent=o.name;s.appendChild(op)});s.value=v;
   if(!midi.outputs.size)$("midiState").textContent="no MIDI ports (see “Use it in your DAW”)";
