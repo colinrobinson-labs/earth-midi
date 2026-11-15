@@ -1,0 +1,7 @@
+• Better on iPad and folding screens: two panes side by side when there's room, and the layout follows the window as it changes
+• More reliable Lock Screen controls and auto-resume, and the screen can stay awake while you listen
+• Tighter timing for drums and MIDI, plus loudness presets when exporting WAV
+• Reading cards keep their last value and show how old it is
+• Larger tap areas, clearer VoiceOver announcements and a reduced-motion pass
+• Fonts, the world map and helper code now load from earthmidi.com instead of third-party servers
+• Updated privacy details in the app
