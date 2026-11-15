@@ -48,7 +48,7 @@ struct TVRootView: View {
         .onPlayPauseCommand { if router.top != .layers && router.top != .zeus { hub.toggle() } }
         .onExitCommand(perform: exitAction)
         .onChange(of: router.top) { _, s in place(s); wake() }
-        .onAppear { place(.home) }
+        .onAppear { place(.home); screenshotLaunch() }
         .onOpenURL { open($0) }
         .task {
             // ambient fade: after 25 s with no input while playing, Home hides its controls so it's just the planet
@@ -82,6 +82,15 @@ struct TVRootView: View {
         }
         globe.spin = s != .explore && s != .zeus
     }
+
+    /// Launch arguments for automated screenshots: -uiScreen producer -uiPlay YES -uiIdle YES
+    private func screenshotLaunch() {
+        let d = UserDefaults.standard
+        if d.bool(forKey: "uiPlay") { hub.play() }
+        if let n = d.string(forKey: "uiScreen"), let s = Self.screenNames[n] { router.go(s) }
+        if d.bool(forKey: "uiIdle") { idle = true }
+    }
+    private static let screenNames: [String: Screen] = ["layers": .layers, "producer": .producer, "presets": .presets, "more": .more, "ambient": .ambient, "readings": .readings, "explore": .explore, "about": .about, "share": .share]
 
     /// earthmidi://play, earthmidi://preset/<name>, earthmidi://zeus, earthmidi://ambient (Top Shelf + Siri)
     private func open(_ url: URL) {

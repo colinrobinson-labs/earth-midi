@@ -1,0 +1,62 @@
+# Runs the Apple TV app in the tvOS simulator and saves screenshots of each screen (artifact "tv-screens").
+name: Apple TV screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: ["apps/apple/TV/**", "apps/apple/Shared/Synth/**", ".github/workflows/tv-screens.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tv-screens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shots:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Build for the simulator
+        working-directory: apps/apple
+        run: |
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)"
+          brew install xcodegen >/dev/null && xcodegen generate
+          set -o pipefail
+          xcodebuild build -project EarthMIDI.xcodeproj -scheme EarthMIDITV -sdk appletvsimulator -configuration Debug \
+            -derivedDataPath dd CODE_SIGNING_ALLOWED=NO | tail -3
+      - name: Boot Apple TV and capture
+        working-directory: apps/apple
+        run: |
+          APP="$(find dd/Build/Products -name 'EarthMIDI.app' -maxdepth 3 | head -1)"; echo "$APP"
+          DEV="$(xcrun simctl list devices available | grep -E 'Apple TV 4K' | tail -1 | grep -oE '[0-9A-F-]{36}')"
+          [ -n "$DEV" ] || { xcrun simctl list devicetypes | grep -i tv; RT="$(xcrun simctl list runtimes | grep tvOS | tail -1 | grep -oE 'com.apple[^ ]+')"; DEV="$(xcrun simctl create tv 'com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K' "$RT")"; }
+          xcrun simctl boot "$DEV"; xcrun simctl bootstatus "$DEV" -b
+          xcrun simctl install "$DEV" "$APP"
+          mkdir -p shots
+          shot() { name="$1"; shift
+            xcrun simctl terminate "$DEV" com.colinrobinson.earthmidi 2>/dev/null || true
+            xcrun simctl launch "$DEV" com.colinrobinson.earthmidi "$@"
+            sleep "${WAIT:-14}"
+            xcrun simctl io "$DEV" screenshot "shots/$name.png"; }
+          WAIT=20 shot 01-home-stopped
+          WAIT=24 shot 02-home-playing -uiPlay YES
+          shot 03-layers -uiPlay YES -uiScreen layers
+          shot 04-producer -uiScreen producer
+          shot 05-presets -uiScreen presets
+          shot 06-readings -uiScreen readings
+          shot 07-ambient -uiPlay YES -uiScreen ambient
+          shot 08-explore -uiPlay YES -uiScreen explore
+          shot 09-more -uiScreen more
+          shot 10-share -uiScreen share
+          shot 11-about -uiScreen about
+          WAIT=18 shot 12-home-idle -uiPlay YES -uiIdle YES
+          ls -la shots
+      - uses: actions/upload-artifact@v4.6.2
+        if: always()
+        with:
+          name: tv-screens
+          path: apps/apple/shots
