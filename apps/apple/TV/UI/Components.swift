@@ -151,6 +151,8 @@ struct ChoiceCard: View {
             .frame(width: 470, height: 150, alignment: .topLeading)
             .padding(24)
         }
+        .menuStyle(.button)
+        .buttonStyle(TileStyle(tint: tint))
     }
 }
 

@@ -114,6 +114,10 @@ struct GlobeView: View {
         let tNow = c.clock.timeIntervalSince1970
         let sp = Astro.sunPos(c.isPlaying ? tNow : Date().timeIntervalSince1970)
         let sv = view(sp.lat, sp.lon)
+        // sunlit side: a soft warm glow centred on the subsolar point (pushed to the rim when it's behind)
+        let sunM = max(1e-6, hypot(sv.x, sv.y))
+        let sunPt = sv.z > 0 ? CGPoint(x: cx + R * sv.x, y: cy - R * sv.y) : CGPoint(x: cx + R * sv.x / sunM, y: cy - R * sv.y / sunM)
+        inner.fill(disc, with: .radialGradient(Gradient(colors: [Theme.hex(0xbfe4ff).opacity(0.13), Theme.hex(0xbfe4ff).opacity(0.04), .clear]), center: sunPt, startRadius: 0, endRadius: R * 1.25))
         // terminator circle: points 90° from the subsolar point
         let sx = sv.x, sy = sv.y, sz = sv.z
         var ux = -sy, uy = sx, uz = 0.0

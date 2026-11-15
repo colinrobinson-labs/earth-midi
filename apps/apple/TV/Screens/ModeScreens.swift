@@ -98,7 +98,7 @@ struct ReadingsScreen: View {
         return VStack(alignment: .leading, spacing: 26) {
             ScreenTitle(title: "Readings", hint: d.snapshotAt.map { "Snapshot \($0.shortAgo) · earthmidi.com/data" } ?? "Live feeds")
             ScrollView(.vertical) {
-                LazyVGrid(columns: cols, alignment: .leading, spacing: 30) {
+                LazyVGrid(columns: cols, alignment: .leading, spacing: 24) {
                     card("q", "Quakes, 24 h", "\(d.quakes24h.count)", d.biggest24h.map { String(format: "biggest M%.1f · %@", $0.mag, $0.place) } ?? "", "USGS", nil)
                     card("s", "Solar wind", d.speedNow.isFinite ? "\(Int(d.speedNow)) km/s" : "–", d.densityNow.isFinite ? String(format: "%.1f p/cm³ · Bz %.1f nT", d.densityNow, d.bzNow) : "", "NOAA SWPC", d.speed)
                     card("g", "Kp", String(format: "%.1f", d.kpNow), Theme.kpWord(d.kpNow), "NOAA SWPC", d.kp)
@@ -126,10 +126,10 @@ struct ReadingsScreen: View {
                 Text(v).font(Theme.mono(36, .semibold)).foregroundStyle(Theme.color(k)).lineLimit(1).minimumScaleFactor(0.6)
                 Text(sub).font(.system(size: 19)).foregroundStyle(Theme.fg2).lineLimit(2)
                 Spacer(minLength: 0)
-                if let s, s.v.count > 1 { Sparkline(series: s, color: Theme.color(k)).frame(height: 44) }
+                if let s, s.v.count > 1 { Sparkline(series: s, color: Theme.color(k)).frame(height: 40) }
                 Text(src).font(Theme.mono(15)).foregroundStyle(Theme.mute)
             }
-            .padding(24).frame(width: 400, height: 260, alignment: .topLeading)
+            .padding(22).frame(width: 400, height: 226, alignment: .topLeading)
         }
         .buttonStyle(TileStyle(tint: Theme.color(k)))
     }

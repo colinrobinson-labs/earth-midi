@@ -267,6 +267,8 @@ struct MoreScreen: View {
                 } label: {
                     tileLabel("Sleep timer", c.sleepAt.map { "Stops at \($0.formatted(date: .omitted, time: .shortened))" } ?? "Fade out after a while", "t", "bed.double")
                 }
+                .menuStyle(.button)
+                .buttonStyle(TileStyle(tint: Theme.color("t")))
                 tile("How it works", "Every note from a real reading", "x", "info.circle") { router.go(.about) }
             }
             Spacer(minLength: 0)

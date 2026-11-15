@@ -171,7 +171,7 @@ struct HomeScreen: View {
                 Button { router.go(.more) } label: { Image(systemName: "ellipsis") }.buttonStyle(PillStyle())
             }
             VStack(alignment: .leading, spacing: 8) {
-                ForEach(c.events.prefix(3)) { e in
+                ForEach(Self.distinct(c.events, 3)) { e in
                     HStack(spacing: 12) {
                         Circle().fill(Theme.color(e.layer)).frame(width: 12, height: 12)
                         Text(e.text).font(Theme.mono(22)).foregroundStyle(Theme.fg2).lineLimit(1)
@@ -202,6 +202,13 @@ struct HomeScreen: View {
             Button { wake() } label: { Caps(text: "Controls", size: 16).padding(.horizontal, 8) }.buttonStyle(PillStyle())
         }
         .animation(.easeInOut(duration: 0.6), value: c.events.first?.id)
+    }
+
+    /// newest events with repeated lines (the chord re-announcing itself) folded together
+    static func distinct(_ ev: [PlayedEvent], _ n: Int) -> [PlayedEvent] {
+        var seen = Set<String>(), out: [PlayedEvent] = []
+        for e in ev where out.count < n && seen.insert(e.text).inserted { out.append(e) }
+        return out
     }
 
     private func readout(_ l: String, _ v: String, _ sub: String, _ k: Character) -> some View {
