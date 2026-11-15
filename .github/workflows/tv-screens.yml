@@ -43,7 +43,7 @@ jobs:
             sleep "${WAIT:-14}"
             xcrun simctl io "$DEV" screenshot "shots/$name.png"; }
           WAIT=20 shot 01-home-stopped
-          WAIT=24 shot 02-home-playing -uiPlay YES
+          WAIT=15 shot 02-home-playing -uiPlay YES
           shot 03-layers -uiPlay YES -uiScreen layers
           shot 04-producer -uiScreen producer
           shot 05-presets -uiScreen presets
