@@ -104,7 +104,7 @@ function buildPro(){
   else{g.className=groups.length>4?"pgrid mas":"pgrid";g.innerHTML=groups.map(([t,cs,lk],i)=>STUDIO.group(t,cs.map(([k,l,ty,...o])=>ctl(k,l,ty,o)).join(""),i,lk)).join("")}
   g.querySelectorAll("[data-k]").forEach(el=>{const k=el.dataset.k,ty=el.dataset.t;if(!ty)return;
     el.addEventListener("focus",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});el.addEventListener("pointerdown",()=>{if(LEARN.on){LEARN.armed=k;xs(`Move a knob to map it to “${k}”`)}});
-    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)};
+    el.oninput=el.onchange=()=>{let val=ty==="ck"?el.checked:ty==="rng"?+el.value:el.value;if(k==="key")val=+val;if(k==="genre"){applyGenre(val);return}setP(CFG,k,val);if((k==="clock"||k==="playAlong")&&val&&!midi)initMIDI(true);if(k==="tempoSrc"||k==="tempoArea"){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}const ot=$(el.id+"_o");if(ot)ot.textContent=val;afterCFG(true)};
     if(ty==="sel"||(ty==="rng"&&/^(oct|tune|coct|qoct|snd\.)/.test(k)))el.addEventListener("change",()=>AUD.pick(k))});
   if(name!=="Presets")STUDIO.enhance(g);
   if(name!=="Presets"&&name!=="Mixer")g.querySelectorAll(".pgrp").forEach(grp=>{const t=(grp.querySelector("h5")||{}).textContent||"",cs=[...grp.children].filter(e=>e.tagName!=="H5"&&!e.classList.contains("linfo"));if(cs.length<6)return;
@@ -122,7 +122,7 @@ function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
   g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];STUDIO.setLast(b.dataset.up);CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`);AUD.pick("preset")});
   g.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteUserPreset(b.dataset.del));
   $("bUP").onclick=saveUserPreset;$("bEP").onclick=exportPreset;$("fPre").onchange=e=>{e.target.files[0]&&loadFile(e.target.files[0]);e.target.value=""};
-  $("bLearn").onclick=()=>{LEARN.on=!LEARN.on;if(LEARN.on&&!midi)initMIDI();renderPresets();xs(LEARN.on?"MIDI learn on: touch a slider, then move a knob":"MIDI learn off")};
+  $("bLearn").onclick=()=>{LEARN.on=!LEARN.on;if(LEARN.on&&!midi)initMIDI(true);renderPresets();xs(LEARN.on?"MIDI learn on: touch a slider, then move a knob":"MIDI learn off")};
   g.classList.toggle("enter",TABIN);TABIN=false}
 function applyPreset(p,n){CFG=clone(DEF);Object.entries(p).forEach(([k,v])=>{if(k==="style")setStyle(v);else if(typeof v==="object")Object.assign(CFG[k],v);else CFG[k]=v});afterCFG();xs(`Preset: ${n}`)}
 function afterCFG(soft){setRoot();if(+CFG.bpmMax<+CFG.bpmMin)CFG.bpmMax=CFG.bpmMin;if(A){A.pad.lastChord=0;A.choir.last=-99;setPadType();setChoirType();applyMaster()}
@@ -210,6 +210,11 @@ function boot(){
   ["vol","mVol"].forEach(id=>{const el=$(id);if(el)el.oninput=e=>setVol(e.target.value,e.target)});
   // Web MIDI: Chrome/Edge/Firefox. Safari (Mac + iPhone) has none, so say so instead of offering a dead menu
   if(!navigator.requestMIDIAccess){const m=$("midiOut");m.disabled=true;m.options[0].textContent="Needs Chrome or Edge";m.title="Safari has no Web MIDI. Use Export → Data pack to get the MIDI instead";if(IS_MOBILE)$("midiCtl").hidden=true}
+  // first reach for the MIDI menu: ask the browser for MIDI now (not on Play), then list the ports
+  {const mo=$("midiOut"),ask=e=>{if(midi||!navigator.requestMIDIAccess||window.EMNative)return;if(e.type==="keydown"&&!/^(Enter| |Arrow|Spacebar)/.test(e.key))return;e.preventDefault();
+    $("midiState").textContent="allow MIDI in the browser prompt to list your ports";
+    initMIDI(true).then(()=>{if(!midi)return;if(midi.outputs.size)$("midiState").textContent="MIDI ready: pick a port";mo.focus();try{mo.showPicker&&mo.showPicker()}catch(_){}})};
+   mo.addEventListener("mousedown",ask);mo.addEventListener("keydown",ask)}
   $("midiOut").onchange=e=>{out=midi&&e.target.value?midi.outputs.get(e.target.value):null;$("midiState").textContent=out?"sending MIDI":"";clk.on=false};
   document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{CFG.mapView=b.dataset.view;afterCFG(true);sizeMap()});
   const panel=(id,btn)=>()=>{const p=$(id);p.hidden=!p.hidden;$(btn).setAttribute("aria-expanded",!p.hidden);if(!p.hidden)p.scrollIntoView({behavior:"smooth",block:"nearest"})};
