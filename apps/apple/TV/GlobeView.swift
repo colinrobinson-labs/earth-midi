@@ -176,7 +176,11 @@ struct GlobeView: View {
         if c.effectiveLevel("w") > 0 && !zeus {
             let jv = c.data.jet(at: tNow), sp2 = jv.isFinite ? jv : 150
             for (base, amp, ph) in [(45.0, 9.0, 0.0), (-47.0, 6.0, 1.7)] {
-                let pts = stride(from: -180.0, through: 180, by: 3).map { (base + amp * sin($0 * .pi / 60 + t * 0.05 + ph), $0) }
+                var pts: [(Double, Double)] = []
+                for lon in stride(from: -180.0, through: 180.0, by: 3.0) {
+                    let wave: Double = sin(lon * Double.pi / 60.0 + t * 0.05 + ph)
+                    pts.append((base + amp * wave, lon))
+                }
                 var st = StrokeStyle(lineWidth: 2.2, lineCap: .round, dash: [12, 10]); st.dashPhase = -t * sp2 * 0.12
                 inner.stroke(line(pts), with: .color(Theme.color("w").opacity(0.42)), style: st)
             }
