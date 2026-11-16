@@ -86,7 +86,9 @@ async function run(name, { hash = "", storage = null, file = null, check = null 
     if (storage) await page.addInitScript(s => { try { for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); } catch (_) {} }, storage);
     await page.goto(SITE + hash, { waitUntil: "load", timeout: 30000 });
     await page.waitForTimeout(1500);
-    const wl = page.locator('#wlc[open] .wlc-o[data-c="silent"]'); // first visit shows the welcome card: enter without sound if (await wl.count()) await wl.click();
+    // first visit shows the welcome card: enter without sound
+    const wl = page.locator('#wlc[open] .wlc-o[data-c="silent"]');
+    if (await wl.count()) await wl.click();
     if (file) await page.evaluate(async txt => { await loadFile(new File([txt], "x.earthmidi.json", { type: "application/json" })); }, file);
     await exercise(page);
     errs.push(...await page.evaluate(verdict));

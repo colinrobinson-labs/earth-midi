@@ -4,69 +4,167 @@
    header. Double-click a slider to reset it too. Defaults are DEF in core.js (the original sound). Console uses the
    same helpers for its section resets. View settings (globe/flat, spin, zones, simple view) are never touched. */
 "use strict";
-const RESET=(()=>{
-const VIEW_KEYS=new Set(["mapView","spin","weather","viewMix","zonesOn","zones","loop"]);
-const eq=(a,b)=>a===b||String(a)===String(b)||(a!==""&&b!==""&&a!=null&&b!=null&&!isNaN(+a)&&!isNaN(+b)&&Math.abs(+a-+b)<1e-9);
-const def=k=>getP(DEF,k);
-const changed=k=>!eq(getP(CFG,k),def(k));
-// every producer key in DEF, flattened ("vol.q", "snd.oTone", ...), minus view settings
-const ALL=Object.keys(DEF).filter(k=>!VIEW_KEYS.has(k)).flatMap(k=>DEF[k]&&typeof DEF[k]==="object"?Object.keys(DEF[k]).map(s=>k+"."+s):[k]);
-const tabKeys=i=>{const [n,groups]=TABS[i]||[];if(n==="Mixer")return PAN_KEYS.flatMap(k=>["vol."+k,"send."+k]);
-  return (groups||[]).flatMap(([,cs])=>cs.filter(([k,,t])=>t!=="info"&&k!=="note"&&k!=="_").map(([k])=>k))};
-const anyChanged=keys=>keys.some(changed);
+const RESET = (() => {
+  const VIEW_KEYS = new Set(["mapView", "spin", "weather", "viewMix", "zonesOn", "zones", "loop"]);
+  const eq = (a, b) =>
+    a === b ||
+    String(a) === String(b) ||
+    (a !== "" && b !== "" && a != null && b != null && !isNaN(+a) && !isNaN(+b) && Math.abs(+a - +b) < 1e-9);
+  const def = (k) => getP(DEF, k);
+  const changed = (k) => !eq(getP(CFG, k), def(k));
+  // every producer key in DEF, flattened ("vol.q", "snd.oTone", ...), minus view settings
+  const ALL = Object.keys(DEF)
+    .filter((k) => !VIEW_KEYS.has(k))
+    .flatMap((k) => (DEF[k] && typeof DEF[k] === "object" ? Object.keys(DEF[k]).map((s) => k + "." + s) : [k]));
+  const tabKeys = (i) => {
+    const [n, groups] = TABS[i] || [];
+    if (n === "Mixer") return PAN_KEYS.flatMap((k) => ["vol." + k, "send." + k]);
+    return (groups || []).flatMap(([, cs]) =>
+      cs.filter(([k, , t]) => t !== "info" && k !== "note" && k !== "_").map(([k]) => k),
+    );
+  };
+  const anyChanged = (keys) => keys.some(changed);
 
-/* set keys back, then one refresh. Single sound settings get the usual audition preview. */
-function keys(list,label,quiet){list=list.filter(changed);if(!list.length)return false;
-  list.forEach(k=>setP(CFG,k,clone(def(k))));
-  if(list.some(k=>k==="tempoSrc"||k==="tempoArea")){if(NEEDS_WX.has(CFG.tempoSrc)&&typeof loadWX==="function")loadWX();TEMPO.lt=0}
-  if(list.includes("genre")||list.includes("pattern")||/^bpm/.test(list.join(" ")))TEMPO.bpm=0;
-  if(typeof STUDIO!=="undefined"&&STUDIO.setLast)STUDIO.setLast(null);
-  afterCFG();
-  if(!quiet)xs(label?`${label}: back to default`:"Back to default");
-  if(list.length===1&&typeof AUD!=="undefined"&&AUD.pick&&!/^(ch\.|clock|playAlong)/.test(list[0]))AUD.pick(list[0]);
-  return true}
-const all=()=>keys(ALL,"All producer settings");
+  /* set keys back, then one refresh. Single sound settings get the usual audition preview. */
+  function keys(list, label, quiet) {
+    list = list.filter(changed);
+    if (!list.length) return false;
+    list.forEach((k) => setP(CFG, k, clone(def(k))));
+    if (list.some((k) => k === "tempoSrc" || k === "tempoArea")) {
+      if (NEEDS_WX.has(CFG.tempoSrc) && typeof loadWX === "function") loadWX();
+      TEMPO.lt = 0;
+    }
+    if (list.includes("genre") || list.includes("pattern") || /^bpm/.test(list.join(" "))) TEMPO.bpm = 0;
+    if (typeof STUDIO !== "undefined" && STUDIO.setLast) STUDIO.setLast(null);
+    afterCFG();
+    if (!quiet) xs(label ? `${label}: back to default` : "Back to default");
+    if (list.length === 1 && typeof AUD !== "undefined" && AUD.pick && !/^(ch\.|clock|playAlong)/.test(list[0]))
+      AUD.pick(list[0]);
+    return true;
+  }
+  const all = () => keys(ALL, "All producer settings");
 
-/* ---------- Producer panel decoration (called at the end of buildPro) ---------- */
-const ICO=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>`;
-const nice=(el,v)=>{if(el.tagName==="SELECT"){const o=[...el.options].find(o=>eq(o.value,v));return o?o.text.replace(/ · .*$/,""):String(v)}
-  if(el.type==="checkbox")return v?"on":"off";return String(v)};
-const groupName=g=>{const h=g.querySelector(":scope>h5,:scope>b");return h?h.textContent.replace(/\s*(ch \d+|Reset)\s*$/g,"").trim():"Card"};
-const pcKeys=g=>[...g.querySelectorAll("[data-t][data-k]")].map(e=>e.dataset.k);
+  /* ---------- Producer panel decoration (called at the end of buildPro) ---------- */
+  const ICO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>`;
+  const nice = (el, v) => {
+    if (el.tagName === "SELECT") {
+      const o = [...el.options].find((o) => eq(o.value, v));
+      return o ? o.text.replace(/ · .*$/, "") : String(v);
+    }
+    if (el.type === "checkbox") return v ? "on" : "off";
+    return String(v);
+  };
+  const groupName = (g) => {
+    const h = g.querySelector(":scope>h5,:scope>b");
+    return h ? h.textContent.replace(/\s*(ch \d+|Reset)\s*$/g, "").trim() : "Card";
+  };
+  const pcKeys = (g) => [...g.querySelectorAll("[data-t][data-k]")].map((e) => e.dataset.k);
 
-function decorate(g){
-  g.querySelectorAll(".pc").forEach(pc=>{const el=pc.querySelector(":scope>[data-t][data-k]");if(!el||pc.querySelector(":scope>.rz"))return;const k=el.dataset.k;
-    const b=document.createElement("button");b.type="button";b.className="rz";b.innerHTML=ICO;
-    const lab=(pc.querySelector(":scope>label")||{}).textContent||k;b.setAttribute("aria-label",`Reset ${lab} to ${nice(el,def(k))}`);b.title=`Back to default: ${nice(el,def(k))}`;
-    b.onclick=e=>{e.preventDefault();e.stopPropagation();keys([k],lab)};
-    const l=pc.querySelector(":scope>label");l?l.after(b):pc.appendChild(b);
-    if(el.type==="range")el.addEventListener("dblclick",()=>keys([k],lab))});
-  g.querySelectorAll(".pgrp,.strip").forEach(grp=>{const h=grp.querySelector(":scope>h5,:scope>b");if(!h||h.querySelector(".rzg")||!pcKeys(grp).length)return;
-    const b=document.createElement("button");b.type="button";b.className="rzg";b.innerHTML=`${ICO}<span>Reset</span>`;const nm=groupName(grp);b.setAttribute("aria-label",`Reset every ${nm} setting`);b.title=`Put every ${nm} setting back to default`;
-    b.onclick=e=>{e.preventDefault();e.stopPropagation();keys(pcKeys(grp),nm)};h.appendChild(b)});
-  // capture + next tick: chips and steppers fire non-bubbling events, and the control's own handler must write CFG first
-  if(!g._rz){g._rz=1;const later=()=>setTimeout(sync,0);g.addEventListener("input",later,true);g.addEventListener("change",later,true)}
-  sync()}
+  function decorate(g) {
+    g.querySelectorAll(".pc").forEach((pc) => {
+      const el = pc.querySelector(":scope>[data-t][data-k]");
+      if (!el || pc.querySelector(":scope>.rz")) return;
+      const k = el.dataset.k;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "rz";
+      b.innerHTML = ICO;
+      const lab = (pc.querySelector(":scope>label") || {}).textContent || k;
+      b.setAttribute("aria-label", `Reset ${lab} to ${nice(el, def(k))}`);
+      b.title = `Back to default: ${nice(el, def(k))}`;
+      b.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        keys([k], lab);
+      };
+      const l = pc.querySelector(":scope>label");
+      l ? l.after(b) : pc.appendChild(b);
+      if (el.type === "range") el.addEventListener("dblclick", () => keys([k], lab));
+    });
+    g.querySelectorAll(".pgrp,.strip").forEach((grp) => {
+      const h = grp.querySelector(":scope>h5,:scope>b");
+      if (!h || h.querySelector(".rzg") || !pcKeys(grp).length) return;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "rzg";
+      b.innerHTML = `${ICO}<span>Reset</span>`;
+      const nm = groupName(grp);
+      b.setAttribute("aria-label", `Reset every ${nm} setting`);
+      b.title = `Put every ${nm} setting back to default`;
+      b.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        keys(pcKeys(grp), nm);
+      };
+      h.appendChild(b);
+    });
+    // capture + next tick: chips and steppers fire non-bubbling events, and the control's own handler must write CFG first
+    if (!g._rz) {
+      g._rz = 1;
+      const later = () => setTimeout(sync, 0);
+      g.addEventListener("input", later, true);
+      g.addEventListener("change", later, true);
+    }
+    sync();
+  }
 
-/* header buttons: Reset tab + Reset all, only while something differs */
-let hdr=null;
-function header(){if(hdr&&document.contains(hdr)){const cg=document.querySelector("#pro h2>.cns-go");if(cg)hdr.prepend(cg);return hdr}const h=document.querySelector("#pro h2");if(!h)return null;
-  hdr=document.createElement("span");hdr.className="przh";
-  hdr.innerHTML=`<button type="button" class="rzg" data-rz="tab" hidden>${ICO}<span>Reset tab</span></button><button type="button" class="rzg" data-rz="all" hidden>${ICO}<span>Reset all</span></button>`;
-  hdr.onclick=e=>{const b=e.target.closest("[data-rz]");if(!b)return;if(b.dataset.rz==="all")all();else keys(tabKeys(TAB),TABS[TAB][0]+" tab")};
-  const st=$("pstat");st?h.insertBefore(hdr,st):h.appendChild(hdr);return hdr}
+  /* header buttons: Reset tab + Reset all, only while something differs */
+  let hdr = null;
+  function header() {
+    if (hdr && document.contains(hdr)) {
+      const cg = document.querySelector("#pro h2>.cns-go");
+      if (cg) hdr.prepend(cg);
+      return hdr;
+    }
+    const h = document.querySelector("#pro h2");
+    if (!h) return null;
+    hdr = document.createElement("span");
+    hdr.className = "przh";
+    hdr.innerHTML = `<button type="button" class="rzg" data-rz="tab" hidden>${ICO}<span>Reset tab</span></button><button type="button" class="rzg" data-rz="all" hidden>${ICO}<span>Reset all</span></button>`;
+    hdr.onclick = (e) => {
+      const b = e.target.closest("[data-rz]");
+      if (!b) return;
+      if (b.dataset.rz === "all") all();
+      else keys(tabKeys(TAB), TABS[TAB][0] + " tab");
+    };
+    const st = $("pstat");
+    st ? h.insertBefore(hdr, st) : h.appendChild(hdr);
+    return hdr;
+  }
 
-function sync(){const g=$("pgrid");if(!g)return;
-  g.querySelectorAll(".pc").forEach(pc=>{const el=pc.querySelector(":scope>[data-t][data-k]");if(el)pc.classList.toggle("chg",changed(el.dataset.k))});
-  g.querySelectorAll(".pgrp,.strip").forEach(grp=>grp.classList.toggle("chg",anyChanged(pcKeys(grp))));
-  document.querySelectorAll("#ptabs button[data-i]").forEach(b=>b.classList.toggle("chg",anyChanged(tabKeys(+b.dataset.i))));
-  const h=header();if(h){const t=h.querySelector('[data-rz="tab"]'),a=h.querySelector('[data-rz="all"]'),n=TABS[TAB][0],tc=anyChanged(tabKeys(TAB)),ac=anyChanged(ALL);
-    t.hidden=!tc;t.querySelector("span").textContent=`Reset ${n}`;t.title=`Put every ${n} setting back to default`;a.hidden=!ac;a.title="Put every producer setting back to default (view and layout stay as they are)"}}
+  function sync() {
+    const g = $("pgrid");
+    if (!g) return;
+    g.querySelectorAll(".pc").forEach((pc) => {
+      const el = pc.querySelector(":scope>[data-t][data-k]");
+      if (el) pc.classList.toggle("chg", changed(el.dataset.k));
+    });
+    g.querySelectorAll(".pgrp,.strip").forEach((grp) => grp.classList.toggle("chg", anyChanged(pcKeys(grp))));
+    document
+      .querySelectorAll("#ptabs button[data-i]")
+      .forEach((b) => b.classList.toggle("chg", anyChanged(tabKeys(+b.dataset.i))));
+    const h = header();
+    if (h) {
+      const t = h.querySelector('[data-rz="tab"]'),
+        a = h.querySelector('[data-rz="all"]'),
+        n = TABS[TAB][0],
+        tc = anyChanged(tabKeys(TAB)),
+        ac = anyChanged(ALL);
+      t.hidden = !tc;
+      t.querySelector("span").textContent = `Reset ${n}`;
+      t.title = `Put every ${n} setting back to default`;
+      a.hidden = !ac;
+      a.title = "Put every producer setting back to default (view and layout stay as they are)";
+    }
+  }
 
-// MIDI learn, the Console and shared links can change settings without touching the panel: catch up while it's open
-setInterval(()=>{const p=$("pro");if(p&&!p.hidden&&!document.hidden)sync()},800);
+  // MIDI learn, the Console and shared links can change settings without touching the panel: catch up while it's open
+  setInterval(() => {
+    const p = $("pro");
+    if (p && !p.hidden && !document.hidden) sync();
+  }, 800);
 
-const css=`
+  const css = `
 .pc{position:relative}
 .pc>.rz{grid-row:1;grid-column:1;justify-self:end;align-self:center;display:none;width:22px;height:22px;padding:0;margin:0;border-radius:50%;border:0;background:transparent;color:var(--ac,var(--fg));opacity:.75;cursor:pointer;place-items:center;transition:opacity .15s,transform .3s}
 .pc.ck>.rz{grid-column:2}
@@ -91,7 +189,9 @@ const css=`
 @keyframes rzIn{from{opacity:0;transform:scale(.6)}}
 @media (prefers-reduced-motion:reduce){.pc>.rz,.rzg{animation:none!important;transition:none}}
 `;
-const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
+  const st = document.createElement("style");
+  st.textContent = css;
+  document.head.appendChild(st);
 
-return {keys,all,changed,decorate,sync,tabKeys,ALL};
+  return { keys, all, changed, decorate, sync, tabKeys, ALL };
 })();

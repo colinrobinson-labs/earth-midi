@@ -1,13 +1,14 @@
 {
   "name": "earth-midi-tests",
   "private": true,
-  "description": "Browser test tools and lint for the site checks. Installed in CI with npm ci, never shipped with the site.",
+  "description": "Browser test tools, lint and formatting for the site checks. Installed in CI with npm ci, never shipped with the site.",
   "type": "module",
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "axe-core": "4.10.2",
     "eslint": "10.1.0",
     "globals": "17.14.0",
-    "playwright": "1.63.0"
+    "playwright": "1.63.0",
+    "prettier": "3.8.1"
   }
 }

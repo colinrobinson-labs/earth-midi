@@ -1,14 +1,18 @@
 /* Earth MIDI · first-visit welcome: what this is, and how to start (Ambient, Pulse, or silent).
    Shows on every fresh visit, last choice pre-selected. Never shows over a shared link (#s=…, #zeus, #how …). Reopen with #welcome or the footer link. */
 "use strict";
-(()=>{
-  const KEY="em.welcome",CHOICES=["ambient","pulse","silent"];
-  let saved=null;try{saved=localStorage.getItem(KEY)}catch(_){}
-  const hash=location.hash.replace(/^#/,"");
+(() => {
+  const KEY = "em.welcome",
+    CHOICES = ["ambient", "pulse", "silent"];
+  let saved = null;
+  try {
+    saved = localStorage.getItem(KEY);
+  } catch (_) {}
+  const hash = location.hash.replace(/^#/, "");
   // returning visitor: keep the style they started with last time (a shared session link sets its own)
-  if((saved==="pulse"||saved==="ambient")&&!/^s=/.test(hash)&&S.style!==saved)setStyle(saved);
+  if ((saved === "pulse" || saved === "ambient") && !/^s=/.test(hash) && S.style !== saved) setStyle(saved);
 
-  const css=`
+  const css = `
 #wlc{border:0;padding:0;margin:auto;background:transparent;color:var(--fg);max-width:min(520px,calc(100vw - 32px));width:100%;max-height:calc(100dvh - 32px);overflow:visible}
 #wlc::backdrop{background:rgba(5,7,10,.66);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
 #wlc[open]{animation:wlcIn .55s cubic-bezier(.2,.8,.2,1) both}#wlc[open]::backdrop{animation:wlcFade .5s ease both}
@@ -54,11 +58,20 @@
  .wlc-card{padding:22px 16px 14px;border-radius:16px}.wlc-h{font-size:26px}.wlc-p{font-size:14px}
  .wlc-o{grid-template-columns:40px 1fr auto;gap:12px;padding:11px 12px}.wlc-g{width:40px;height:40px}.wlc-live{margin-bottom:14px}}
 @media (prefers-reduced-motion:reduce){#wlc[open],#wlc.out,#wlc::backdrop{animation:none!important}.g-amb i,.g-pul i,.wlc-live i{animation:none}.g-amb i:first-child{opacity:.6;transform:scale(.8)}}`;
-  const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
+  const st = document.createElement("style");
+  st.textContent = css;
+  document.head.appendChild(st);
 
-  const title="EARTH MIDI".split("").map((ch,i)=>ch===" "?" ":`<span style="--c_:${COLS[TL_LAYERS[(i>5?i-1:i)%TL_LAYERS.length]]}">${ch}</span>`).join("");
-  const d=document.createElement("dialog");d.id="wlc";d.setAttribute("aria-labelledby","wlcH");
-  d.innerHTML=`<div class="wlc-card">
+  const title = "EARTH MIDI"
+    .split("")
+    .map((ch, i) =>
+      ch === " " ? " " : `<span style="--c_:${COLS[TL_LAYERS[(i > 5 ? i - 1 : i) % TL_LAYERS.length]]}">${ch}</span>`,
+    )
+    .join("");
+  const d = document.createElement("dialog");
+  d.id = "wlc";
+  d.setAttribute("aria-labelledby", "wlcH");
+  d.innerHTML = `<div class="wlc-card">
   <button class="wlc-x" data-c="silent" aria-label="Close and enter silently">×</button>
   <h2 class="wlc-h" id="wlcH" aria-label="Earth MIDI">${title}</h2>
   <p class="wlc-p">The planet, played live. Earthquakes, solar wind, ocean swell, tides, the ISS and more, turned into sound and MIDI as they happen.</p>
@@ -74,36 +87,104 @@
   document.body.appendChild(d);
 
   // the live line: actual readings, so the first thing people see is the data itself
-  let liveT=null;
-  const fmt=n=>Math.round(n).toLocaleString("en-US");
-  function live(){const el=$("wlcLive");if(!el)return;
-    const sp=S.sun.speed.filter(Number.isFinite),sun=!S.demo.s&&sp.length?sp[sp.length-1]:null,q=!S.demo.q?S.quakes.filter(x=>x.time>Date.now()-864e5).length:0;
-    const parts=[];if(sun)parts.push(`solar wind <b>${fmt(sun)} km/s</b>`);if(q)parts.push(`<b>${fmt(q)}</b> earthquakes in the last 24 h`);
-    el.innerHTML=parts.length?`<i></i>Right now: ${parts.join(" · ")}`:(S.demo.s&&S.demo.q?"":"Reading the sensors…")}
+  let liveT = null;
+  const fmt = (n) => Math.round(n).toLocaleString("en-US");
+  function live() {
+    const el = $("wlcLive");
+    if (!el) return;
+    const sp = S.sun.speed.filter(Number.isFinite),
+      sun = !S.demo.s && sp.length ? sp[sp.length - 1] : null,
+      q = !S.demo.q ? S.quakes.filter((x) => x.time > Date.now() - 864e5).length : 0;
+    const parts = [];
+    if (sun) parts.push(`solar wind <b>${fmt(sun)} km/s</b>`);
+    if (q) parts.push(`<b>${fmt(q)}</b> earthquakes in the last 24 h`);
+    el.innerHTML = parts.length
+      ? `<i></i>Right now: ${parts.join(" · ")}`
+      : S.demo.s && S.demo.q
+        ? ""
+        : "Reading the sensors…";
+  }
 
-  function close(choice){if(!d.open)return;clearInterval(liveT);
-    if(CHOICES.includes(choice))try{localStorage.setItem(KEY,choice)}catch(_){}
-    const done=()=>{d.classList.remove("out");try{d.close()}catch(_){d.removeAttribute("open")}};
-    if(matchMedia("(prefers-reduced-motion:reduce)").matches)done();else{d.classList.add("out");setTimeout(done,300)}
-    if(location.hash==="#welcome")try{history.replaceState(null,"",location.pathname+location.search)}catch(_){}
-    if(choice==="ambient"||choice==="pulse"){setStyle(choice);if(!S.on)startStop().catch(e=>console.error(e))}
-    if(choice==="how"){const h=$("how");if(h){h.open=true;setTimeout(()=>h.scrollIntoView({behavior:"smooth",block:"start"}),320)}}}
+  function close(choice) {
+    if (!d.open) return;
+    clearInterval(liveT);
+    if (CHOICES.includes(choice))
+      try {
+        localStorage.setItem(KEY, choice);
+      } catch (_) {}
+    const done = () => {
+      d.classList.remove("out");
+      try {
+        d.close();
+      } catch (_) {
+        d.removeAttribute("open");
+      }
+    };
+    if (matchMedia("(prefers-reduced-motion:reduce)").matches) done();
+    else {
+      d.classList.add("out");
+      setTimeout(done, 300);
+    }
+    if (location.hash === "#welcome")
+      try {
+        history.replaceState(null, "", location.pathname + location.search);
+      } catch (_) {}
+    if (choice === "ambient" || choice === "pulse") {
+      setStyle(choice);
+      if (!S.on) startStop().catch((e) => console.error(e));
+    }
+    if (choice === "how") {
+      const h = $("how");
+      if (h) {
+        h.open = true;
+        setTimeout(() => h.scrollIntoView({ behavior: "smooth", block: "start" }), 320);
+      }
+    }
+  }
 
-  function open(){if(d.open)return;live();liveT=setInterval(live,1000);
-    try{d.showModal()}catch(_){d.setAttribute("open","")}
+  function open() {
+    if (d.open) return;
+    live();
+    liveT = setInterval(live, 1000);
+    try {
+      d.showModal();
+    } catch (_) {
+      d.setAttribute("open", "");
+    }
     // focus the choice they made last time, otherwise Ambient
-    const pick=d.querySelector(`.wlc-o[data-c="${saved||"ambient"}"]`);pick&&pick.focus({preventScroll:true})}
+    const pick = d.querySelector(`.wlc-o[data-c="${saved || "ambient"}"]`);
+    pick && pick.focus({ preventScroll: true });
+  }
 
-  d.addEventListener("click",e=>{const b=e.target.closest("[data-c]");if(b){e.preventDefault();close(b.dataset.c);return}
-    if(e.target===d)close("silent")}); // tap outside the card = enter silently
-  d.addEventListener("cancel",e=>{e.preventDefault();close("silent")}); // Esc
+  d.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-c]");
+    if (b) {
+      e.preventDefault();
+      close(b.dataset.c);
+      return;
+    }
+    if (e.target === d) close("silent");
+  }); // tap outside the card = enter silently
+  d.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    close("silent");
+  }); // Esc
   // keep the page's own shortcuts (space = play, g/f/p) from firing underneath
-  d.addEventListener("keydown",e=>{if(e.key!=="Escape")e.stopPropagation()});
+  d.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") e.stopPropagation();
+  });
 
-  window.EMWelcome={open};
-  addEventListener("hashchange",()=>{if(location.hash==="#welcome")open()});
-  document.querySelectorAll("[data-welcome]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();open()}));
+  window.EMWelcome = { open };
+  addEventListener("hashchange", () => {
+    if (location.hash === "#welcome") open();
+  });
+  document.querySelectorAll("[data-welcome]").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      open();
+    }),
+  );
 
   // every fresh visit (one tap = sound on, since browsers only allow audio after a tap); never on top of a shared link
-  if(hash==="welcome"||hash==="simple"||!hash)setTimeout(open,350);
+  if (hash === "welcome" || hash === "simple" || !hash) setTimeout(open, 350);
 })();
