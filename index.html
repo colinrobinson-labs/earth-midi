@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Connection policy: the browser only lets this page talk to the data sources below (plus the anonymous visit counter). Any other host, AI services included, is refused by the browser itself. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://earthmidi.goatcounter.com; media-src 'self' data: blob:; connect-src 'self' data: blob: https://earthquake.usgs.gov https://services.swpc.noaa.gov https://api.tidesandcurrents.noaa.gov https://api.open-meteo.com https://marine-api.open-meteo.com https://air-quality-api.open-meteo.com https://eonet.gsfc.nasa.gov https://api.wheretheiss.at https://celestrak.org https://earthmidi.goatcounter.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://earthmidi.goatcounter.com; media-src 'self' data: blob:; connect-src 'self' data: blob: https://earthquake.usgs.gov https://services.swpc.noaa.gov https://api.tidesandcurrents.noaa.gov https://api.open-meteo.com https://marine-api.open-meteo.com https://air-quality-api.open-meteo.com https://eonet.gsfc.nasa.gov https://api.wheretheiss.at https://celestrak.org https://earthmidi.goatcounter.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Earth MIDI · the planet as a live instrument</title>
 <meta name="description" content="The planet as an instrument. 14 live feeds (earthquakes, solar wind, flares, ocean swell, tides, jet stream, city temperatures, the ISS, NASA fires and storms, the magnetosphere, air quality, sunrise over 42 cities) played as sound and sent as MIDI. Raw data run through the same rule every time, synthesized live in your browser.">
@@ -32,7 +32,7 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Earth MIDI","url":"https://earthmidi.com/","description":"The planet as a live instrument: earthquakes, solar wind, ocean swell, tides, the ISS and more, played as sound and sent as MIDI in the browser.","applicationCategory":"MultimediaApplication","operatingSystem":"Any (web browser), iOS, iPadOS, macOS, tvOS","browserRequirements":"Requires JavaScript and Web Audio","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://earthmidi.com/og.png?v=2","isAccessibleForFree":true,"downloadUrl":"https://apps.apple.com/app/id6832020441"}</script>
 <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="fonts/plex-sans-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/fonts.css">
-<script>try{if(location.hash==="#embed")document.documentElement.classList.add("simple","embed");else if(location.hash==="#simple"||localStorage.getItem("em.simple")==="1")document.documentElement.classList.add("simple")}catch(_){}</script>
+<script src="js/boot.js"></script>
 <style>
 :root{
  /* Earth MIDI design tokens (docs/design-system.md). Chrome is neutral graphite; the 13 layer hues are data colours. */
