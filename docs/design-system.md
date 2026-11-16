@@ -6,7 +6,7 @@ Earth MIDI is a live instrument fed by scientific sensors. The interface should 
 
 Three rules carry the identity:
 
-1. **Data owns the colour.** The 13 layer hues (quakes red, solar wind amber, ocean cyan…) appear on meters, dots, card top-rules, fader caps, sparklines and channel strips. Chrome (buttons, tabs, panels, dialogs) stays neutral graphite. Selected state is paper-white fill, not a hue.
+1. **Data owns the colour.** The 13 layer hues (quakes red, solar wind amber, ocean cyan…) appear on meters, dots, strip edge ticks, fader caps, sparklines and channel strips. Chrome (buttons, tabs, panels, dialogs) stays neutral graphite. Selected state is paper-white fill, not a hue.
 2. **Three type voices, each with one job.** Archivo Expanded for headings and legends, IBM Plex Sans for anything you read or press, IBM Plex Mono for numbers, readings, rules, timestamps and tiny uppercase captions.
 3. **The planet is the light source.** Glows are driven by `--hit` / `--glow` (real events). Nothing glows decoratively at rest except the Play call-to-action and the Producer button's live knobs.
 
@@ -99,7 +99,8 @@ Made after "too busy / looks vibe coded" feedback. Nothing was removed; details 
 - **Status line:** one sentence in Plex Sans ("Live feeds unreachable, playing demo data", or "12 of 14 feeds live · 2 on demo data") with a "which" toggle listing the feeds.
 - **Globe HUD:** Globe/Flat, **View options** (Live weather, Sound follows view, Zones) and Zeus Mode. The popover lives in `js/tidy.js`; a dot on the button shows when Zones are on or weather is off.
 - **Layers:** Mute/Solo show on hover or focus with a fine pointer, always on touch screens, and stay visible while active.
-- **Layer cards:** reading and chart only; "How it sounds" opens the rule, channel/CC and Mute/Solo (`.ch.open`).
+- **The rack (Nov 16):** the 13 readings are no longer a grid of identical cards. They sit in four source bands (Ground, Sea, Sky, Space; `BANDS` in js/ui.js), each a panel with an uppercase Archivo caption plus its agencies in mono, and one strip per reading: colour tick, name, value, note, 24 h chart, level meter, rule link. Under 1100px the note drops under the name and the meter goes; under 700px each strip stacks. New readings go in the band they are measured in, not in a new card style.
+- **Layer strips:** reading and chart only; "How it sounds" opens the rule, channel/CC and Mute/Solo (`.ch.open`).
 - **Inspector (`#insp`):** Event log, MIDI monitor, Trace and Output as tabs. Tapping an event opens Trace.
 - **Reference rows (`.refs`):** Use it in your DAW (`#daw`), How it works (`#how`), Accuracy (`#accuracy`), Free to use (`#license`). Links to those ids open the row.
 - **Producer:** tab subtitles, group icon tiles and channel tags hidden; selected chips are paper white; values are plain mono. Groups with 6+ controls show four plus "More (n)".

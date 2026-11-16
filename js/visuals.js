@@ -157,7 +157,7 @@ tl.addEventListener("pointerdown",e=>{const r=tl.getBoundingClientRect(),f=(e.cl
 /* ---------- sparklines with glowing playhead ---------- */
 function spark(id,ts,vs,col,t,lo,hi){const c=$(id);if(!c||!c.offsetParent)return;
   // off-screen cards skip redraws, except the first draw with real data, so no card is blank when you scroll to it
-  const have=vs.some(Number.isFinite);if(!FX.on(c)&&(c._has||!have))return;c._has=have;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);
+  const have=vs.some(Number.isFinite);if(!FX.on(c)&&(c._has||!have))return;c._has=have;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);
   // no readings (source down and nothing saved): a dashed baseline and a caption instead of an empty box
   if(!have){g.strokeStyle=col+"55";g.lineWidth=DPR;g.setLineDash([3*DPR,5*DPR]);g.beginPath();g.moveTo(0,h-6*DPR);g.lineTo(w,h-6*DPR);g.stroke();g.setLineDash([]);
     g.fillStyle="rgba(150,160,172,.75)";g.font=`${10.5*DPR}px "IBM Plex Mono",ui-monospace,monospace`;g.textBaseline="bottom";g.fillText("no readings yet",0,h-12*DPR);return}
@@ -237,7 +237,7 @@ const mbuf=new Float32Array(256);
 function drawMeters(){if(!A)return;const lv=S.lv||(S.lv={});PAN_KEYS.forEach(k=>{const m=A.meters[k];if(!m)return;m.getFloatTimeDomainData(mbuf);
   let rms=0;for(let i=0;i<mbuf.length;i++)rms+=mbuf[i]*mbuf[i];rms=Math.sqrt(rms/mbuf.length);lv[k]=rms;S.hit[k]=Math.max(S.hit[k]||0,clamp(rms*5,0,1)*.7);
   const c=$("vu"+k);if(!c||!c.offsetParent||!FX.on(c))return;
-  const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);g.beginPath();
+  const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);g.beginPath();
   for(let i=0;i<mbuf.length;i++){const x=i/mbuf.length*w,y=h/2+clamp(mbuf[i]*3,-1,1)*h/2;i?g.lineTo(x,y):g.moveTo(x,y)}
   g.strokeStyle=COLS[k];g.lineWidth=1.2*DPR;g.shadowColor=COLS[k];g.shadowBlur=6*DPR;g.stroke();g.shadowBlur=0})}
 /* ---------- title letters glow with their layer ---------- */
