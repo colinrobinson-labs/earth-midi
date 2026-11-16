@@ -175,16 +175,18 @@ async function loadFile(f){try{const j=JSON.parse(await f.text());if(!isObj(j)||
 const shareURL=()=>(location.protocol==="https:"?location.origin+location.pathname:"https://earthmidi.com/")+"#s="+btoa(unescape(encodeURIComponent(JSON.stringify({cfg:CFG,style:S.style,mode:+$("mode").value}))));
 async function shareLink(){const u=shareURL();history.replaceState(null,"",u.slice(u.indexOf("#")));
   if(navigator.share&&IS_MOBILE){try{await navigator.share({title:"Earth MIDI",text:"The planet as an instrument, with my settings",url:u});return}catch(_){}}
-  try{await navigator.clipboard.writeText(u);xs("Link copied: opens with your settings on live data")}catch(_){prompt("Copy this link",u)}}
+  try{await navigator.clipboard.writeText(u);xs("Link copied: opens with your settings on live data")}catch(_){EMAsk.copy({title:"Copy this link",text:u})}}
 function readHash(){const m=location.hash.match(/#s=([^&]+)/);if(!m)return false;try{const j=JSON.parse(decodeURIComponent(escape(atob(m[1]))));if(!isObj(j))return false;CFG=mergeCFG(j.cfg);if(fitStyle(j.style))setStyle(j.style);if(typeof j.mode==="number"&&Number.isFinite(j.mode))$("mode").value=String(j.mode);return true}catch(_){return false}}
 // the groove, genre and tempo tables exist by now, so re-check the settings that were read from this browser before they loaded
 CFG=mergeCFG(CFG);
 // user presets in this browser + preset files
 let UPRE={};try{const j=JSON.parse(localStorage.getItem("em5.presets")||"{}");if(isObj(j))for(const n of Object.keys(j))if(isObj(j[n])&&n!=="__proto__")UPRE[n.slice(0,80)]={cfg:mergeCFG(j[n].cfg),style:fitStyle(j[n].style)||undefined}}catch(_){}
-function saveUserPreset(){const n=prompt("Name this preset");if(!n)return;UPRE[n]={cfg:clone(CFG),style:S.style};try{localStorage.setItem("em5.presets",JSON.stringify(UPRE))}catch(_){}renderPresets();xs(`Saved preset “${n}”`)}
-function exportPreset(){const n=prompt("Preset name","My Earth MIDI preset")||"preset";download(`${n.replace(/[^\w-]+/g,"_")}.earthmidi.json`,new Blob([JSON.stringify({app:"Earth MIDI",preset:true,version:VERSION,name:n,cfg:CFG,style:S.style,credit:CREDIT})],{type:"application/json"}));xs("Preset file saved")}
-function deleteUserPreset(n){delete UPRE[n];try{localStorage.setItem("em5.presets",JSON.stringify(UPRE))}catch(_){}renderPresets()}
-async function copyCredit(){try{await navigator.clipboard.writeText(CREDIT);xs("Credit copied")}catch(_){prompt("",CREDIT)}}
+async function saveUserPreset(){const n=await EMAsk.text({title:"Name this preset",label:"Preset name",hint:"Saved in this browser. Use Export preset to move it to another device."});if(!n)return;
+  if(Object.prototype.hasOwnProperty.call(UPRE,n)&&!await EMAsk.confirm({title:`Replace “${n}”?`,body:"You already have a preset with that name.",ok:"Replace",cancel:"Keep the old one"}))return;
+  UPRE[n]={cfg:clone(CFG),style:S.style};try{localStorage.setItem("em5.presets",JSON.stringify(UPRE))}catch(_){}renderPresets();xs(`Saved preset “${n}”`)}
+async function exportPreset(){const n=await EMAsk.text({title:"Export preset",label:"Preset name",value:"My Earth MIDI preset",ok:"Save file"});if(!n)return;download(`${n.replace(/[^\w-]+/g,"_")}.earthmidi.json`,new Blob([JSON.stringify({app:"Earth MIDI",preset:true,version:VERSION,name:n,cfg:CFG,style:S.style,credit:CREDIT})],{type:"application/json"}));xs("Preset file saved")}
+async function deleteUserPreset(n){if(!await EMAsk.confirm({title:`Delete “${n}”?`,body:"It only lives in this browser, so this can't be undone.",ok:"Delete",cancel:"Keep it"}))return;delete UPRE[n];try{localStorage.setItem("em5.presets",JSON.stringify(UPRE))}catch(_){}renderPresets()}
+async function copyCredit(){try{await navigator.clipboard.writeText(CREDIT);xs("Credit copied")}catch(_){EMAsk.copy({title:"Copy the credit line",text:CREDIT})}}
 
 /* ================= live network ledger: proof of what this page talks to ================= */
 const HOSTS={"earthquake.usgs.gov":["USGS","seismometers"],"services.swpc.noaa.gov":["NOAA SWPC","satellites: DSCOVR, ACE, GOES"],"api.tidesandcurrents.noaa.gov":["NOAA CO-OPS","tide gauges"],"marine-api.open-meteo.com":["Open-Meteo","ocean model"],"api.open-meteo.com":["Open-Meteo","weather + jet stream"],"air-quality-api.open-meteo.com":["Open-Meteo","air quality"],"eonet.gsfc.nasa.gov":["NASA EONET","natural events"],"api.wheretheiss.at":["Where the ISS at","ISS orbit"],"celestrak.org":["CelesTrak","ISS orbit"],"cdn.jsdelivr.net":["jsDelivr","map shapes + code library"],"cdnjs.cloudflare.com":["cdnjs","zip library"],"fonts.googleapis.com":["Google Fonts","typefaces"],"fonts.gstatic.com":["Google Fonts","typefaces"]};

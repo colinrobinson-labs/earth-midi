@@ -33,7 +33,14 @@ async function loadWX(force){
     // meteorological direction is where the wind comes FROM: u east, v north
     WX.u=P(0,(k,i)=>d.s[k][i]==null?null:-d.s[k][i]*Math.sin(d.d[k][i]*D2R));WX.v=P(0,(k,i)=>d.s[k][i]==null?null:-d.s[k][i]*Math.cos(d.d[k][i]*D2R));
     WX.ok=true;WX.err="";WX.at=d.at;WX.fT=NaN;WX.texT=NaN;WX.src=d.src||"open-meteo";WSRC.wx0=WX.src;
-  }catch(e){if(!WX.ok)WX.err=String(e&&e.message||e)==="429"?"weather feed busy, retrying":"weather feed unreachable, retrying"}
+    WX.fails=0;clearTimeout(WX.retry);
+  }catch(e){if(!WX.ok){
+      // two quick retries (20 s, then 90 s), then stop saying "retrying": the 10-minute refresh and the button take over
+      const n=WX.fails=(WX.fails||0)+1,busy=String(e&&e.message||e)==="429",wait=n===1?20:n===2?90:0;
+      WX.err=navigator.onLine===false?"You're offline, so no weather map. The rest still plays."
+        :wait?`${busy?"The weather source is busy":"Weather map didn't load"}. Trying again in ${wait}\u00a0s.`
+        :`${busy?"The weather source is still busy":"The weather source isn't answering"}. The globe plays without it; next try in 10 min.`;
+      clearTimeout(WX.retry);if(wait)WX.retry=setTimeout(()=>CFG.weather&&!S.frozen&&loadWX(),wait*1000)}}
   finally{WX.loading=false;wxLegend(true)}
 }
 function wxField(t){if(!WX.ok)return false;if(Math.abs(t-WX.fT)<3e4)return true;const ts=WX.t,n=ts.length;let i=0;while(i<n-2&&ts[i+1]<=t)i++;
@@ -137,9 +144,9 @@ const DIRS=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","
 const WMO={0:"clear sky",1:"mainly clear",2:"partly cloudy",3:"overcast",45:"fog",48:"rime fog",51:"light drizzle",53:"drizzle",55:"heavy drizzle",56:"freezing drizzle",57:"freezing drizzle",61:"light rain",63:"rain",65:"heavy rain",66:"freezing rain",67:"freezing rain",71:"light snow",73:"snow",75:"heavy snow",77:"snow grains",80:"rain showers",81:"rain showers",82:"violent rain showers",85:"snow showers",86:"heavy snow showers",95:"thunderstorm",96:"thunderstorm with hail",99:"thunderstorm with heavy hail"};
 const fmtLL=(lo,la)=>`${Math.abs(la).toFixed(1)}°${la>=0?"N":"S"} ${Math.abs(lo).toFixed(1)}°${lo>=0?"E":"W"}`;
 const overLand=(lo,la)=>{const px=window.LANDPX;if(!px)return null;const x=clamp(Math.floor((lo+180)/360*720),0,719),y=clamp(Math.floor((90-la)/180*360),0,359);return px[(y*720+x)*4]>128};
-function wxLegend(force){const el=$("wxl");if(!el)return;el.hidden=!CFG.weather;if(!CFG.weather)return;
+function wxLegend(force){const el=$("wxl");if(!el)return;el.hidden=!CFG.weather;if(!CFG.weather)return;el.classList.toggle("err",!WX.ok&&!!WX.err);
   const h=WX.ok?`<div class="wxg"><i></i><span>wind 0</span><span>25</span><span>45+ km/h</span></div><div class="wxk"><span><i class="c"></i>cloud</span><span><i class="r"></i>rain</span><span><i class="h"></i>heavy</span></div><div class="wxs">${WX.src==="weatherkit"?"Apple Weather":"Open-Meteo model"} · 15° grid · ${new Date(WX.at).toISOString().slice(11,16)} UTC</div><div class="wxa" data-wk hidden></div><div class="wxh" id="wxh"></div>`
-    :`<div class="wxs">${esc(WX.err||"loading live weather…")}</div>`;if(force||el._h!==h){el.innerHTML=h;el._h=h;wkSync()}}
+    :`<div class="wxs" role="status">${esc(WX.err||"Loading live weather…")}</div>${WX.err?`<button type="button" class="wxretry">Try now</button>`:""}`;if(force||el._h!==h){el.innerHTML=h;el._h=h;wkSync()}}
 function wxLine(s){return `wind ${Math.round(s.ws)} km/h from ${dirName(s.wd)} · cloud ${Math.round(s.c)}% · ${s.p>=.05?`rain ${s.p.toFixed(1)} mm/h`:"dry"} · ${Math.round(s.T)}°C`}
 
 /* ---------- sound: one gust, one tone, rain drops, on the Jet stream bus + MIDI ---------- */
@@ -188,4 +195,6 @@ function wxSync(){const b=$("wxBtn");if(b)b.setAttribute("aria-pressed",!!CFG.we
 window.wxToggle=function(){CFG.weather=!CFG.weather;try{localStorage.setItem("em5.cfg",JSON.stringify(CFG))}catch(_){}wxSync();xs(CFG.weather?"Live weather on":"Live weather off")};
 {const b=$("wxBtn");if(b)b.onclick=wxToggle}
 addEventListener("keydown",e=>{if(e.target.matches("input,select,textarea"))return;if(e.key==="w"&&!e.metaKey&&!e.ctrlKey)wxToggle()});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".wxretry");if(!b)return;WX.err="";WX.fails=0;clearTimeout(WX.retry);wxLegend(true);loadWX(true)});
+addEventListener("online",()=>{if(CFG.weather&&!WX.ok&&!S.frozen){WX.fails=0;loadWX()}});
 setTimeout(wxSync,1200);setInterval(()=>CFG.weather&&!S.frozen&&loadWX(),10*6e4);
