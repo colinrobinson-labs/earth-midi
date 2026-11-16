@@ -67,8 +67,8 @@ function buildSheet(){
   addEventListener("keydown",e=>{if(e.key==="Escape"&&!el.hidden)closeSheet()});
   $("rsGo").onclick=startCapture;$("rpStop").onclick=stopCapture;
   $("rsShare").onclick=shareLast;$("rsSave").onclick=()=>{if(LAST){download(LAST.name,LAST.blob);note2(`Saved ${LAST.name}`)}};
-  $("rsCap").onclick=async()=>{try{await navigator.clipboard.writeText(caption());note2("Caption copied. Paste it with your post")}catch(_){prompt("Copy this caption",caption())}};
-  $("rsLink").onclick=async()=>{const u=shareURL();try{await navigator.clipboard.writeText(u);note2("Link copied: opens Earth MIDI with your exact settings")}catch(_){prompt("Copy this link",u)}};
+  $("rsCap").onclick=async()=>{try{await navigator.clipboard.writeText(caption());note2("Caption copied. Paste it with your post")}catch(_){EMAsk.copy({title:"Copy this caption",text:caption()})}};
+  $("rsLink").onclick=async()=>{const u=shareURL();try{await navigator.clipboard.writeText(u);note2("Link copied: opens Earth MIDI with your exact settings")}catch(_){EMAsk.copy({title:"Copy this link",text:u})}};
   $("rsAgain").onclick=()=>{showStep("setup")};
   $("rsTitle2").onclick=()=>{if(LAST&&LAST.title){download(LAST.title.name,LAST.title.blob);note2(`Saved ${LAST.title.name}`)}};
 }
