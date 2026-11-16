@@ -22,6 +22,9 @@ const globeR=()=>Math.min(cv.width,cv.height)*.46*VIEW.zoom*(1+(window.BEATG||0)
 function smallCircle(lat0,lon0,ang,n=72){const out=[],p1=lat0*D2R,d=ang*D2R;for(let i=0;i<=n;i++){const th=i/n*2*Math.PI,p2=Math.asin(Math.sin(p1)*Math.cos(d)+Math.cos(p1)*Math.sin(d)*Math.cos(th)),l2=lon0+Math.atan2(Math.sin(th)*Math.sin(d)*Math.cos(p1),Math.cos(d)-Math.sin(p1)*Math.sin(p2))/D2R;out.push([((l2+540)%360)-180,p2/D2R])}return out}
 function strokePath(pts){cx.beginPath();let pen=false,prev=null;for(const [lo,la] of pts){const [x,y,v]=proj(lo,la);const brk=!v||v<0||(CFG.mapView==="flat"&&prev!==null&&Math.abs(lo-prev)>180);if(brk){pen=false}else{pen?cx.lineTo(x,y):cx.moveTo(x,y);pen=true}prev=lo}cx.stroke()}
 let parts=[];S.flashes=[];
+// land dot colours: day, dusk, night × DOT_N brightness steps (brighter towards the centre of the globe)
+const DOT_N=24,DOT_B=[],DOT_C=[];
+[["140,200,240",.45,.45],["255,170,90",.35,.4],["70,100,140",.22,.25]].forEach(([rgb,a0,a1])=>{for(let i=0;i<DOT_N;i++){DOT_B.push([]);DOT_C.push(`rgba(${rgb},${(a0+(i+.5)/DOT_N*a1).toFixed(3)})`)}});
 function drawMap(now){
   const W=cv.width,H=cv.height,t=realNow(),globe=CFG.mapView!=="flat";cx.clearRect(0,0,W,H);
   const fk=drawMap.t?clamp((now-drawMap.t)/16.7,.25,4):1;drawMap.t=now; // per-frame motion scaled to real time, so 30 fps looks the same speed
@@ -40,8 +43,13 @@ function drawMap(now){
     cx.strokeStyle="rgba(120,170,220,.08)";cx.lineWidth=DPR*.7;for(let l=-150;l<=180;l+=30){const pts=[];for(let la=-90;la<=90;la+=4)pts.push([l,la]);strokePath(pts)}for(let la=-60;la<=60;la+=30){const pts=[];for(let l=-180;l<=180;l+=4)pts.push([l,la]);strokePath(pts)}
     // land as dots, lit by the real sun
     const sd=Math.sin(sp.lat*D2R),cd=Math.cos(sp.lat*D2R),ds=(IS_MOBILE?1.7:1.5)*DPR*VIEW.zoom;
-    for(const d of LAND_DOTS){const [x,y,v]=proj(d[0],d[1]);if(v<=0)continue;const el=d[2]*sd+d[3]*cd*Math.cos((d[0]-sp.lon)*D2R);
-      cx.fillStyle=el>.05?`rgba(140,200,240,${.45+v*.45})`:el>-.1?`rgba(255,170,90,${.35+v*.4})`:`rgba(70,100,140,${.22+v*.25})`;cx.fillRect(x-ds/2,y-ds/2,ds,ds)}
+    // ~3,000 dots a frame: the projection is worked out in place and dots are grouped by colour (day / dusk / night,
+    // 24 brightness steps towards the limb), so the canvas gets a few dozen colour changes a frame instead of one per dot
+    const p0=VIEW.lat*D2R,sp0=Math.sin(p0),cp0=Math.cos(p0),hs=ds/2;for(let i=0;i<DOT_B.length;i++)DOT_B[i].length=0;
+    for(const d of LAND_DOTS){const l=(d[0]-VIEW.lon)*D2R,cl=Math.cos(l),v=sp0*d[2]+cp0*d[3]*cl;if(v<=0)continue;
+      const el=d[2]*sd+d[3]*cd*Math.cos((d[0]-sp.lon)*D2R);
+      DOT_B[(el>.05?0:el>-.1?1:2)*DOT_N+Math.min(DOT_N-1,v*DOT_N|0)].push(gx+R*d[3]*Math.sin(l)-hs,gy-R*(cp0*d[2]-sp0*d[3]*cl)-hs)}
+    for(let i=0;i<DOT_B.length;i++){const b=DOT_B[i];if(!b.length)continue;cx.fillStyle=DOT_C[i];for(let j=0;j<b.length;j+=2)cx.fillRect(b[j],b[j+1],ds,ds)}
     // terminator line
     cx.strokeStyle="rgba(255,190,110,.35)";cx.lineWidth=1.4*DPR;strokePath(smallCircle(sp.lat,sp.lon,90,120));
     const [ssx,ssy,sv]=proj(sp.lon,sp.lat);if(sv>0){const g=cx.createRadialGradient(ssx,ssy,0,ssx,ssy,R*.6);g.addColorStop(0,"rgba(255,210,120,.16)");g.addColorStop(1,"rgba(255,210,120,0)");cx.fillStyle=g;cx.beginPath();cx.arc(gx,gy,R,0,7);cx.fill()}
@@ -244,12 +252,14 @@ function logEv(txt,k,q,tr){const real=q?q.time:realNow();if(S.on&&EVENTS.length<
   const tm=new Date(real).toISOString().slice(11,19);li.innerHTML=`<span>${tm}</span>${q?`<b>M${q.mag.toFixed(1)}</b>`:`<b style="color:${COLS[k]}">${{x:"FLARE",u:"SUN",e:"NASA",i:"ISS",c:"CHORD"}[k]||"•"}</b>`}<span></span>`;li.lastChild.textContent=q?txt.split(" · ").slice(1).join(" · "):txt;
   const ul=$("log");ul.prepend(li);while(ul.children.length>40)ul.lastChild.remove()}
 
-let lastFrame=0,lastDraw=0,decayT=0;
+let lastFrame=0,lastDraw=0,decayT=0,wlcEl=null;
 // js/fx.js: at the light level the canvases redraw at ~30 fps; at every level, things scrolled out of view skip drawing
 const mapWrap=document.querySelector(".mapwrap"),titleEl=$("title");
 function frame(now){
   requestAnimationFrame(frame);
-  const fm=FX.frameMs();if(fm&&now-lastDraw<fm)return;
+  // behind the welcome card the page is dimmed and blurred, so it redraws ~8 times a second until the card closes
+  if(!wlcEl)wlcEl=$("wlc");
+  const fm=wlcEl&&wlcEl.open?120:FX.frameMs();if(fm&&now-lastDraw<fm)return;
   const dtf=lastDraw?Math.min(4,(now-lastDraw)/16.7):1;lastDraw=now;
   try{const mapOn=FX.on(mapWrap)||document.body.classList.contains("imm")||(window.EMRec&&EMRec.capturing);
   if(mapOn){drawMap(now);if(window.drawFocus)drawFocus(now);if(window.drawZones)drawZones(now)}else $("clock").textContent=new Date(realNow()).toISOString().slice(0,19).replace("T"," ")+" UTC";

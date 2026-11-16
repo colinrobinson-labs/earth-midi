@@ -218,9 +218,7 @@ const shortName=k=>REC_SHORT[k]||(LNAME[k]||k).slice(0,5).toUpperCase();
 /* ---------------- wire up ---------------- */
 (function initRecord(){
   buildSheet();
-  const tools=document.querySelector(".tools");
-  if(tools&&!$("bRecord")){const b=document.createElement("button");b.id="bRecord";b.className="rec-btn";b.setAttribute("aria-haspopup","dialog");b.innerHTML="<b>●</b> Record";tools.prepend(b)}
-  $("bRecord").onclick=()=>openSheet();
+  $("bRecord").onclick=()=>openSheet(); // the button is in index.html, so the bar doesn't jump when this file loads
   const m=$("mRec");if(m){m.innerHTML="<b>●</b>Record";m.setAttribute("aria-label","Record video or audio");m.onclick=()=>openSheet()}
   // Export panel shortcuts open the sheet pre-set
   const av=$("bVid"),aa=$("bAac");if(av)av.onclick=()=>openSheet("video");if(aa)aa.onclick=()=>{CAP.afmt="small";openSheet("audio")};
