@@ -42,7 +42,7 @@ const syncDelay=()=>{if(!T)return;const t=clamp(60/(S.bpm||100)*.75,.18,.6);T.dl
 // let the title be heard when the planet isn't playing
 const openOut=()=>{A.ctx.resume();const c=A.ctx.currentTime,v=+($("vol")?.value||.8);
   if(!S.on){A.out.gain.cancelScheduledValues(c);A.out.gain.setTargetAtTime(v,c,.02);clearTimeout(closeT);
-    closeT=setTimeout(()=>{if(A&&!S.on&&!(T&&T.voices.size)&&!(typeof G!=="undefined"&&G&&G.on))A.out.gain.setTargetAtTime(0,A.ctx.currentTime,.4)},3200)}};
+    closeT=setTimeout(()=>{if(A&&!S.on&&!(T&&T.voices.size)&&!(window.GOD&&GOD.on))A.out.gain.setTargetAtTime(0,A.ctx.currentTime,.4)},3200)}};
 
 /* ---------- one voice ---------- */
 // p = {n, vel 0..1, bright 0..1 (top of letter = 1), metal 0..1 (edges = 1), pan -1..1}

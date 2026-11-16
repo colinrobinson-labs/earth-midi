@@ -30,7 +30,6 @@ if(hud&&wrap){
   // a small dot on View options while Zones are on or weather is off, so nothing changes silently
   const flag=()=>{const z=znB,w=wxB;box.classList.toggle("act",!!(z&&z.getAttribute("aria-pressed")==="true")||!!(w&&w.getAttribute("aria-pressed")==="false"))};
   [znB,wxB].forEach(b=>b&&new MutationObserver(flag).observe(b,{attributes:true,attributeFilter:["aria-pressed"]}));flag();
-  if(typeof measureHud==="function")measureHud();
 }
 // inspector tabs
 const ins=$("insp");
