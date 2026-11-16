@@ -54,9 +54,10 @@ function losses(){const G=window.GOD,L=[];if(!G||!G.on)return L;
 function ask(L,go){let d=$("homeAsk");if(!d){d=document.createElement("dialog");d.id="homeAsk";d.setAttribute("aria-labelledby","homeAskH");document.body.appendChild(d)}
   d.innerHTML=`<h3 id="homeAskH">You'll lose this. Leave anyway?</h3><p></p><div class="row"><button type="button" data-a="stay">Stay</button><button type="button" class="go2" data-a="go">Leave anyway</button></div>`;
   d.querySelector("p").textContent="Going home leaves Zeus Mode: "+L.join(", and ")+".";
-  d.querySelector('[data-a="stay"]').onclick=()=>d.close();
-  d.querySelector('[data-a="go"]').onclick=()=>{d.close();go()};
-  if(d.showModal){d.showModal();d.querySelector('[data-a="stay"]').focus()}else if(confirm(d.querySelector("p").textContent))go()}
+  const shut=()=>{d.close?d.close():d.removeAttribute("open")};
+  d.querySelector('[data-a="stay"]').onclick=shut;
+  d.querySelector('[data-a="go"]').onclick=()=>{shut();go()};
+  if(d.showModal)d.showModal();else d.setAttribute("open","");d.querySelector('[data-a="stay"]').focus()}
 
 function home(){
   const G=window.GOD;if(G&&G.on&&G.set)G.set(false);

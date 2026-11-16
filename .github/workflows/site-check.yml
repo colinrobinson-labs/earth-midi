@@ -28,7 +28,7 @@ jobs:
           cache: npm
           cache-dependency-path: tests/package-lock.json
       - name: Syntax check
-        run: for f in js/*.js scripts/*.mjs tests/*.mjs; do node --check "$f" || exit 1; done
+        run: for f in js/*.js sw.js scripts/*.mjs tests/*.mjs; do node --check "$f" || exit 1; done
       - name: WeatherKit switch (offline)
         run: node tests/weatherkit.test.mjs
       - name: Install browser (exact versions from tests/package-lock.json)
@@ -55,6 +55,7 @@ jobs:
           (cd _site && python3 -m http.server 8765 >/dev/null 2>&1 &)
           sleep 1
           node tests/smoke.mjs
+          node tests/keyboard-offline.mjs
       - name: Hostile input test (as deployed)
         run: node tests/hostile.mjs
       - name: Smoke test (as in the repo)

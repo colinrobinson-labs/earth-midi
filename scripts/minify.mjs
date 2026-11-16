@@ -25,7 +25,7 @@ try {
   const writes = [];
 
   // local scripts only: <script src="js/x.js"></script> with nothing else on the tag
-  const TAG = /<script src="((?:js|vendor)\/[\w.\-]+\.js)"><\/script>/g;
+  const TAG = /<script src="((?:js|vendor)\/[\w.-]+\.js)"><\/script>/g;
   const files = [...html.matchAll(TAG)].map(m => m[1]);
   if (files.length < 2) throw new Error("no script tags found");
   // scripts in the <head> (js/boot.js) have to run before the first paint, so they are minified but never deferred

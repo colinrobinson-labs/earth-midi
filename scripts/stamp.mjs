@@ -11,7 +11,7 @@ const cache = {};
 let n = 0, missing = [];
 for (const page of readdirSync(root).filter(f => f.endsWith(".html"))) {
   const p = join(root, page);
-  const html = readFileSync(p, "utf8").replace(/(\b(?:src|href)=")(\/?)((?:js|css|vendor)\/[\w.\-]+\.(?:js|css))(?:\?v=[\w]+)?"/g, (m, a, slash, rel) => {
+  const html = readFileSync(p, "utf8").replace(/(\b(?:src|href)=")(\/?)((?:js|css|vendor)\/[\w.-]+\.(?:js|css))(?:\?v=[\w]+)?"/g, (m, a, slash, rel) => {
     const f = join(root, rel);
     if (!existsSync(f)) { missing.push(`${page}: ${rel}`); return m; }
     n++;

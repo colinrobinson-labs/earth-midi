@@ -5,13 +5,19 @@ const URL_ = process.env.HEALTH_URL || "https://earthmidi.com/data/status.json";
 const MAIN = { quakes: "Earthquakes (USGS)", rtswWind: "Solar wind speed (NOAA)", rtswMag: "Solar wind field (NOAA)", kp: "Kp index (NOAA)", xray: "X-rays (NOAA)", ocean: "Ocean swell (Open-Meteo)", temps: "City temperatures", wx0: "Weather grid" };
 const SRC = { weatherkit: "Apple WeatherKit", "open-meteo": "Open-Meteo" };
 const now = Date.now(), min = ms => Math.round(ms / 6e4);
-let s;
-try {
-  const r = await fetch(URL_ + "?t=" + now, { headers: { "user-agent": "earthmidi.com health check" } });
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  s = await r.json();
-} catch (e) {
-  console.log(`Couldn't read the data status file (${e.message}).\n\n${URL_}`);
+// One dropped connection shouldn't open an alert: try three times, a few seconds apart, and never hang the keeper loop.
+const WAIT = +(process.env.HEALTH_RETRY_MS ?? 5000);
+let s, err;
+for (let i = 0; i < 3 && !s; i++) {
+  if (i) await new Promise(r => setTimeout(r, WAIT));
+  try {
+    const r = await fetch(URL_ + "?t=" + now, { headers: { "user-agent": "earthmidi.com health check" }, signal: AbortSignal.timeout(20000) });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    s = await r.json();
+  } catch (e) { err = e; }
+}
+if (!s) {
+  console.log(`Couldn't read the data status file (${err.message}).\n\n${URL_}`);
   process.exit(0);
 }
 const problems = [];
