@@ -1,9 +1,7 @@
 Thank you for reviewing Earth MIDI. Free app: no login, no account, no in-app purchases, no ads, no user-generated content.
 
 1. SCREEN RECORDING
-Recorded on a physical iPhone running the latest iOS, starting from app launch:
-https://earthmidi.com/review/earth-midi-ios-demo.mp4
-(also attached to our reply in App Review)
+Recorded on a physical iPhone running the latest iOS, starting from app launch. Attached to my reply in App Review.
 
 2. PURPOSE AND AUDIENCE
 Earth MIDI turns live public science data into music. Earthquakes ring bells pitched by depth and struck by magnitude, the solar wind sweeps a synth pad, ocean swell and tides shape drones, and city temperatures tune a chord. Audience: musicians and producers who want a living, generative source of melody and MIDI; listeners who want ambient sound for focus or sleep; teachers and curious people who want to hear what the planet is doing right now. The problem it solves: raw earthquake and space-weather data is hard to feel; Earth MIDI makes it audible in real time and lets producers route it into their DAW as MIDI.
