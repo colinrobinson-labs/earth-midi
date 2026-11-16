@@ -41,5 +41,5 @@ values), the MIDI button (virtual CoreMIDI port: open GarageBand and pick "Earth
 widgets, and Siri "Play Earth MIDI". The sound engine is HTML/JS run by WebKit inside the app and bundled
 with it; live readings come from public scientific data feeds.
 
-**Support URL:** https://earthmidi.com · **Marketing URL:** https://earthmidi.com
+**Support URL:** https://earthmidi.com/support.html · **Marketing URL:** https://earthmidi.com
 **Copyright:** © 2026 Colin Robinson

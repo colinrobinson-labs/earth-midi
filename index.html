@@ -235,6 +235,8 @@ select:disabled{opacity:.55;cursor:not-allowed}
 
 /* cards */
 .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));margin-top:12px}
+/* hold a screen of space until the layer cards are built, so the sections below don't jump down mid-load */
+.grid:empty{min-height:100vh}
 .ch{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:12px 14px;position:relative;overflow:hidden;transition:opacity .3s,border-color .2s;border-color:color-mix(in srgb,var(--c) calc(var(--hit,0)*60%),var(--line))}
 .ch.dim{opacity:.45}
 .ch::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:var(--c);box-shadow:0 0 calc(6px + var(--hit,0)*30px) var(--c);opacity:calc(.5 + var(--hit,0)*.5)}
