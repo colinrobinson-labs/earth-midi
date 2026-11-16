@@ -46,7 +46,46 @@ const DEF={
 /* Zones (js/zones.js) fill these in; until then every layer hears the whole planet */
 const ZN={has:()=>false,w:()=>1,bus:()=>1,label:()=>""};
 const clone=o=>JSON.parse(JSON.stringify(o));
-function mergeCFG(src){const c=clone(DEF);if(!src)return c;for(const k in src){if(c[k]&&typeof c[k]==="object"&&!Array.isArray(c[k]))Object.assign(c[k],src[k]);else if(k in c)c[k]=src[k]}return c}
+/* Text that came from outside the page (files, links, feeds) goes through esc() before it is written as HTML. */
+const esc=s=>String(s).replace(/[&<>"'`]/g,c=>"&#"+c.charCodeAt(0)+";");
+const hasOwn=(o,k)=>o!=null&&Object.prototype.hasOwnProperty.call(o,k);
+const isObj=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
+/* What each setting may hold: [min,max] or [min,max,1] (whole numbers) for numbers, a list or a lookup table for
+   choices. Booleans and the grouped settings (vol, send, ch, inst, snd, zones) are handled by type in mergeCFG. */
+const WAVES=["sine","triangle","square","sawtooth"],OCT1=[-1,1,1],TONE=[-1,1];
+const LIMITS={
+  key:[0,11,1],oct:[-2,2,1],scale:SCALES,tune:[415,466],prog:PROGS,chordEvery:[2,30],
+  qpitch:["depth","lat","mag"],qpan:["lon","lat"],mmin:[0,6],region:REGIONS,vcurve:["linear","soft","hard"],velMin:[1,100],velMax:[40,127],len:[.25,4],dens:[1,30],qoct:[-2,2,1],humanize:[0,1],
+  bpmMin:[60,180],bpmMax:[60,180],bpmLock:[0,180],swing:[0,.5],hats:[0,2],duck:[0,.9],tempoArea:["world","view"],
+  pattern:()=>typeof GROOVES!=="undefined"&&GROOVES,genre:()=>typeof GENRE_BY!=="undefined"&&{custom:1,...GENRE_BY},tempoSrc:()=>typeof TSRC!=="undefined"&&TSRC,
+  rev:[-1,1],revType:["hall","plate","room","cathedral","cave","space"],dtime:["0.25","0.375","0.5","0.75"],dfb:[0,.85],mlp:[300,20000],hpf:[20,400],drive:[0,1],width:[0,1.5],lowEq:[-12,12],highEq:[-12,12],coct:[-2,1,1],
+  mapView:["globe","flat"],viewMix:["off","focus","full"],
+  vol:[0,1.5],send:[0,1],ch:[1,16,1],
+  inst:{q:["bell","marimba","glass","gong","pluck"],s:["saw","soft","hollow","pure"],c:["voices","strings","glass","reed"],i:["pluck","glass","square"],u:["chime","warm","soft"]},
+  snd:{oTone:TONE,oQ:[.3,4],xOct:OCT1,xBell:WAVES,wTone:TONE,wQ:[.4,2.5],tOct:OCT1,tWave:WAVES,tLp:[150,2000],eHp:[400,6000],eOct:OCT1,gMode:["metal","fifth","octave"],gOct:OCT1,aTone:TONE,rKick:[-7,7,1],rDec:[.4,2],rBass:WAVES,rTone:TONE}
+};
+const ZONE_BARS=[4,8,16,32];
+/* one value against its limit; anything that doesn't fit falls back to the default */
+function fitCFG(v,lim,def){
+  if(typeof lim==="function"){lim=lim();if(!lim)return typeof v==="string"&&/^[\w-]{1,32}$/.test(v)?v:def}// table not loaded yet: plain names only, re-checked once it is
+  if(typeof def==="boolean")return typeof v==="boolean"?v:def;
+  if(typeof def==="number"){if(typeof v!=="number"||!Number.isFinite(v))return def;if(!lim)return v;v=clamp(v,lim[0],lim[1]);return lim[2]?Math.round(v):v}
+  if(typeof def==="string"){if(typeof v==="number")v=String(v);if(typeof v!=="string"||!lim)return def;return (Array.isArray(lim)?lim.includes(v):hasOwn(lim,v))?v:def}
+  return def}
+function fitZone(z){if(!isObj(z))return null;const n=(v,a,b,d)=>typeof v==="number"&&Number.isFinite(v)?clamp(v,a,b):d;let o;
+  if(z.shape==="circle")o={shape:"circle",lat:n(z.lat,-90,90,0),lon:n(z.lon,-180,180,0),r:n(z.r,100,10000,2000)};
+  else if(z.shape==="band")o={shape:"band",a:n(z.a,-90,90,-15),b:n(z.b,-90,90,15)};
+  else if(z.shape==="region"&&typeof z.id==="string"&&hasOwn(REGIONS,z.id)&&REGIONS[z.id])return {shape:"region",id:z.id};
+  else return null;
+  if(isObj(z.move))o.move={type:z.move.type==="drift"?"drift":"still",bars:ZONE_BARS.includes(z.move.bars)?z.move.bars:16};
+  return o}
+function mergeCFG(src){const c=clone(DEF);if(!isObj(src))return c;
+  for(const k of Object.keys(DEF)){if(!hasOwn(src,k))continue;const v=src[k],d=DEF[k],lim=LIMITS[k];
+    if(k==="zones"){if(isObj(v))for(const zk of PAN_KEYS){if(zk==="r"||!hasOwn(v,zk))continue;const z=fitZone(v[zk]);if(z)c.zones[zk]=z}}
+    else if(isObj(d)){if(isObj(v))for(const kk of Object.keys(d))if(hasOwn(v,kk))c[k][kk]=fitCFG(v[kk],Array.isArray(lim)?lim:lim[kk],d[kk])}
+    else c[k]=fitCFG(v,lim,d)}
+  return c}
+const fitStyle=v=>v==="pulse"||v==="ambient"?v:null;
 let CFG=clone(DEF);
 try{const sv=localStorage.getItem("em5.cfg");if(sv)CFG=mergeCFG(JSON.parse(sv))}catch(_){}
 const getP=(o,k)=>k.split(".").reduce((a,b)=>a==null?a:a[b],o),setP=(o,k,v)=>{const ks=k.split(".");ks.slice(0,-1).reduce((a,b)=>a[b],o)[ks.at(-1)]=v};
@@ -74,8 +113,10 @@ function snapMerge(j){if(j&&j.v===1&&j.feeds){for(const [u,f] of Object.entries(
    Open-Meteo for those feeds itself; it plays the snapshot copy (or the last one, marked delayed). */
 const WSRC={};
 const wkOn=id=>WSRC[id]==="weatherkit";
-function wkMark(){const a=SNAP.wk||{},legal=a.legal||"https://weatherkit.apple.com/legal-attribution.html",logo=a.logo&&a.logo.dark;
-  return `<span class="wkm"><a href="${legal}" target="_blank" rel="noopener" aria-label="Apple Weather, data sources and legal attribution">${logo?`<img src="data/${logo}" alt="Apple Weather" height="12" onerror="this.replaceWith('Apple Weather')">`:"Apple Weather"}</a> · <a href="${legal}" target="_blank" rel="noopener">Other data sources</a></span>`}
+// a logo that fails to load becomes the plain words
+document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.classList.contains("wkl"))t.replaceWith("Apple Weather")},true);
+function wkMark(){const a=SNAP.wk||{},legal=typeof a.legal==="string"&&/^https:\/\/[\w.-]+\/[\w./-]*$/.test(a.legal)?a.legal:"https://weatherkit.apple.com/legal-attribution.html",logo=a.logo&&typeof a.logo.dark==="string"&&/^[\w-]+(\/[\w-]+)*\.(png|svg)$/.test(a.logo.dark)&&a.logo.dark;
+  return `<span class="wkm"><a href="${legal}" target="_blank" rel="noopener" aria-label="Apple Weather, data sources and legal attribution">${logo?`<img class="wkl" src="data/${logo}" alt="Apple Weather" height="12">`:"Apple Weather"}</a> · <a href="${legal}" target="_blank" rel="noopener">Other data sources</a></span>`}
 function wkSync(){const on=wkOn("temps")||wkOn("wx0");document.querySelectorAll("[data-wk]").forEach(e=>{if(e.hidden===!on&&e._on===on)return;e.hidden=!on;e._on=on;if(on)e.innerHTML=(e.dataset.wk||"")+wkMark()})}
 async function loadSnap(file="live",every=6e4){
   if(Date.now()-(SNAP.last[file]||0)<every)return SNAP.files[file];
