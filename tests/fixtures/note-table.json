@@ -1,4 +1,5 @@
 {
+ "defaults": {"root": 50, "tune": 440, "chordEvery": 8, "progClassic": [[0, 2, 4, 7], [5, 7, 9, 12], [3, 5, 7, 10], [4, 6, 8, 11]]},
  "scale": [
   {"kp": 0, "name": "major pentatonic", "steps": [0, 2, 4, 7, 9]},
   {"kp": 2, "name": "major pentatonic", "steps": [0, 2, 4, 7, 9]},

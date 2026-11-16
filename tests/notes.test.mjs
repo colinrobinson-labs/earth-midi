@@ -16,6 +16,7 @@ const near = (got, want, what) => assert.ok(Math.abs(got - want) <= 1e-9 * Math.
 
 test("defaults the table assumes: D3 root, A = 440, depth sets pitch, linear velocity 20-127", () => {
   assert.deepEqual(call("()=>[ROOT,+CFG.tune,CFG.scale,CFG.qpitch,CFG.qpan,CFG.vcurve,CFG.velMin,CFG.velMax,CFG.qoct,CFG.coct]"), [50, 440, "auto", "depth", "lon", "linear", 20, 127, 0, 0]);
+  assert.deepEqual(call("()=>({root:ROOT,tune:+CFG.tune,chordEvery:CFG.chordEvery,progClassic:PROGS[CFG.prog]})"), T.defaults);
 });
 
 test("Kp picks the scale", () => {
