@@ -327,7 +327,6 @@ const TAB={Sound:{c:"var(--c)",i:"sound",s:"key · 13 layers"},Mixer:{c:"var(--o
 const GRP={"Key + scale":["var(--c)","note"],"Harmony":["var(--x)","harmony"],"Instruments":["var(--o)","inst"],"Earthquakes":["var(--q)","quake"],"Genre":["var(--q)","genre"],"Pulse groove":["var(--s)","groove"],"Feel":["var(--k)","feel"],"Space":["var(--o)","space"],"Tone":["var(--s)","tone"],"Sync + input":["var(--k)","sync"],"Channels":["#9ad1ff","chan"],"Channels 2":["#9ad1ff","chan"]};
 const LIC={q:IC.quake,s:SRC_IC.sun,o:SRC_IC.tides,x:p("M13 2L5 13h6l-1 9 8-11h-6z"),w:SRC_IC.jet,t:p("M12 3v13M8 12l4 4 4-4M3 20c3-2 6-2 9 0s6 2 9 0"),c:IC.harmony,i:IC.sat,e:PRE["Burning world"].i,g:SRC_IC.kp,a:SRC_IC.wind,u:PRE["Dawn chorus"].i,r:IC.groove,m:p("M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z")};
 const GROW={K:"#ff5a3c",S:"#ffc53d",H:"#3cc8ff",B:"#7cff9e"};
-const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 
 /* 16-step grid as SVG: 4 rows (kick, snare, hats, bass) straight from the groove strings */
 function grid(gk,big){const G=GROOVES[gk]||GROOVES.four,rows=[["K",G.k],["S",G.s],["H",G.h],["B",G.b]];let r="";
@@ -347,8 +346,8 @@ function presetLook(cfg,style){const vol={...DEF.vol,...(cfg.vol||{})};if(style!
   let top="c",tv=-1;PAN_KEYS.forEach(k=>{if(k!=="r"&&vol[k]>tv){tv=vol[k];top=k}});
   const bars=PAN_KEYS.map((k,j)=>`<i style="--h:${Math.min(1,(vol[k]||0)/1.5).toFixed(2)};--c:${COLS[k]};--j:${j}" title="${LNAME[k]} ${(+vol[k]||0).toFixed(2)}"></i>`).join("");
   const tags=[`<em class="st">${style==="pulse"?"Pulse":style==="ambient"?"Ambient":"Any style"}</em>`];
-  if(cfg.bpmLock>0)tags.push(`<em>${cfg.bpmLock} BPM</em>`);else if(style==="pulse"&&cfg.bpmMin)tags.push(`<em>${cfg.bpmMin}–${cfg.bpmMax} BPM</em>`);
-  if(cfg.scale&&cfg.scale!=="auto")tags.push(`<em>${SCALE_N[cfg.scale]||cfg.scale}</em>`);if(cfg.revType)tags.push(`<em>${ROOM_N[cfg.revType]||cfg.revType}</em>`);
+  if(cfg.bpmLock>0)tags.push(`<em>${+cfg.bpmLock} BPM</em>`);else if(style==="pulse"&&cfg.bpmMin)tags.push(`<em>${+cfg.bpmMin}–${+cfg.bpmMax} BPM</em>`);
+  if(cfg.scale&&cfg.scale!=="auto")tags.push(`<em>${esc(SCALE_N[cfg.scale]||cfg.scale)}</em>`);if(cfg.revType)tags.push(`<em>${esc(ROOM_N[cfg.revType]||cfg.revType)}</em>`);
   return {col:COLS[top],bars,tags:tags.join("")}}
 
 let lastPre=null;
@@ -369,7 +368,7 @@ function presets(){
   <div class="psec" style="--ac:var(--k);--i:2"><div class="psh"><span class="gi">${ic("save")}</span>Yours<small>saved in this browser · share them with Share</small></div>
    <div class="fps">${up||`<div class="fpempty">${ic("save")}<span>Nothing saved yet. Dial in a sound, then <b>Save current as preset</b> and it lands here with its own mix bars.</span></div>`}</div>
    <div class="ptools"><button id="bUP" class="pri">${ic("save")}Save current as preset</button><button id="bEP">${ic("down")}Export preset file</button><label class="btnlike">${ic("up")}Import preset<input type="file" accept=".json" hidden id="fPre"></label><button id="bLearn" aria-pressed="${LEARN.on}"><span class="lled"></span>${ic("knob")}MIDI learn ${LEARN.on?"on":"off"}</button></div>
-   <div class="lmap">${LEARN.on?"Touch any slider, then move a knob on your controller.":"MIDI learn maps your controller's knobs to any slider."} ${lm.length?"Mapped: "+lm.map(([cc,k])=>`<em>CC${cc} → ${esc(k)}</em>`).join(""):"Nothing mapped yet."}</div></div>`}
+   <div class="lmap">${LEARN.on?"Touch any slider, then move a knob on your controller.":"MIDI learn maps your controller's knobs to any slider."} ${lm.length?"Mapped: "+lm.map(([cc,k])=>`<em>CC${esc(cc)} → ${esc(k)}</em>`).join(""):"Nothing mapped yet."}</div></div>`}
 
 /* ---------- enhance native controls after a render ---------- */
 const setPct=el=>{const a=+el.min,b=+el.max;el.style.setProperty("--p",((+el.value-a)/(b-a||1)*100).toFixed(1)+"%")};
@@ -392,7 +391,7 @@ function enhance(g){
   // MIDI channels: compact steppers in each layer's colour
   g.querySelectorAll('input[data-k^="ch."]').forEach(el=>{const pc=el.closest(".pc"),lk=el.dataset.k.slice(3),col=COLS[lk==="b"||lk==="d"?"r":lk]||"#9ad1ff";pc.classList.add("chn");pc.style.setProperty("--lc",col);
     pc.querySelector("label").insertAdjacentHTML("afterbegin",`<i class="ld" style="--lc:${col}"></i>`);
-    const s=document.createElement("span");s.className="stp";s.innerHTML=`<button type="button" aria-label="Channel down">−</button><b>${el.value}</b><button type="button" aria-label="Channel up">+</button>`;pc.appendChild(s);
+    const s=document.createElement("span");s.className="stp";s.innerHTML=`<button type="button" aria-label="Channel down">−</button><b>${esc(el.value)}</b><button type="button" aria-label="Channel up">+</button>`;pc.appendChild(s);
     const [dn,up]=s.querySelectorAll("button"),out=s.querySelector("b");const step=d=>{el.value=clamp(+el.value+d,1,16);out.textContent=el.value;el.dispatchEvent(new Event("input"))};dn.onclick=()=>step(-1);up.onclick=()=>step(1)});
   // Rhythm: big tempo readout + the groove as a step grid
   const tn=g.querySelector("#tempoNow");if(tn)tn.insertAdjacentHTML("beforebegin",`<div class="bpmr"><b id="stBpm">–</b><small>BPM</small><div class="rbar" aria-hidden="true"><i id="stRng"></i><em id="stMk"></em><span style="left:0">60</span><span style="left:50%">120</span><span style="left:100%">180</span></div></div>`);
@@ -416,7 +415,7 @@ function loop(now){requestAnimationFrame(loop);const pro=$("pro");if(!pro||pro.h
   if(now-t1<220)return;t1=now;
   const b=$("stBpm");if(b){b.textContent=bpm.toFixed(1);const lo=+CFG.bpmMin,hi=Math.max(lo,+CFG.bpmMax),r=$("stRng"),m=$("stMk");if(r){r.style.left=((lo-60)/120*100)+"%";r.style.width=Math.max(.8,(hi-lo)/120*100)+"%"}if(m)m.style.left=clamp((bpm-60)/120*100,0,100)+"%"}
   const ps=$("pstat");if(ps){const g=GENRE_BY[CFG.genre],sc=CFG.scale==="auto"?kpScaleName(S.cur.kp||2):(SCALE_N[CFG.scale]||CFG.scale).toLowerCase();
-    ps.innerHTML=`<span class="ps-sty" data-s="${S.style}"><i></i>${pulse?"Pulse":"Ambient"}</span><span>${KEYS[CFG.key]} ${sc}</span>${pulse?`<span class="ps-bpm"><b>${bpm.toFixed(1)}</b> BPM</span><span>${g?g.name:"custom groove"}</span>`:""}${lastPre?`<span>${esc(lastPre)}</span>`:""}`}
+    ps.innerHTML=`<span class="ps-sty" data-s="${esc(S.style)}"><i></i>${pulse?"Pulse":"Ambient"}</span><span>${esc(KEYS[CFG.key])} ${esc(sc)}</span>${pulse?`<span class="ps-bpm"><b>${bpm.toFixed(1)}</b> BPM</span><span>${g?g.name:"custom groove"}</span>`:""}${lastPre?`<span>${esc(lastPre)}</span>`:""}`}
   document.querySelectorAll("#pgrid .gt").forEach(t=>{const on=CFG.genre===t.dataset.genre&&pulse;if(t.classList.contains("sel")!==on){t.classList.toggle("sel",on);t.setAttribute("aria-pressed",on)}});
   if($("smapl")&&CFG.scale==="auto")paintKey()}
 requestAnimationFrame(loop);
