@@ -1,0 +1,8 @@
+{
+  "name": "earth-midi-deploy-tools",
+  "private": true,
+  "description": "The minifier the deploy runs on the built site (scripts/minify.mjs). Installed in CI with npm ci, never shipped with the site.",
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

@@ -9,7 +9,7 @@
 // exist before its code is reached, so checks like `typeof CONSOLE!=="undefined"` in an earlier file stop meaning
 // "console.js hasn't loaded yet" (tried it; simple.js threw). Separate files behave exactly like the repo's.
 // The Apple apps build from the repo's unminified files (apps/apple/scripts/sync-web.sh), so this never touches them.
-// Needs esbuild (npm i --no-save esbuild). If esbuild is missing or anything here fails, the site folder is left
+// Needs esbuild, pinned in scripts/package-lock.json (cd scripts && npm ci). If esbuild is missing or anything here fails, the site folder is left
 // exactly as it was and the page ships unminified, so a broken minifier can never block a deploy.
 import {readFileSync, writeFileSync, existsSync} from "node:fs";
 import {join} from "node:path";
@@ -28,6 +28,9 @@ try {
   const TAG = /<script src="((?:js|vendor)\/[\w.\-]+\.js)"><\/script>/g;
   const files = [...html.matchAll(TAG)].map(m => m[1]);
   if (files.length < 2) throw new Error("no script tags found");
+  // scripts in the <head> (js/boot.js) have to run before the first paint, so they are minified but never deferred
+  const bodyAt = html.indexOf("<body");
+  if (bodyAt < 0) throw new Error("no <body> found");
   let jsBefore = 0, jsAfter = 0;
   for (const f of files) {
     const src = readFileSync(join(root, f), "utf8");
@@ -38,7 +41,7 @@ try {
     jsBefore += src.length; jsAfter += out.length;
     if (!f.includes(".min.")) writes.push([join(root, f), out]);
   }
-  html = html.replace(TAG, '<script defer src="$1"></script>');
+  html = html.slice(0, bodyAt) + html.slice(bodyAt).replace(TAG, '<script defer src="$1"></script>');
 
   // fonts.css into the page (its font paths are written relative to css/)
   const link = '<link rel="stylesheet" href="css/fonts.css">';

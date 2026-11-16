@@ -1,7 +1,15 @@
-# Suggests updates to the pinned GitHub Actions versions once a month.
+# Suggests updates to the pinned GitHub Actions (by commit) the browser test tools and the deploy minifier once a month.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: npm
+    directory: /tests
+    schedule:
+      interval: monthly
+  - package-ecosystem: npm
+    directory: /scripts
     schedule:
       interval: monthly

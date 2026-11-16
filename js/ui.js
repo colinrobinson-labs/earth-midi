@@ -91,7 +91,7 @@ function ctl(k,label,type,o){const id="p_"+k.replace(".","_"),v=getP(CFG,k);
   if(k==="note")return `<p class="xs tnow" id="${label}" aria-live="off"></p>`;
   if(type==="info")return `<p class="xs linfo">${label}</p>`;
   if(type==="selg"){const g=GENRE_BY[v];return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${a===v?"selected":""}>${b}</option>`).join("")}${o[1].map(([fam,L])=>`<optgroup label="${fam}">${L.map(([a,b,p])=>`<option value="${a}" ${a===v?"selected":""}>${b} · ${p.lo}–${p.hi}</option>`).join("")}</optgroup>`).join("")}</select>${g?`<small class="xs gtip">${g.tip}</small>`:""}</div>`}
-  if(type==="rng")return `<div class="pc"><label for="${id}">${label}</label><output id="${id}_o">${v}</output><input type="range" id="${id}" data-k="${k}" data-t="rng" min="${o[0]}" max="${o[1]}" step="${o[2]}" value="${v}"></div>`;
+  if(type==="rng")return `<div class="pc"><label for="${id}">${label}</label><output id="${id}_o">${esc(v)}</output><input type="range" id="${id}" data-k="${k}" data-t="rng" min="${o[0]}" max="${o[1]}" step="${o[2]}" value="${esc(v)}"></div>`;
   if(type==="sel")return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a,b])=>`<option value="${a}" ${String(a)===String(v)?"selected":""}>${b}</option>`).join("")}</select></div>`;
   return `<div class="pc ck"><input type="checkbox" id="${id}" data-k="${k}" data-t="ck" ${v?"checked":""}><label for="${id}">${label}</label></div>`}
 let TAB=0,TABIN=true;const PMORE=new Set();
@@ -119,7 +119,7 @@ function renderPresets(){const g=$("pgrid");if(TABS[TAB][0]!=="Presets")return;
   g.querySelectorAll("[data-genre]").forEach(b=>b.onclick=()=>{if(S.style!=="pulse")setStyle("pulse");STUDIO.setLast(null);applyGenre(b.dataset.genre);AUD.pick("genre")});
   g.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>{STUDIO.setLast(b.dataset.fp);applyPreset(PRESETS[b.dataset.fp],b.dataset.fp);AUD.pick("preset");const n=$("pgrid").querySelector(`[data-fp="${CSS.escape(b.dataset.fp)}"]`);n&&n.classList.add("flash")});
   g.querySelector("[data-reset]").onclick=()=>{STUDIO.setLast(null);if(typeof RESET!=="undefined"){if(!RESET.all())xs("Already at the defaults")}else{CFG=clone(DEF);afterCFG();xs("Settings reset")}};
-  g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];STUDIO.setLast(b.dataset.up);CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`);AUD.pick("preset")});
+  g.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const p=UPRE[b.dataset.up];if(!p)return;STUDIO.setLast(b.dataset.up);CFG=mergeCFG(p.cfg);if(p.style)setStyle(p.style);afterCFG();xs(`Preset: ${b.dataset.up}`);AUD.pick("preset")});
   g.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>deleteUserPreset(b.dataset.del));
   $("bUP").onclick=saveUserPreset;$("bEP").onclick=exportPreset;$("fPre").onchange=e=>{e.target.files[0]&&loadFile(e.target.files[0]);e.target.value=""};
   $("bLearn").onclick=()=>{LEARN.on=!LEARN.on;if(LEARN.on&&!midi)initMIDI(true);renderPresets();xs(LEARN.on?"MIDI learn on: touch a slider, then move a knob":"MIDI learn off")};
