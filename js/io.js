@@ -14,7 +14,7 @@ const README_CREDIT=()=>`CREDIT (required)\n${CREDIT}\n\nLICENSE\n${LICENSE}\n\n
 /* ================= Standard MIDI File writer (type 1) ================= */
 const ascii=s=>String(s).replace(/·/g,"-").replace(/[–—−]/g,"-").replace(/…/g,"...").replace(/µ/g,"u").replace(/³/g,"3").replace(/°/g," deg").replace(/≥/g,">=").replace(/→/g,"->").replace(/×/g,"x").replace(/[^\x20-\x7e]/g,"");
 function smf(tracks,tpq,bpm){const enc={encode:s=>new TextEncoder().encode(ascii(s))},out=[0x4D,0x54,0x68,0x64,0,0,0,6,0,1,(tracks.length>>8)&255,tracks.length&255,(tpq>>8)&255,tpq&255];
-  tracks.forEach((tr,ti)=>{const b=[],vlq=n=>{n=Math.max(0,Math.round(n));const st=[n&127];while(n>>=7)st.unshift((n&127)|128);b.push(...st)},meta=(type,txt)=>{const d=enc.encode(txt);vlq(0);b.push(0xFF,type);vlq(d.length);b.push(...d)};
+  tracks.forEach((tr,ti)=>{const b=[],vlq=n=>{n=Math.max(0,Math.round(n));const st=[n&127];while((n>>=7))st.unshift((n&127)|128);b.push(...st)},meta=(type,txt)=>{const d=enc.encode(txt);vlq(0);b.push(0xFF,type);vlq(d.length);b.push(...d)};
     meta(0x03,tr.name);if(ti===0){meta(0x02,"Earth MIDI by Colin Robinson. "+LICENSE);meta(0x01,CREDIT);meta(0x01,SOURCES());(tr.text||[]).forEach(t=>meta(0x01,t));const us=Math.round(60e6/bpm);vlq(0);b.push(0xFF,0x51,3,(us>>16)&255,(us>>8)&255,us&255);vlq(0);b.push(0xFF,0x58,4,4,2,24,8)}
     const ev=(tr.ev||[]).slice().sort((a,c)=>a[0]-c[0]||((a[1][0]&0xF0)===0x80?-1:1));let prev=0;ev.forEach(([tk,bytes])=>{tk=Math.max(0,Math.round(tk));vlq(tk-prev);prev=tk;b.push(...bytes)});vlq(0);b.push(0xFF,0x2F,0);
     out.push(0x4D,0x54,0x72,0x6B,(b.length>>>24)&255,(b.length>>>16)&255,(b.length>>>8)&255,b.length&255,...b)});

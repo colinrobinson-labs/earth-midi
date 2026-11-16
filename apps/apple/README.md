@@ -16,7 +16,8 @@ share sheet / save panel for every export, Mac menu bar player and keyboard shor
 
 ## Same reading, same note
 `Shared/Core/Music.swift` is a 1:1 port of the note rules in `js/audio.js` (default producer settings).
-If a rule changes on the site, change it there too. All apps read `earthmidi.com/data/live.json` first
+If a rule changes on the site, change it there too. `tests/fixtures/note-table.json` holds known readings and the notes
+they must give; the site's tests and the app's tests both check it, so the two can't drift apart. All apps read `earthmidi.com/data/live.json` first
 (the same snapshot cache as the site), so the free public APIs see one request per refresh.
 
 ## Build
@@ -26,6 +27,13 @@ cd apps/apple && xcodegen generate && open EarthMIDI.xcodeproj
 ```
 Set the team on each target (or pass `DEVELOPMENT_TEAM=…`), then Product → Archive.
 CI (`.github/workflows/apple.yml`) compiles all three unsigned on every change.
+
+## Tests
+```
+cd apps/apple && swift test
+```
+Runs in seconds with no simulator: the note rules against the shared table, and the decoding of `live.json`
+against a sample written by the real snapshot job (`Tests/CoreTests`, built from `Package.swift`). CI runs it too.
 
 ## Icons
 `node apps/apple/scripts/make-icons.js` re-renders every icon (iOS, macOS sizes, tvOS layered icon + Top Shelf) from the site logo.

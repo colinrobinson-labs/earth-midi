@@ -1,13 +1,13 @@
-# Compiles the Apple apps (iPhone/iPad, Mac, Apple TV) on every change under apps/apple.
+# Compiles the Apple apps (iPhone/iPad, Mac, Apple TV) and runs their unit tests on every change under apps/apple.
 # Unsigned build check only; signing + TestFlight happen on Colin's Mac.
 name: Apple apps build
 
 on:
   push:
     branches: [main, "claude/**"]
-    paths: ["apps/apple/**", "js/**", "index.html", ".github/workflows/apple.yml"]
+    paths: ["apps/apple/**", "js/**", "index.html", "tests/fixtures/**", ".github/workflows/apple.yml"]
   pull_request:
-    paths: ["apps/apple/**", ".github/workflows/apple.yml"]
+    paths: ["apps/apple/**", "tests/fixtures/**", ".github/workflows/apple.yml"]
   workflow_dispatch:
     inputs:
       duo:
@@ -23,6 +23,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Note rules and snapshot decoding, checked against the same tables as the site (tests/fixtures). No simulator needed.
+  unit:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Unit tests
+        working-directory: apps/apple
+        run: swift test
+
   build:
     runs-on: macos-15
     timeout-minutes: 40
