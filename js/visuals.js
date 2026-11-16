@@ -147,7 +147,12 @@ tl.addEventListener("pointermove",e=>{const r=tl.getBoundingClientRect();TLH=(e.
 tl.addEventListener("pointerdown",e=>{const r=tl.getBoundingClientRect(),f=(e.clientX-r.left)/r.width;if(!S.on){startStop().then(()=>seekTo(f))}else seekTo(f);xs(`Jumped to ${new Date(Date.now()-864e5*(1-f)).toISOString().slice(11,16)} UTC`)});
 
 /* ---------- sparklines with glowing playhead ---------- */
-function spark(id,ts,vs,col,t,lo,hi){const c=$(id);if(!c||!c.offsetParent||!FX.on(c))return;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);if(!vs.length)return;
+function spark(id,ts,vs,col,t,lo,hi){const c=$(id);if(!c||!c.offsetParent)return;
+  // off-screen cards skip redraws, except the first draw with real data, so no card is blank when you scroll to it
+  const have=vs.some(Number.isFinite);if(!FX.on(c)&&(c._has||!have))return;c._has=have;const w=c.clientWidth*DPR,h=c.clientHeight*DPR;if(c.width!==w){c.width=w;c.height=h}const g=c.getContext("2d");g.clearRect(0,0,w,h);
+  // no readings (source down and nothing saved): a dashed baseline and a caption instead of an empty box
+  if(!have){g.strokeStyle=col+"55";g.lineWidth=DPR;g.setLineDash([3*DPR,5*DPR]);g.beginPath();g.moveTo(0,h-6*DPR);g.lineTo(w,h-6*DPR);g.stroke();g.setLineDash([]);
+    g.fillStyle="rgba(150,160,172,.75)";g.font=`${10.5*DPR}px "IBM Plex Mono",ui-monospace,monospace`;g.textBaseline="bottom";g.fillText("no readings yet",0,h-12*DPR);return}
   const t0=ts[0],t1=ts[ts.length-1],X=x=>(x-t0)/(t1-t0||1)*w,Y=v=>h-((v-lo)/(hi-lo||1))*(h-6)-3;
   const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,col+"55");gr.addColorStop(1,col+"00");g.beginPath();let st=false;ts.forEach((tt,i)=>{const v=vs[i];if(!Number.isFinite(v))return;st?g.lineTo(X(tt),Y(v)):g.moveTo(X(tt),Y(v));st=true});
   g.strokeStyle=col;g.lineWidth=1.5*DPR;g.stroke();g.lineTo(w,h);g.lineTo(0,h);g.fillStyle=gr;g.fill();
@@ -158,16 +163,16 @@ function drawSparks(){
   const t=realNow(),c=S.cur||{};
   spark("kq",S.quakes.map(q=>q.time),S.quakes.map(q=>q.mag),COLS.q,t,0,7);
   spark("ks",S.sun.t,S.sun.speed,COLS.s,t,250,Math.max(700,...S.sun.speed.filter(Number.isFinite)));
-  if(S.ocean.length){const ts=S.ocean[0].ht;spark("ko",ts,ts.map(x=>oceanAt(x).h),COLS.o,t,0,6)}
+  if(S.ocean.length){const ts=S.ocean[0].ht;spark("ko",ts,ts.map(x=>oceanAt(x).h),COLS.o,t,0,6)}else spark("ko",[],[],COLS.o,t,0,1);
   spark("kx",S.xray.map(x=>x.t),S.xray.map(x=>Math.log10(x.v)),COLS.x,t,-8,-4);
-  if(S.jet.length){const ts=S.jet[0].t;spark("kw",ts,ts.map(x=>jetAvg(x)),COLS.w,t,40,300)}
-  if(S.tides.length)spark("kt",S.tides[0].t,S.tides[0].v,COLS.t,t,Math.min(...S.tides[0].v),Math.max(...S.tides[0].v));
-  if(S.temps.length){const ts=S.temps[0].t;spark("kc",ts,ts.map(x=>S.temps.reduce((a,o)=>a+(tsAt(o,x)||0),0)/S.temps.length),COLS.c,t,0,30)}
+  if(S.jet.length){const ts=S.jet[0].t;spark("kw",ts,ts.map(x=>jetAvg(x)),COLS.w,t,40,300)}else spark("kw",[],[],COLS.w,t,0,1);
+  if(S.tides.length)spark("kt",S.tides[0].t,S.tides[0].v,COLS.t,t,Math.min(...S.tides[0].v),Math.max(...S.tides[0].v));else spark("kt",[],[],COLS.t,t,0,1);
+  if(S.temps.length){const ts=S.temps[0].t;spark("kc",ts,ts.map(x=>S.temps.reduce((a,o)=>a+(tsAt(o,x)||0),0)/S.temps.length),COLS.c,t,0,30)}else spark("kc",[],[],COLS.c,t,0,1);
   {const ts=[...Array(60)].map((_,i)=>t-15*864e5+i*864e5/2);spark("km",ts,ts.map(x=>moon(x).illum),COLS.m,t,0,1)}
-  if(S.iss){const ts=[...Array(97)].map((_,i)=>t-12*36e5+i*15*6e4);spark("ki",ts,ts.map(x=>issAt(x).lat),COLS.i,t,-55,55)}
-  if(S.events.length){const ts=[...Array(49)].map((_,i)=>Date.now()-864e5*2+i*36e5);spark("ke",ts,ts.map(x=>S.events.filter(e=>e.start<=x).length),COLS.e,t,0,Math.max(10,S.events.length))}
-  if(S.dst.length)spark("kg",S.dst.map(d=>d.t),S.dst.map(d=>d.v),COLS.g,t,Math.min(-50,...S.dst.map(d=>d.v)),Math.max(20,...S.dst.map(d=>d.v)));
-  if(S.air.length){const ts=S.air[0].t;spark("ka",ts,ts.map(x=>airAt(x).pm),COLS.a,t,0,60)}
+  if(S.iss){const ts=[...Array(97)].map((_,i)=>t-12*36e5+i*15*6e4);spark("ki",ts,ts.map(x=>issAt(x).lat),COLS.i,t,-55,55)}else spark("ki",[],[],COLS.i,t,0,1);
+  if(S.events.length){const ts=[...Array(49)].map((_,i)=>Date.now()-864e5*2+i*36e5);spark("ke",ts,ts.map(x=>S.events.filter(e=>e.start<=x).length),COLS.e,t,0,Math.max(10,S.events.length))}else spark("ke",[],[],COLS.e,t,0,1);
+  if(S.dst.length)spark("kg",S.dst.map(d=>d.t),S.dst.map(d=>d.v),COLS.g,t,Math.min(-50,...S.dst.map(d=>d.v)),Math.max(20,...S.dst.map(d=>d.v)));else spark("kg",[],[],COLS.g,t,0,1);
+  if(S.air.length){const ts=S.air[0].t;spark("ka",ts,ts.map(x=>airAt(x).pm),COLS.a,t,0,60)}else spark("ka",[],[],COLS.a,t,0,1);
   {const ts=[...Array(97)].map((_,i)=>t-12*36e5+i*15*6e4),sp0=x=>{const sp=sunPos(x);return SUN_CITIES.filter(cc=>sunElev(cc[1],cc[2],sp)>0).reduce((a,cc)=>a+cc[3],0)};spark("ku",ts,ts.map(sp0),COLS.u,t,0,320)}
   const T=(id,h)=>{const e=$(id);if(e&&e._h!==h){e.innerHTML=h;e._h=h}},Tt=(id,s)=>{const e=$(id);if(e&&e.textContent!==s)e.textContent=s};
   // a late feed shows its last real reading and how old it is; a dash only when there has never been one

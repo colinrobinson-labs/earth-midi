@@ -215,9 +215,21 @@ async function refresh(full){
   const d=Object.entries(S.demo).filter(([,v])=>v).map(([k])=>DEMO_NAMES[k]||k);
   const late=[...LATE].filter(([n])=>!d.includes(n)),ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<90?m+" min":Math.round(m/60)+" h"};
   const lateNote=late.length?` · <span class="late" title="${late.map(([n,t])=>`${n}: reading from ${ago(t)} ago`).join("\n")}\nThe source didn't answer, so this plays its last real reading.">${late.length>2?"some readings":late.map(([n])=>n).join(", ")} delayed</span>`:"";
-  if(!S.frozen)$("dataState").innerHTML=(d.length?`<span class="dot dw"></span>${d.length>=13?"Live feeds unreachable, playing demo data":`${14-d.length} of 14 feeds live · ${d.length} on demo data`} <details class="dsrc"><summary>which</summary><span>${d.join(", ")} (source unreachable)</span></details>`:`<span class="dot"></span>14 live feeds · updated ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`)+lateNote;
+  // what the status line says: live, partly live, or demo. Demo and offline are spelled out, with a way to retry
+  const off=navigator.onLine===false,allDemo=d.length>=13,oldest=late.length?ago(Math.min(...late.map(([,t])=>t))):"";
+  document.body.classList.toggle("demo",allDemo&&!S.frozen);
+  const tag=$("demoTag");if(tag)tag.hidden=!(allDemo&&!S.frozen);
+  if(!S.frozen)$("dataState").innerHTML=allDemo?`<span class="dot dw"></span><b>${off?"You're offline.":"Can't reach the live feeds."}</b> Playing built-in demo data, not live readings. <button type="button" class="dsretry">Try again</button>`
+    :d.length?`<span class="dot dw"></span>${14-d.length} of 14 feeds live · ${d.length} on demo data <details class="dsrc"><summary>which</summary><span>${d.join(", ")} (source unreachable)</span></details>`+lateNote
+    :off?`<span class="dot dw"></span><b>You're offline.</b> Playing the last real readings this browser saved${oldest?`, the oldest from ${oldest} ago`:""}. <button type="button" class="dsretry">Try again</button>`
+    :`<span class="dot"></span>14 live feeds · updated ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`+lateNote;
   if(window.onData)onData();
 }
+
+// "Try again" on the status line, and an automatic retry the moment the connection comes back
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".dsretry");if(!b||b.disabled)return;b.disabled=true;b.textContent="Checking…";refresh(true)});
+addEventListener("online",()=>{if(!S.frozen)refresh(true)});
+addEventListener("offline",()=>{if(!S.frozen)refresh()});
 
 /* ================= time series helpers ================= */
 function at(ts,vs,t){if(!vs||!vs.length)return NaN;let lo=0,hi=ts.length-1;if(t<=ts[0])return vs[0];if(t>=ts[hi])return vs[hi];while(hi-lo>1){const m=(lo+hi)>>1;ts[m]<=t?lo=m:hi=m}
