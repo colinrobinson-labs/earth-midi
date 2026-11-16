@@ -45,5 +45,6 @@ export default [
   { files: ["scripts/**/*.js", "apps/apple/scripts/**/*.js"], languageOptions: { sourceType: "commonjs", ecmaVersion: "latest", globals: globals.node } },
   { files: ["**/*.mjs"], languageOptions: { sourceType: "module", ecmaVersion: "latest", globals: globals.node } },
   // these drive a real browser, and the callbacks they hand to it run inside the page
-  { files: ["tests/smoke.mjs", "tests/hostile.mjs", "apps/apple/scripts/*.js"], languageOptions: { globals: { ...globals.node, ...globals.browser, ...shared, axe: "readonly" } } },
+  { files: ["sw.js"], languageOptions: { sourceType: "script", ecmaVersion: "latest", globals: globals.serviceworker } },
+  { files: ["tests/smoke.mjs", "tests/hostile.mjs", "tests/keyboard-offline.mjs", "apps/apple/scripts/*.js"], languageOptions: { globals: { ...globals.node, ...globals.browser, ...shared, axe: "readonly" } } },
 ];
