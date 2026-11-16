@@ -6,10 +6,10 @@
    If leaving would throw away something you made in Zeus Mode (storms you're steering, a take being recorded),
    it asks first. Not on the title, because tapping the title plays notes. */
 "use strict";
-(()=>{
-const RM=matchMedia("(prefers-reduced-motion: reduce)");
-const css=document.createElement("style");
-css.textContent=`
+(() => {
+  const RM = matchMedia("(prefers-reduced-motion: reduce)");
+  const css = document.createElement("style");
+  css.textContent = `
 #homeBtn{position:fixed;z-index:35;left:max(16px,env(safe-area-inset-left,0px));bottom:16px;display:flex;align-items:center;gap:7px;height:38px;padding:0 14px 0 11px;
  border-radius:999px;border:1px solid var(--line2);background:rgba(11,16,22,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--fg);
  font:600 12.5px var(--mono);letter-spacing:.02em;box-shadow:0 8px 28px rgba(0,0,0,.45);cursor:pointer;
@@ -30,48 +30,112 @@ body.imm #homeBtn{display:none}
 #homeAsk .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 #homeAsk button{min-height:40px;padding:0 14px;border-radius:10px;font:500 13px var(--body);cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--fg)}
 #homeAsk button.go2{background:var(--fg);color:var(--bg);border-color:var(--fg)}`;
-document.head.appendChild(css);
+  document.head.appendChild(css);
 
-const b=document.createElement("button");b.id="homeBtn";b.type="button";
-b.setAttribute("aria-label","Back to the main view");b.title="Back to the main view";
-b.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h4.5v-5.5h3V20H18V9.5"/></svg><span>Home</span>`;
-document.body.appendChild(b);
+  const b = document.createElement("button");
+  b.id = "homeBtn";
+  b.type = "button";
+  b.setAttribute("aria-label", "Back to the main view");
+  b.title = "Back to the main view";
+  b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h4.5v-5.5h3V20H18V9.5"/></svg><span>Home</span>`;
+  document.body.appendChild(b);
 
-const head=document.querySelector("header");
-const god=()=>window.GOD&&window.GOD.on;
-function away(){const y=head?head.getBoundingClientRect().bottom:0;return y<-40||god()||!!(typeof CFG!=="undefined"&&CFG.zonesOn)}
-let shown=null;const sync=()=>{const a=away();if(a!==shown){shown=a;b.classList.toggle("show",a);b.tabIndex=a?0:-1}};
-addEventListener("scroll",sync,{passive:true});setInterval(sync,400);sync();
+  const head = document.querySelector("header");
+  const god = () => window.GOD && window.GOD.on;
+  function away() {
+    const y = head ? head.getBoundingClientRect().bottom : 0;
+    return y < -40 || god() || !!(typeof CFG !== "undefined" && CFG.zonesOn);
+  }
+  let shown = null;
+  const sync = () => {
+    const a = away();
+    if (a !== shown) {
+      shown = a;
+      b.classList.toggle("show", a);
+      b.tabIndex = a ? 0 : -1;
+    }
+  };
+  addEventListener("scroll", sync, { passive: true });
+  setInterval(sync, 400);
+  sync();
 
-// what would be thrown away by leaving right now
-function losses(){const G=window.GOD,L=[];if(!G||!G.on)return L;
-  if(G.rec)L.push("the Zeus take you're recording stops (you can still export it next time you open Zeus Mode)");
-  if(G.storms&&G.storms.length)L.push(`your ${G.storms.length===1?"storm":G.storms.length+" storms"} and the sandbox weather disappear`);
-  else if(G.last)L.push("the sandbox weather you made resets");
-  if(G.replay)L.push("the take that's replaying stops");
-  return L}
+  // what would be thrown away by leaving right now
+  function losses() {
+    const G = window.GOD,
+      L = [];
+    if (!G || !G.on) return L;
+    if (G.rec) L.push("the Zeus take you're recording stops (you can still export it next time you open Zeus Mode)");
+    if (G.storms && G.storms.length)
+      L.push(`your ${G.storms.length === 1 ? "storm" : G.storms.length + " storms"} and the sandbox weather disappear`);
+    else if (G.last) L.push("the sandbox weather you made resets");
+    if (G.replay) L.push("the take that's replaying stops");
+    return L;
+  }
 
-function ask(L,go){let d=$("homeAsk");if(!d){d=document.createElement("dialog");d.id="homeAsk";d.setAttribute("aria-labelledby","homeAskH");document.body.appendChild(d)}
-  d.innerHTML=`<h3 id="homeAskH">You'll lose this. Leave anyway?</h3><p></p><div class="row"><button type="button" data-a="stay">Stay</button><button type="button" class="go2" data-a="go">Leave anyway</button></div>`;
-  d.querySelector("p").textContent="Going home leaves Zeus Mode: "+L.join(", and ")+".";
-  const shut=()=>{d.close?d.close():d.removeAttribute("open")};
-  d.querySelector('[data-a="stay"]').onclick=shut;
-  d.querySelector('[data-a="go"]').onclick=()=>{shut();go()};
-  if(d.showModal)d.showModal();else d.setAttribute("open","");d.querySelector('[data-a="stay"]').focus()}
+  function ask(L, go) {
+    let d = $("homeAsk");
+    if (!d) {
+      d = document.createElement("dialog");
+      d.id = "homeAsk";
+      d.setAttribute("aria-labelledby", "homeAskH");
+      document.body.appendChild(d);
+    }
+    d.innerHTML = `<h3 id="homeAskH">You'll lose this. Leave anyway?</h3><p></p><div class="row"><button type="button" data-a="stay">Stay</button><button type="button" class="go2" data-a="go">Leave anyway</button></div>`;
+    d.querySelector("p").textContent = "Going home leaves Zeus Mode: " + L.join(", and ") + ".";
+    const shut = () => {
+      d.close ? d.close() : d.removeAttribute("open");
+    };
+    d.querySelector('[data-a="stay"]').onclick = shut;
+    d.querySelector('[data-a="go"]').onclick = () => {
+      shut();
+      go();
+    };
+    if (d.showModal) d.showModal();
+    else d.setAttribute("open", "");
+    d.querySelector('[data-a="stay"]').focus();
+  }
 
-function home(){
-  const G=window.GOD;if(G&&G.on&&G.set)G.set(false);
-  if(typeof CFG!=="undefined"&&CFG.zonesOn){const z=$("znBtn");z&&z.click()}
-  if(document.body.classList.contains("imm")){const i=$("immBtn");i&&i.click()}
-  [["pro","bPro"],["exp","bExp"]].forEach(([p,bt])=>{const s=$(p),x=$(bt);if(s&&!s.hidden){s.hidden=true;x&&x.setAttribute("aria-expanded","false")}});
-  const how=$("how");if(how)how.open=false;
-  const sh=$("sheetHead");if(sh)for(let i=0;i<2;i++)sh.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape"}));
-  if(typeof VIEW!=="undefined"){VIEW.zoom=1;VIEW.lastInteract=0}
-  try{if(location.hash&&location.hash!=="#")history.replaceState(null,"",location.pathname+location.search)}catch(_){}
-  scrollTo({top:0,behavior:RM.matches?"auto":"smooth"});
-  if((window.EMRec&&EMRec.capturing)||(typeof REC!=="undefined"&&REC))xs("Back home. Still recording");
-  b.blur()}
+  function home() {
+    const G = window.GOD;
+    if (G && G.on && G.set) G.set(false);
+    if (typeof CFG !== "undefined" && CFG.zonesOn) {
+      const z = $("znBtn");
+      z && z.click();
+    }
+    if (document.body.classList.contains("imm")) {
+      const i = $("immBtn");
+      i && i.click();
+    }
+    [
+      ["pro", "bPro"],
+      ["exp", "bExp"],
+    ].forEach(([p, bt]) => {
+      const s = $(p),
+        x = $(bt);
+      if (s && !s.hidden) {
+        s.hidden = true;
+        x && x.setAttribute("aria-expanded", "false");
+      }
+    });
+    const how = $("how");
+    if (how) how.open = false;
+    const sh = $("sheetHead");
+    if (sh) for (let i = 0; i < 2; i++) sh.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    if (typeof VIEW !== "undefined") {
+      VIEW.zoom = 1;
+      VIEW.lastInteract = 0;
+    }
+    try {
+      if (location.hash && location.hash !== "#") history.replaceState(null, "", location.pathname + location.search);
+    } catch (_) {}
+    scrollTo({ top: 0, behavior: RM.matches ? "auto" : "smooth" });
+    if ((window.EMRec && EMRec.capturing) || (typeof REC !== "undefined" && REC)) xs("Back home. Still recording");
+    b.blur();
+  }
 
-b.addEventListener("click",()=>{const L=losses();L.length?ask(L,home):home()});
-window.EMHome=home;
+  b.addEventListener("click", () => {
+    const L = losses();
+    L.length ? ask(L, home) : home();
+  });
+  window.EMHome = home;
 })();
