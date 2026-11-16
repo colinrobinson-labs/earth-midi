@@ -139,7 +139,7 @@ const fmtLL=(lo,la)=>`${Math.abs(la).toFixed(1)}°${la>=0?"N":"S"} ${Math.abs(lo
 const overLand=(lo,la)=>{const px=window.LANDPX;if(!px)return null;const x=clamp(Math.floor((lo+180)/360*720),0,719),y=clamp(Math.floor((90-la)/180*360),0,359);return px[(y*720+x)*4]>128};
 function wxLegend(force){const el=$("wxl");if(!el)return;el.hidden=!CFG.weather;if(!CFG.weather)return;
   const h=WX.ok?`<div class="wxg"><i></i><span>wind 0</span><span>25</span><span>45+ km/h</span></div><div class="wxk"><span><i class="c"></i>cloud</span><span><i class="r"></i>rain</span><span><i class="h"></i>heavy</span></div><div class="wxs">${WX.src==="weatherkit"?"Apple Weather":"Open-Meteo model"} · 15° grid · ${new Date(WX.at).toISOString().slice(11,16)} UTC</div><div class="wxa" data-wk hidden></div><div class="wxh" id="wxh"></div>`
-    :`<div class="wxs">${WX.err||"loading live weather…"}</div>`;if(force||el._h!==h){el.innerHTML=h;el._h=h;wkSync()}}
+    :`<div class="wxs">${esc(WX.err||"loading live weather…")}</div>`;if(force||el._h!==h){el.innerHTML=h;el._h=h;wkSync()}}
 function wxLine(s){return `wind ${Math.round(s.ws)} km/h from ${dirName(s.wd)} · cloud ${Math.round(s.c)}% · ${s.p>=.05?`rain ${s.p.toFixed(1)} mm/h`:"dry"} · ${Math.round(s.T)}°C`}
 
 /* ---------- sound: one gust, one tone, rain drops, on the Jet stream bus + MIDI ---------- */
@@ -176,8 +176,8 @@ window.wxTap=function(e,r){if(!CFG.weather||!WX.ok)return false;const ll=invProj
   if(wk)return true;
   getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lon.toFixed(2)}&current=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&timezone=GMT`,12000).then(j=>{
     if(id!==wxReq||tip.style.display==="none")return;const c=j.current;if(!c)return;const x={ws:c.wind_speed_10m,wd:c.wind_direction_10m,c:c.cloud_cover,p:c.precipitation,T:c.temperature_2m};
-    const nowL=`<b>${WMO[c.weather_code]||"now"}</b>${Number.isFinite(c.wind_gusts_10m)?` · gusts ${Math.round(c.wind_gusts_10m)} km/h`:""}<br>${wxLine(x)}`;
-    tip.innerHTML=Math.abs(Date.now()-t)>18e5?`${head}<br>${wxLine(s)}<br><small>model grid at ${new Date(t).toISOString().slice(11,16)} UTC (replay) → ${noteName(n)}</small><br>right now here: ${nowL}`:`${head}<br>${nowL}<br><small>this exact point, ${String(c.time).slice(11,16)} UTC → ${noteName(n)}</small>`}).catch(()=>{});
+    const nowL=`<b>${hasOwn(WMO,c.weather_code)?WMO[c.weather_code]:"now"}</b>${Number.isFinite(c.wind_gusts_10m)?` · gusts ${Math.round(c.wind_gusts_10m)} km/h`:""}<br>${wxLine(x)}`;
+    tip.innerHTML=Math.abs(Date.now()-t)>18e5?`${head}<br>${wxLine(s)}<br><small>model grid at ${new Date(t).toISOString().slice(11,16)} UTC (replay) → ${noteName(n)}</small><br>right now here: ${nowL}`:`${head}<br>${nowL}<br><small>this exact point, ${esc(String(c.time).slice(11,16))} UTC → ${noteName(n)}</small>`}).catch(()=>{});
   return true};
 cv.addEventListener("pointermove",e=>{if(e.pointerType==="touch"||!CFG.weather||!WX.ok||VIEW.drag)return;const now=performance.now();if(now-WX.hoverAt<60)return;WX.hoverAt=now;const h=$("wxh");if(!h)return;
   const r=cv.getBoundingClientRect(),ll=invProj((e.clientX-r.left)*DPR,(e.clientY-r.top)*DPR);if(!ll){h.textContent="";return}wxField(realNow());h.textContent=`${fmtLL(ll[0],ll[1])} · ${wxLine(wxSample(ll[0],ll[1]))}`});

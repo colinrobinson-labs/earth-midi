@@ -3,8 +3,9 @@
 //   npm i --no-save playwright axe-core && node tests/smoke.mjs
 import { chromium, devices } from "playwright";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 const require = createRequire(import.meta.url);
-const AXE = require.resolve("axe-core/axe.min.js");
+const AXE = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 const SITE = (process.env.SITE || "http://localhost:8765/").replace(/\/?$/, "/");
 const PAGES = ["", "support.html", "press.html", "whats-new.html", "privacy.html", "404.html", "#simple", "#embed"];
 const VIEWS = { phone: devices["iPhone 13"], desktop: { viewport: { width: 1440, height: 900 } } };
@@ -33,7 +34,7 @@ for (const [view, opts] of Object.entries(VIEWS)) {
         const w = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
         if (w[0] > w[1] + 1) errs.push(`page scrolls sideways (${w[0]}px wide in a ${w[1]}px window)`);
       }
-      await page.addScriptTag({ path: AXE });
+      await page.evaluate(AXE); // run in the page directly: the site's policy refuses injected script tags, as it should
       const v = await page.evaluate(async () => (await axe.run(document, { resultTypes: ["violations"] })).violations
         .filter(x => x.impact === "serious" || x.impact === "critical").map(x => `${x.impact} ${x.id}: ${x.help} (${x.nodes.slice(0, 2).map(n => n.target.join(" ")).join("; ")})`));
       errs.push(...v.map(x => "accessibility: " + x));
