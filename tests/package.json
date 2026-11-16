@@ -1,0 +1,10 @@
+{
+  "name": "earth-midi-tests",
+  "private": true,
+  "description": "Browser test tools for the site checks. Installed in CI with npm ci, never shipped with the site.",
+  "type": "module",
+  "devDependencies": {
+    "axe-core": "4.10.2",
+    "playwright": "1.63.0"
+  }
+}
