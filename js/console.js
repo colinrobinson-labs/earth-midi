@@ -438,7 +438,7 @@ let tip=null;
 function tipHide(){if(tip){tip.remove();tip=null}try{localStorage.setItem(SEEN,"1")}catch(_){}}
 function tipShow(){if(tip||open_||seen)return;
   tip=document.createElement("div");tip.className="vtip";tip.setAttribute("role","dialog");tip.setAttribute("aria-label","Try the Console");
-  tip.innerHTML=`<span class="gi">${ic("mixer")}</span><b>Tablet screen detected</b><p>Console puts all 13 layer faders, Sound, Pulse and Master on one screen, built for fingers. Switch back any time with <b style="font:inherit;color:var(--fg)">Globe</b>.</p>
+  tip.innerHTML=`<span class="gi">${ic("mixer")}</span><b>Tablet screen detected</b><p>Console puts all 13 layer faders, Sound, Pulse and Master on one screen, built for fingers. Switch back with <b style="font:inherit;color:var(--fg)">Globe</b>.</p>
    <div class="va"><button type="button" class="pri" data-t="try">Try Console</button><button type="button" data-t="always">Always start in Console</button><button type="button" class="nn" data-t="no">Not now</button></div>`;
   tip.onclick=e=>{const b=e.target.closest("[data-t]");if(!b)return;const t=b.dataset.t;tipHide();if(t==="always")setStart("console");if(t!=="no")open();else xs("Console is always one tap away: Globe | Console, top right")};
   document.body.appendChild(tip)}

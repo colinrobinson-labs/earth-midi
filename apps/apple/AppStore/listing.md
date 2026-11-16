@@ -7,12 +7,12 @@
 **Privacy label:** Data Not Collected.
 
 ## Description
-Earth MIDI turns the living planet into music, live.
+Earth MIDI is the planet, played live.
 
 Every earthquake rings a bell, pitched by its depth and struck as hard as its magnitude. The solar wind
 sweeps a synth pad, ocean swell breathes at its real wave period, tides bend a drone, the jet stream howls,
 and ten cities sing a chord tuned to their temperature right now. When the sun flares, bells ring.
-The planet's magnetic weather even picks the musical scale.
+The planet's magnetic weather picks the scale.
 
 • Live: hear events as the sensors publish them, or replay the last 24 hours in three minutes
 • Ambient or Pulse: a drifting soundscape, or drums and bass driven by the solar wind
