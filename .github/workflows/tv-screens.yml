@@ -5,10 +5,11 @@ on:
   workflow_dispatch:
   push:
     branches: ["claude/**"]
-    paths: ["apps/apple/TV/**", "apps/apple/Shared/Synth/**", ".github/workflows/tv-screens.yml"]
+    paths: ["apps/apple/TV/**", "apps/apple/Shared/Synth/**"]
 
+# The build job can only read the repo. Only the small job that commits the pictures can write to it.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: tv-screens-${{ github.ref }}
@@ -19,7 +20,9 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build for the simulator
         working-directory: apps/apple
         run: |
@@ -55,18 +58,39 @@ jobs:
           shot 11-about -uiScreen about
           WAIT=18 shot 12-home-idle -uiPlay YES -uiIdle YES
           ls -la shots
-      - name: Save 1920x1080 copies to the branch (App Store size)
-        if: startsWith(github.ref, 'refs/heads/claude/')
+      - name: Make 1920x1080 copies (App Store size)
         working-directory: apps/apple
         run: |
-          OUT=AppStore/screenshots/tv-1.1; mkdir -p "$OUT"
-          for f in shots/*.png; do sips -z 1080 1920 "$f" --out "$OUT/$(basename "$f")" >/dev/null; done
-          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$OUT"; git diff --cached --quiet && exit 0
-          git commit -m "Apple TV simulator screenshots [skip ci]"
-          git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"
-      - uses: actions/upload-artifact@v4.6.2
+          mkdir -p store
+          for f in shots/*.png; do sips -z 1080 1920 "$f" --out "store/$(basename "$f")" >/dev/null; done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: tv-screens
           path: apps/apple/shots
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tv-screens-1080
+          path: apps/apple/store
+
+  save:
+    name: Save the App Store copies to the branch
+    needs: shots
+    if: startsWith(github.ref, 'refs/heads/claude/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: tv-screens-1080
+          path: apps/apple/AppStore/screenshots/tv-1.1
+      - name: Commit and push
+        run: |
+          OUT=apps/apple/AppStore/screenshots/tv-1.1
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$OUT"; git diff --cached --quiet && exit 0
+          git commit -m "Apple TV simulator screenshots [skip ci]"
+          git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"

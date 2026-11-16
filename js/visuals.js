@@ -103,13 +103,13 @@ let HOVER=null;
 function pickAt(px,py){let best=null,bd=(IS_MOBILE?24:14)*DPR;const T=(o,lon,lat,extra)=>{const[x,y,v]=proj(lon,lat);if(v<=0)return;const d=Math.hypot(x-px,y-py);if(d<bd){bd=d;best=Object.assign({o},extra||{})}};
   S.quakes.forEach(q=>{if(S.on&&!S.played.has(q.id))return;T(q,q.lon,q.lat,{type:"q"})});S.ocean.forEach(o=>T(o,o.lon,o.lat,{type:"o"}));S.events.forEach(e=>T(e,e.lon,e.lat,{type:"e"}));S.temps.forEach((o,i)=>T(o,o.lon,o.lat,{type:"c",i}));
   if(S.iss){const p=issAt(realNow());if(p)T(p,p.lon,p.lat,{type:"i"})}S.tides.forEach(o=>T(o,o.lon,o.lat,{type:"t"}));return best}
-function tipHTML(b){const t=realNow(),o=b.o,E=s=>String(s).replace(/[<&]/g,m=>m==="<"?"&lt;":"&amp;");
+function tipHTML(b){const t=realNow(),o=b.o,E=esc,hex=c=>/^#[0-9a-f]{3,8}$/i.test(c)?c:"#d9dce6";
   if(b.type==="q")return `<b style="color:#ff5a3c">M${o.mag.toFixed(1)}</b> ${E(o.place)}<br>${Math.round(o.depth)} km deep · ${new Date(o.time).toISOString().slice(11,16)} UTC<br>→ ${noteName(quakeNote(o).note)} · tap to hear it`;
-  if(b.type==="o")return `<b style="color:#3cc8ff">${o.name}</b><br>waves ${o.h.toFixed(1)} m · period ${o.p.toFixed(1)} s`;
-  if(b.type==="e")return `<b style="color:${o.col}">${E(o.kind)}</b> ${E(o.title)}<br>since ${new Date(o.start).toISOString().slice(0,10)}${o.mag?` · ${o.mag} ${E(o.magU||"")}`:""}<br><small>NASA EONET</small>`;
-  if(b.type==="c"){const a=S.air[b.i];return `<b style="color:#ff8fd1">${o.name}</b> ${tsAt(o,t).toFixed(1)}°C${a?`<br>PM2.5 ${at(a.t,a.pm,t).toFixed(0)} µg/m³ · UV ${at(a.t,a.uv,t).toFixed(1)}`:""}`}
+  if(b.type==="o")return `<b style="color:#3cc8ff">${E(o.name)}</b><br>waves ${o.h.toFixed(1)} m · period ${o.p.toFixed(1)} s`;
+  if(b.type==="e")return `<b style="color:${hex(o.col)}">${E(o.kind)}</b> ${E(o.title)}<br>since ${new Date(o.start).toISOString().slice(0,10)}${o.mag?` · ${E(o.mag)} ${E(o.magU||"")}`:""}<br><small>NASA EONET</small>`;
+  if(b.type==="c"){const a=S.air[b.i];return `<b style="color:#ff8fd1">${E(o.name)}</b> ${tsAt(o,t).toFixed(1)}°C${a?`<br>PM2.5 ${at(a.t,a.pm,t).toFixed(0)} µg/m³ · UV ${at(a.t,a.uv,t).toFixed(1)}`:""}`}
   if(b.type==="i")return `<b>International Space Station</b><br>${o.lat.toFixed(1)}°, ${o.lon.toFixed(1)}° · ${Math.round(o.alt)} km up<br>${S.cur.issLit?"in sunlight":"in Earth's shadow"}`;
-  if(b.type==="t")return `<b style="color:#4dd6c1">${o.name}</b> tide gauge<br>${tsAt(o,t).toFixed(2)} m above MLLW`;return ""}
+  if(b.type==="t")return `<b style="color:#4dd6c1">${E(o.name)}</b> tide gauge<br>${tsAt(o,t).toFixed(2)} m above MLLW`;return ""}
 const ptr=new Map();let pinch0=0,zoom0=1;
 cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);VIEW.lastInteract=performance.now();
   if(ptr.size===2){const [a,b]=[...ptr.values()];pinch0=Math.hypot(a[0]-b[0],a[1]-b[1]);zoom0=VIEW.zoom;VIEW.drag=null}else VIEW.drag={x:e.clientX,y:e.clientY,lon:VIEW.lon,lat:VIEW.lat,moved:0}});

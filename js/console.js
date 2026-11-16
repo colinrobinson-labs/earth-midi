@@ -357,7 +357,7 @@ function loop(now){if(!open_)return;requestAnimationFrame(loop);if(document.hidd
   if(now-t1<200)return;t1=now;syncAll(false);
   const b=$("cnBpm"),pulse=S.style==="pulse",bpm=curBpm();if(b)b.textContent=bpm.toFixed(1);
   const gs=$("cnGState");if(gs)gs.textContent=live&&pulse?"live":pulse?"press play":"resting";
-  const rd=$("cnRd");if(rd){const g=GENRE_BY[CFG.genre],h=`<span class="rk">${KEYS[CFG.key]} ${scName()}</span>${pulse?`<span><b>${bpm.toFixed(1)}</b> BPM</span>${g?`<span class="rk">${g.name}</span>`:""}`:""}<span>${PAN_KEYS.filter(k=>!muted(k)).length}/13 on</span>`;if(rd._h!==h){rd.innerHTML=h;rd._h=h}}}
+  const rd=$("cnRd");if(rd){const g=GENRE_BY[CFG.genre],h=`<span class="rk">${esc(KEYS[CFG.key])} ${esc(scName())}</span>${pulse?`<span><b>${bpm.toFixed(1)}</b> BPM</span>${g?`<span class="rk">${g.name}</span>`:""}`:""}<span>${PAN_KEYS.filter(k=>!muted(k)).length}/13 on</span>`;if(rd._h!==h){rd.innerHTML=h;rd._h=h}}}
 
 /* ---------- input ---------- */
 const drags=new Map();
