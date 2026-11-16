@@ -150,18 +150,37 @@ function exportEventsCsv(){if(!EVENTS.length){xs("Nothing yet: press PLAY and le
 function saveSession(){const snap={app:"Earth MIDI",version:VERSION,credit:CREDIT,license:LICENSE,sources:SOURCES(),saved:new Date().toISOString(),endT:S.endT||Date.now(),style:S.style,mode:S.mode,cfg:CFG,
     data:{quakes:S.quakes,sun:S.sun,kp:S.kp,dst:S.dst,protons:S.protons,xray:S.xray,ocean:S.ocean,jet:S.jet,temps:S.temps,air:S.air,tides:S.tides,events:S.events,iss:S.iss,demo:S.demo}};
   download(`earth-midi-session_${stamp()}.json`,new Blob([JSON.stringify(snap)],{type:"application/json"}));xs("Session saved: settings + exact data, replays identically")}
-async function loadFile(f){try{const j=JSON.parse(await f.text());if(j.app!=="Earth MIDI")throw new Error("not an Earth MIDI file");
-  if(j.preset){CFG=mergeCFG(j.cfg);if(j.style)setStyle(j.style);afterCFG();xs(`Preset loaded: ${j.name||"preset"}`);return}
-  if(!j.data)throw new Error("no data in file");Object.assign(S,j.data);S.endT=j.endT;S.frozen=true;CFG=mergeCFG(j.cfg);setStyle(j.style||"ambient");afterCFG();
+/* A session file carries feed readings and nothing else. Only those fields are copied, and only plain rows:
+   numbers, short text and lists of numbers. Rows missing the numbers the map and synth need are dropped. */
+const SESSION_ROWS={quakes:["mag","depth","time","lat","lon"],kp:["t","v"],dst:["t","v"],protons:["t","v"],xray:["t","v"],ocean:["lat","lon","h","p"],jet:["lat","lon"],temps:["lat","lon"],air:["lat","lon"],tides:["lat","lon"],events:["lat","lon","start"]};
+const SUN_SERIES=["speed","density","bz","bt","t","mt"];
+function fitRow(r){if(!isObj(r))return null;const o={};
+  for(const k of Object.keys(r)){if(!/^[A-Za-z]\w{0,23}$/.test(k)||k==="constructor"||k==="prototype")continue;const v=r[k];
+    if(v===null||typeof v==="boolean"||(typeof v==="number"&&Number.isFinite(v)))o[k]=v;
+    else if(typeof v==="string")o[k]=v.slice(0,300);
+    else if(Array.isArray(v))o[k]=v.slice(0,20000).map(x=>typeof x==="number"&&Number.isFinite(x)?x:null);}
+  return o}
+function fitSession(d){if(!isObj(d))throw new Error("no data in file");const out={};
+  for(const [k,need] of Object.entries(SESSION_ROWS))out[k]=(Array.isArray(d[k])?d[k]:[]).slice(0,20000).map(fitRow).filter(r=>r&&need.every(n=>typeof r[n]==="number"));
+  const sun=fitRow(d.sun)||{};out.sun=Object.fromEntries(SUN_SERIES.map(k=>[k,Array.isArray(sun[k])?sun[k].map(v=>v===null?NaN:v):[]]));
+  out.iss=fitRow(d.iss);if(out.iss&&!["epoch","inc","raan","ecc","argp","M","n"].every(k=>typeof out.iss[k]==="number"))out.iss=null;
+  out.demo={};if(isObj(d.demo))for(const k of Object.keys(d.demo))if(/^[a-z]{1,4}$/.test(k))out.demo[k]=d.demo[k]===true;
+  return out}
+async function loadFile(f){try{const j=JSON.parse(await f.text());if(!isObj(j)||j.app!=="Earth MIDI")throw new Error("not an Earth MIDI file");
+  if(j.preset){CFG=mergeCFG(j.cfg);if(fitStyle(j.style))setStyle(j.style);afterCFG();xs(`Preset loaded: ${typeof j.name==="string"?j.name.slice(0,80):"preset"}`);return}
+  if(!j.data)throw new Error("no data in file");if(typeof j.endT!=="number"||!(Math.abs(j.endT)<8e15))throw new Error("no end time in file");
+  Object.assign(S,fitSession(j.data));S.endT=j.endT;S.frozen=true;CFG=mergeCFG(j.cfg);setStyle(fitStyle(j.style)||"ambient");afterCFG();
   $("dataState").innerHTML=`<span class="dot" style="background:var(--s);box-shadow:0 0 8px var(--s)"></span>saved session · ${new Date(j.endT-864e5).toISOString().slice(0,16)} → ${new Date(j.endT).toISOString().slice(0,16)} UTC`;
   if(S.on)startStop();xs("Session loaded. Press PLAY to replay it exactly")}catch(err){xs("Couldn't load: "+err.message)}}
 const shareURL=()=>(location.protocol==="https:"?location.origin+location.pathname:"https://earthmidi.com/")+"#s="+btoa(unescape(encodeURIComponent(JSON.stringify({cfg:CFG,style:S.style,mode:+$("mode").value}))));
 async function shareLink(){const u=shareURL();history.replaceState(null,"",u.slice(u.indexOf("#")));
   if(navigator.share&&IS_MOBILE){try{await navigator.share({title:"Earth MIDI",text:"The planet as an instrument, with my settings",url:u});return}catch(_){}}
   try{await navigator.clipboard.writeText(u);xs("Link copied: opens with your settings on live data")}catch(_){EMAsk.copy({title:"Copy this link",text:u})}}
-function readHash(){const m=location.hash.match(/#s=([^&]+)/);if(!m)return false;try{const j=JSON.parse(decodeURIComponent(escape(atob(m[1]))));CFG=mergeCFG(j.cfg);if(j.style)setStyle(j.style);if(j.mode!=null)$("mode").value=String(j.mode);return true}catch(_){return false}}
+function readHash(){const m=location.hash.match(/#s=([^&]+)/);if(!m)return false;try{const j=JSON.parse(decodeURIComponent(escape(atob(m[1]))));if(!isObj(j))return false;CFG=mergeCFG(j.cfg);if(fitStyle(j.style))setStyle(j.style);if(typeof j.mode==="number"&&Number.isFinite(j.mode))$("mode").value=String(j.mode);return true}catch(_){return false}}
+// the groove, genre and tempo tables exist by now, so re-check the settings that were read from this browser before they loaded
+CFG=mergeCFG(CFG);
 // user presets in this browser + preset files
-let UPRE={};try{UPRE=JSON.parse(localStorage.getItem("em5.presets")||"{}")}catch(_){}
+let UPRE={};try{const j=JSON.parse(localStorage.getItem("em5.presets")||"{}");if(isObj(j))for(const n of Object.keys(j))if(isObj(j[n])&&n!=="__proto__")UPRE[n.slice(0,80)]={cfg:mergeCFG(j[n].cfg),style:fitStyle(j[n].style)||undefined}}catch(_){}
 async function saveUserPreset(){const n=await EMAsk.text({title:"Name this preset",label:"Preset name",hint:"Saved in this browser. Use Export preset to move it to another device."});if(!n)return;
   if(Object.prototype.hasOwnProperty.call(UPRE,n)&&!await EMAsk.confirm({title:`Replace “${n}”?`,body:"You already have a preset with that name.",ok:"Replace",cancel:"Keep the old one"}))return;
   UPRE[n]={cfg:clone(CFG),style:S.style};try{localStorage.setItem("em5.presets",JSON.stringify(UPRE))}catch(_){}renderPresets();xs(`Saved preset “${n}”`)}
@@ -176,5 +195,5 @@ const LEDGER={};let AI_HITS=0,REQS=0;
 function ledgerAdd(name,size){let h;try{h=new URL(name).host}catch(_){return}if(h===location.host)return;REQS++;if(AI_RX.test(h))AI_HITS++;const L=LEDGER[h]=LEDGER[h]||{n:0,b:0};L.n++;L.b+=size||0;renderLedger()}
 try{new PerformanceObserver(l=>l.getEntries().forEach(e=>ledgerAdd(e.name,e.transferSize))).observe({type:"resource",buffered:true})}catch(_){}
 let ledT=0;function renderLedger(){clearTimeout(ledT);ledT=setTimeout(()=>{const el=$("ledger");if(!el)return;
-  el.innerHTML=Object.entries(LEDGER).sort((a,b)=>b[1].n-a[1].n).map(([h,v])=>{const k=HOSTS[h];return `<li><b>${k?k[0]:h}</b><span>${k?k[1]:"other"}</span><em>${v.n}×</em><i class="${AI_RX.test(h)?"bad":"ok"}">${AI_RX.test(h)?"AI SERVICE":"not AI"}</i></li>`}).join("");
+  el.innerHTML=Object.entries(LEDGER).sort((a,b)=>b[1].n-a[1].n).map(([h,v])=>{const k=HOSTS[h];return `<li><b>${k?k[0]:esc(h)}</b><span>${k?k[1]:"other"}</span><em>${v.n}×</em><i class="${AI_RX.test(h)?"bad":"ok"}">${AI_RX.test(h)?"AI SERVICE":"not AI"}</i></li>`}).join("");
   $("aiHits").textContent=AI_HITS;$("aiHits2").textContent=AI_HITS;$("reqs").textContent=REQS;$("hosts").textContent=Object.keys(LEDGER).length},200)}

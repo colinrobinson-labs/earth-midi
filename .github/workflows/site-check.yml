@@ -1,5 +1,5 @@
 # Opens every page on a phone and a desktop in a real browser, presses Play, and fails on script errors
-# or serious accessibility problems. Runs on every pull request and every push to a work branch.
+# or serious accessibility problems, then feeds it junk share links and files and fails if any of it gets through. Runs on every pull request and every push to a work branch.
 name: Site check
 
 on:
@@ -21,17 +21,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
       - name: Syntax check
         run: for f in js/*.js sw.js scripts/*.mjs tests/*.mjs; do node --check "$f" || exit 1; done
       - name: WeatherKit switch (offline)
         run: node tests/weatherkit.test.mjs
-      - name: Install browser
+      - name: Install browser (exact versions from tests/package-lock.json)
+        working-directory: tests
         run: |
-          npm i --no-save playwright@1.49.1 axe-core@4.10.2
+          npm ci
           npx playwright install --with-deps chromium
       - name: Build the site like the deploy does
         run: |
@@ -44,3 +47,5 @@ jobs:
           sleep 1
           node tests/smoke.mjs
           node tests/keyboard-offline.mjs
+      - name: Hostile input test
+        run: node tests/hostile.mjs
