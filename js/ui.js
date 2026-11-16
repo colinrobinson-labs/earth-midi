@@ -224,7 +224,7 @@ function boot(){
   $("bShare").onclick=shareLink;$("bCredit").onclick=copyCredit;$("bPack").onclick=exportDataPack;$("bPackMid").onclick=exportDataMidOnly;
   document.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>{const t=$(b.dataset.jump);if(t.hidden){t.hidden=false;const x=$(t.id==="pro"?"bPro":"bExp");x&&x.setAttribute("aria-expanded","true")}t.scrollIntoView({behavior:"smooth",block:"start"})});
   document.querySelectorAll('a[href="#how"]').forEach(l=>l.addEventListener("click",()=>{$("how").open=true}));if(location.hash==="#how")$("how").open=true;
-  addEventListener("keydown",e=>{if(e.target.matches("input,select,textarea"))return;if(e.code==="Space"){e.preventDefault();startStop()}else if(e.key==="g")document.querySelector('[data-view="globe"]').click();else if(e.key==="f")document.querySelector('[data-view="flat"]').click();else if(e.key==="p")setStyle(S.style==="pulse"?"ambient":"pulse")});
+  addEventListener("keydown",e=>{if(e.target.matches("input,select,textarea"))return;if(e.code==="Space"){if(e.target.closest('button,a[href],summary,[role="button"],[role="tab"],dialog'))return;/* Space on a focused control presses that control */e.preventDefault();startStop()}else if(e.key==="g")document.querySelector('[data-view="globe"]').click();else if(e.key==="f")document.querySelector('[data-view="flat"]').click();else if(e.key==="p")setStyle(S.style==="pulse"?"ambient":"pulse")});
   if(fromHash){$("pro").hidden=false;$("bPro").setAttribute("aria-expanded","true")}
   if(IS_MOBILE){VIEW.zoom=.98}
   sizeMap();afterCFG(true);loadLand();refresh(true);requestAnimationFrame(frame);
