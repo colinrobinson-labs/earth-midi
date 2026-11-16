@@ -31,15 +31,26 @@ jobs:
         run: node tests/weatherkit.test.mjs
       - name: Install browser
         run: |
-          npm i --no-save playwright@1.49.1 axe-core@4.10.2
+          npm i --no-save playwright@1.49.1 axe-core@4.10.2 esbuild@0.28.2
           npx playwright install --with-deps chromium
+      # two copies: _site is what the deploy publishes (home page minified by scripts/minify.mjs),
+      # _plain is the site as it is in the repo, which is what the Apple apps bundle and what ships if minifying ever fails
       - name: Build the site like the deploy does
         run: |
           mkdir _site && git archive HEAD | tar -x -C _site
           rm -rf _site/.github _site/scripts _site/docs _site/tests _site/apps
+          cp -r _site _plain
+          node scripts/minify.mjs _site
+          grep -q '<script defer src="js/core.js"' _site/index.html || { echo "The home page was not minified"; exit 1; }
           node scripts/stamp.mjs _site
-      - name: Smoke test
+          node scripts/stamp.mjs _plain
+      - name: Smoke test (as deployed)
         run: |
           (cd _site && python3 -m http.server 8765 >/dev/null 2>&1 &)
           sleep 1
           node tests/smoke.mjs
+      - name: Smoke test (as in the repo)
+        run: |
+          (cd _plain && python3 -m http.server 8766 >/dev/null 2>&1 &)
+          sleep 1
+          SITE=http://localhost:8766/ node tests/smoke.mjs

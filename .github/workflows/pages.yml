@@ -55,6 +55,15 @@ jobs:
           git archive HEAD | tar -x -C _site
           rm -rf _site/.github _site/scripts _site/docs _site/tests _site/apps
 
+      - name: Minify the home page
+        if: steps.mode.outputs.ready == 'true'
+        # never blocks the deploy: if esbuild can't be installed or the step fails, the page ships as separate files
+        continue-on-error: true
+        timeout-minutes: 2
+        run: |
+          npm i --no-save --no-audit --no-fund esbuild@0.28.2
+          node scripts/minify.mjs _site
+
       - name: Fingerprint scripts and styles
         if: steps.mode.outputs.ready == 'true'
         run: node scripts/stamp.mjs _site
