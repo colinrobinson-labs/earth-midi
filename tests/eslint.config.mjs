@@ -1,5 +1,5 @@
 // Lint rules for the site scripts, the build scripts and the tests.
-//   npm i --no-save eslint@10.1.0 @eslint/js@10.0.1 globals@17.14.0 && npx eslint -c tests/eslint.config.mjs .
+//   (cd tests && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci) && tests/node_modules/.bin/eslint -c tests/eslint.config.mjs .
 // The site's js/ files are plain <script> tags that share one global scope (index.html sets the order), so a name
 // defined at the top of one file is visible in all the others. ESLint checks one file at a time, so this config
 // reads every file first and tells it which names the others define.
@@ -23,7 +23,7 @@ for (const file of readdirSync(SITE).filter(f => f.endsWith(".js"))) {
 }
 
 export default [
-  { ignores: ["vendor/**", "node_modules/**", "_site/**", "apps/apple/.build/**", "**/*.min.js"] },
+  { ignores: ["vendor/**", "**/node_modules/**", "_site/**", "apps/apple/.build/**", "**/*.min.js"] },
   js.configs.recommended,
   {
     rules: {
@@ -45,5 +45,5 @@ export default [
   { files: ["scripts/**/*.js", "apps/apple/scripts/**/*.js"], languageOptions: { sourceType: "commonjs", ecmaVersion: "latest", globals: globals.node } },
   { files: ["**/*.mjs"], languageOptions: { sourceType: "module", ecmaVersion: "latest", globals: globals.node } },
   // these drive a real browser, and the callbacks they hand to it run inside the page
-  { files: ["tests/smoke.mjs", "apps/apple/scripts/*.js"], languageOptions: { globals: { ...globals.node, ...globals.browser, axe: "readonly" } } },
+  { files: ["tests/smoke.mjs", "tests/hostile.mjs", "apps/apple/scripts/*.js"], languageOptions: { globals: { ...globals.node, ...globals.browser, ...shared, axe: "readonly" } } },
 ];
