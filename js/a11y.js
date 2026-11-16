@@ -104,7 +104,6 @@
     const sync = () =>
       pads.querySelectorAll(".lname").forEach((b) => {
         const r = b.closest(".lrow"),
-          k = b.dataset.k,
           name = (b.textContent || "").trim();
         if (!r) return;
         const off = r.classList.contains("off"),

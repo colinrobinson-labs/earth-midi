@@ -210,9 +210,6 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 .cpiano .w.sc{background:linear-gradient(color-mix(in srgb,var(--ac) 32%,#cfd8e2),#eef3f7)}
 .cpiano .b.sc{background:linear-gradient(color-mix(in srgb,var(--ac) 55%,var(--line2)),var(--sf2));color:#fff}
 .cpiano button[aria-pressed="true"]{background:var(--ac)!important;color:var(--bg)!important;box-shadow:0 0 18px var(--ac)}
-.hrow{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr) 52px;gap:8px;align-items:center;margin:6px 0}
-.hrow span{font:600 11px var(--mono);color:var(--fg2);white-space:nowrap}
-.hrow output{font:700 11.5px var(--mono);color:var(--ac);text-align:right;font-variant-numeric:tabular-nums}
 .stp2{display:inline-flex;align-items:center;gap:4px}
 .stp2 button{width:44px;height:38px;padding:0;border-radius:8px;background:var(--sf2);color:var(--fg);border:1px solid var(--line2);font:700 16px var(--mono)}
 .stp2 b{min-width:3ch;text-align:center;font:700 14px var(--mono);color:var(--ac)}
@@ -279,7 +276,7 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 .cns.tight .chips::-webkit-scrollbar{display:none}
 .cns.tight .chips button{min-height:36px}
 .cns.tight .cpiano,.cns.tight .cpiano .w{height:64px}.cns.tight .cpiano .b{height:38px}
-.cns.tight .hrow{margin:2px 0}.cns.tight .hrow .cf{--hh:32px}
+
 .cns.tight .pbig .grd svg{height:40px;aspect-ratio:auto!important}.cns.tight .pbig .grd .gn{display:none}.cns.tight .pbig .bpm{padding:4px 10px}
 .cns.tight .pbig .bpm b{font-size:24px}
 .cns.tight .mfs{gap:5px}.cns.tight .mf{flex-basis:40px;min-width:40px}.cns.tight .mf.vol{flex-basis:54px;min-width:54px}.cns.tight .mf>span{font-size:9.5px;letter-spacing:0}
@@ -452,9 +449,6 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
   }
   const chips = (k, list, cls = "") =>
     `<div class="chips ${cls}" data-c="${k}" role="group">${list.map(([v, n]) => `<button type="button" data-v="${v}" aria-pressed="false">${n}</button>`).join("")}</div>`;
-  function hrow(k, lab, o) {
-    return `<div class="hrow"><span>${lab}</span>${fd(k, Object.assign({ lab, h: 1 }, o))}<output data-o="${k}"></output></div>`;
-  }
   const vcol = (k, lab, o, extra = "") =>
     `<div class="mf"><span>${lab}</span>${fd(k, Object.assign({ lab }, o))}<output data-o="${k}"></output>${extra}</div>`;
   function secSound() {

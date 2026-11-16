@@ -933,7 +933,6 @@ function auditionQuake(q, quiet) {
     A.out.gain.setTargetAtTime(+$("vol").value, A.ctx.currentTime, 0.1);
   }
   A.ctx.resume();
-  const was = S.played.has(q.id);
   const r = quakeVoice(q);
   pushNote(r.note, "q", r.vel, r.dur);
   S.rings.push({ lat: q.lat, lon: q.lon, mag: q.mag, t: performance.now() });

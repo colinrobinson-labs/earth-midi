@@ -33,3 +33,5 @@ jobs:
         run: |
           (cd tests && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci)
           tests/node_modules/.bin/eslint -c tests/eslint.config.mjs .
+      - name: Formatting (Prettier, js/ only)
+        run: tests/node_modules/.bin/prettier --check .

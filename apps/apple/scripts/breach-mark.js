@@ -1,7 +1,7 @@
 // Earth MIDI "Breach" mark: the planet's ring in the six layer colours, broken top and bottom
 // where a quake-red seismogram spikes through it. All geometry is relative to (cx, cy, R);
 // R = 300 on a 1024 canvas is the reference size.
-const TAU=Math.PI*2,D=Math.PI/180;
+const D=Math.PI/180;
 const C={q:'#ff5a3c',s:'#ffc53d',k:'#7cff9e',o:'#3cc8ff',x:'#c77dff',c:'#ff8fd1'};
 const RING=[C.q,C.s,C.k,C.o,C.x,C.c];
 const f=n=>Math.round(n*100)/100;

@@ -584,7 +584,6 @@ const STUDIO = (() => {
       b = +el.max;
     el.style.setProperty("--p", (((+el.value - a) / (b - a || 1)) * 100).toFixed(1) + "%");
   };
-  const INST_L = { "inst.q": "q", "inst.s": "s", "inst.c": "c", "inst.i": "i", "inst.u": "u" };
   function enhance(g) {
     g.querySelectorAll("input[type=range]").forEach((el) => {
       setPct(el);

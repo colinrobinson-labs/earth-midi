@@ -1711,7 +1711,6 @@ function onMidiIn(e) {
     });
     const n = d1 - pc + best;
     const fake = { mag: map(d2, 1, 127, 1, 7), depth: 0, lon: map(d1, 36, 96, -180, 180), lat: 0, time: realNow() };
-    const sv = CFG.qpitch;
     const r = quakeVoiceRaw(n, d2, fake);
     pushNote(n, "q", d2, r);
   }
