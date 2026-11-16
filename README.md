@@ -2,7 +2,7 @@
 
 **The planet as a live instrument.** Earthquakes, solar wind, geomagnetic storms, tides, ocean swell, the ISS orbit and more, each run through the same rule every time and played as sound and MIDI in your browser. Same reading, same note.
 
-Live at **https://earthmidi.com**. The iPhone, iPad and Apple TV app is [on the App Store](https://apps.apple.com/app/id6832020441); the Mac app is in review.
+Live at **https://earthmidi.com**. The iPhone, iPad, Mac and Apple TV app is [on the App Store](https://apps.apple.com/app/id6832020441).
 
 **No active AI.** AI helped design and build Earth MIDI, including the rules that turn data into sound. No AI runs while you listen: every note comes from a published sensor reading.
 
