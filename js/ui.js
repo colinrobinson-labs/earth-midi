@@ -15,9 +15,12 @@ const CARDS=[
  ["a","Air","CC 14–15","<b>PM2.5 → haze on the planet chord</b> (dirtier air, dirtier sound) · <b>UV index → brightness</b>"],
  ["u","Sunrise chorus","notes","<b>the sun rising or setting over 42 big cities → a chime</b> · up for sunrise, down for sunset · <b>population → velocity</b>"],
  ["m","Moon","CC 9","<b>illumination → reverb size</b> · computed from orbital mechanics, not fetched"]];
-function buildCards(){$("grid").innerHTML=CARDS.map(([k,n,midi,m])=>`<div class="ch" id="c${k}" style="--c:${COLS[k]}"><h3><span>${n}</span><small>ch ${CH(k==="m"?"m":k)} · ${midi}</small></h3>
+/* the rack: readings grouped by where they are measured, one strip each */
+const BANDS=[["Ground","USGS · NASA EONET","qe"],["Sea","NOAA · Open-Meteo marine","ot"],["Sky","Open-Meteo · computed sun","cuwa"],["Space","NOAA SWPC · CelesTrak · computed moon","sxgim"]];
+function buildCards(){const card=([k,n,midi,m])=>`<div class="ch" id="c${k}" style="--c:${COLS[k]}"><h3><span>${n}</span><small>ch ${CH(k==="m"?"m":k)} · ${midi}</small></h3>
   <div class="vrow"><div class="big" id="v${k}">–</div>${k!=="m"?`<canvas class="vu" id="vu${k}"></canvas>`:""}</div><div class="sub" id="s${k}"></div>${k==="c"?`<div class="sub wka" data-wk hidden></div>`:""}<canvas class="spark" id="k${k}"></canvas>
-  <button type="button" class="chow" aria-expanded="false" aria-controls="c${k}">How it sounds</button><div class="map">${m}</div>${k!=="m"?`<div class="ms"><button data-m="${k}" aria-pressed="false">Mute</button><button data-s="${k}" aria-pressed="false">Solo</button></div>`:""}</div>`).join("");
+  <button type="button" class="chow" aria-expanded="false" aria-controls="c${k}">How it sounds</button><div class="map">${m}</div>${k!=="m"?`<div class="ms"><button data-m="${k}" aria-pressed="false">Mute</button><button data-s="${k}" aria-pressed="false">Solo</button></div>`:""}</div>`;
+  $("grid").innerHTML=BANDS.map(([n,src,ks])=>`<section class="band" aria-label="${n}"><div class="bh"><b>${n}</b><span>${src}</span></div>${[...ks].map(k=>card(CARDS.find(c=>c[0]===k))).join("")}</section>`).join("");
   document.querySelectorAll("#grid .chow").forEach(b=>b.onclick=()=>{const c=b.closest(".ch"),o=c.classList.toggle("open");b.setAttribute("aria-expanded",String(o))});
   bindMS()}
 function bindMS(){document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>toggleMute(b.dataset.m));document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>toggleSolo(b.dataset.s))}
