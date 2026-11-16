@@ -34,10 +34,9 @@ let lastStorm=false;setInterval(()=>{if(!playing()||!S.cur||!Number.isFinite(S.c
 const nl=document.createElement("p");nl.id="nowLine";nl.setAttribute("aria-hidden","true");
 const status=document.querySelector(".bar .status");if(status)status.after(nl);
 const scaleName=kp=>{if(typeof CFG!=="undefined"&&CFG.scale&&CFG.scale!=="auto")return CFG.scale.replace(/pent$/," pentatonic").replace(/^maj/,"major ").replace(/^min/,"minor ");return kp>=5?"minor pentatonic":kp>=4?"Dorian":"major pentatonic"};
-const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function nowLine(){if(!playing()||!S.cur){if(nl.textContent)nl.textContent="";return}
   const c=S.cur,parts=[];
-  if(Number.isFinite(c.kp))parts.push(`Kp ${c.kp.toFixed(1)} picks <b>${scaleName(c.kp)}</b>`);
+  if(Number.isFinite(c.kp))parts.push(`Kp ${c.kp.toFixed(1)} picks <b>${esc(scaleName(c.kp))}</b>`);
   if(S.style==="pulse"&&S.bpm)parts.push(`${Number.isFinite(c.sp)&&CFG.tempoSrc==="sun"?`solar wind ${Math.round(c.sp)} km/s sets `:""}<b>${Math.round(S.bpm)} BPM</b>`);
   else if(Number.isFinite(c.sp))parts.push(`solar wind <b>${Math.round(c.sp)} km/s</b> sweeps the pad`);
   const e=LAST.q&&Date.now()-LAST.q.at<120000?LAST.q:LAST.ev&&Date.now()-LAST.ev.at<60000?LAST.ev:null;
