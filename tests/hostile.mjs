@@ -90,7 +90,7 @@ async function run(name, { hash = "", storage = null, file = null, check = null 
     if (file) await page.evaluate(async txt => { await loadFile(new File([txt], "x.earthmidi.json", { type: "application/json" })); }, file);
     await exercise(page);
     errs.push(...await page.evaluate(verdict));
-    if (check) errs.push(...await page.evaluate(check));
+    if (check) errs.push(...await page.evaluate(check, file));
   } catch (e) { errs.push("could not run: " + e.message); }
   console.log(`${errs.length ? "FAIL" : "ok  "} ${name}`);
   [...new Set(errs)].slice(0, 12).forEach(e => console.log("     " + e));
@@ -104,13 +104,15 @@ await run("share link with junk instead of settings", { hash: "#s=" + b64(`{"cfg
 await run("preset file with junk settings", { file: `{"app":"Earth MIDI","preset":true,"name":${JSON.stringify(BAD)},"style":${JSON.stringify(BAD)},"cfg":${junkCfg}}` });
 await run("session file with junk readings", {
   file: junkSession,
-  check: () => {
-    const out = [];
-    if (S.on === true && !document.querySelector(".go")) out.push("session data overwrote playback state");
+  // the live feeds keep refreshing behind a loaded session, so the row checks read the cleaner's own answer
+  check: file => {
+    const out = [], d = fitSession(JSON.parse(file).data);
     if (!(S.played instanceof Set) || !Array.isArray(S.notes)) out.push("session data overwrote app state it should not hold");
-    if (S.quakes.length !== 1 || S.events.length !== 1) out.push(`kept ${S.quakes.length} quakes and ${S.events.length} events, expected 1 and 1`);
-    if (!Array.isArray(S.dst) || !Array.isArray(S.protons) || S.xray.length) out.push("malformed lists were not dropped");
-    if (S.iss !== null) out.push("malformed station orbit was kept");
+    if (Object.keys(d).some(k => !["quakes", "kp", "dst", "protons", "xray", "ocean", "jet", "temps", "air", "tides", "events", "sun", "iss", "demo"].includes(k))) out.push("session data carries fields a session should not hold");
+    if (d.quakes.length !== 1 || d.events.length !== 1) out.push(`kept ${d.quakes.length} quakes and ${d.events.length} events, expected 1 and 1`);
+    if (!Array.isArray(d.dst) || !Array.isArray(d.protons) || d.xray.length) out.push("malformed lists were not dropped");
+    if (d.iss !== null) out.push("malformed station orbit was kept");
+    if (d.demo.q !== false) out.push("demo flags are not plain true or false");
     return out;
   },
 });
