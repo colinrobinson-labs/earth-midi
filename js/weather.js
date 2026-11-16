@@ -13,10 +13,14 @@ const WX={t:[],u:null,v:null,c:null,p:null,T:null,f:{u:new Float32Array(WX_N),v:
   ok:false,err:"",loading:false,at:0,fT:NaN,texT:NaN,texC:new Float32Array(64800),texR:new Float32Array(64800),parts:[],pins:[],
   g:null,gLat:NaN,gSize:0,gc:null,fc:null,fT2:0,lastNow:0,hoverAt:0};
 (function noise(){// fixed value-noise texture, 360 × 180, wraps east-west
-  const W=360,H=180,n=new Float32Array(W*H),h=(x,y,s)=>{const v=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return v-Math.floor(v)};
-  const oct=[[30,.5],[12,.3],[5,.2]];for(let y=0;y<H;y++)for(let x=0;x<W;x++){let a=0;oct.forEach(([c,w],s)=>{const gx=x/c,gy=y/c,x0=Math.floor(gx),y0=Math.floor(gy),tx=gx-x0,ty=gy-y0,nx=Math.round(W/c),
-    q=(i,j)=>h(((i%nx)+nx)%nx,j,s),sx=tx*tx*(3-2*tx),sy=ty*ty*(3-2*ty);a+=w*lerp(lerp(q(x0,y0),q(x0+1,y0),sx),lerp(q(x0,y0+1),q(x0+1,y0+1),sx),sy)});n[y*W+x]=a}
-  WX.noise=n})();
+  const W=360,H=180,n=new Float64Array(W*H),h=(x,y,s)=>{const v=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return v-Math.floor(v)};
+  // three octaves; each is a small lattice of hashed values blended smoothly between its points (hashed once, not per pixel)
+  [[30,.5],[12,.3],[5,.2]].forEach(([c,w],s)=>{const nx=Math.round(W/c),ny=Math.floor((H-1)/c)+2,L=new Float64Array(nx*ny);
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)L[j*nx+i]=h(i,j,s);
+    for(let y=0;y<H;y++){const gy=y/c,y0=Math.floor(gy),ty=gy-y0,sy=ty*ty*(3-2*ty),r0=y0*nx,r1=r0+nx;
+      for(let x=0;x<W;x++){const gx=x/c,x0=Math.floor(gx),tx=gx-x0,sx=tx*tx*(3-2*tx),i0=x0%nx,i1=(x0+1)%nx;
+        n[y*W+x]+=w*lerp(lerp(L[r0+i0],L[r0+i1],sx),lerp(L[r1+i0],L[r1+i1],sx),sy)}}});
+  WX.noise=Float32Array.from(n)})();
 
 /* ---------- data ---------- */
 async function loadWX(force){
