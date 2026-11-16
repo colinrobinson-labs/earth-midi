@@ -28,7 +28,7 @@ jobs:
           cache: npm
           cache-dependency-path: tests/package-lock.json
       - name: Syntax check
-        run: for f in js/*.js scripts/*.mjs tests/*.mjs; do node --check "$f" || exit 1; done
+        run: for f in js/*.js sw.js scripts/*.mjs tests/*.mjs; do node --check "$f" || exit 1; done
       - name: WeatherKit switch (offline)
         run: node tests/weatherkit.test.mjs
       - name: Install browser (exact versions from tests/package-lock.json)
@@ -36,15 +36,32 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+      - name: Install the minifier (exact version from scripts/package-lock.json)
+        working-directory: scripts
+        run: npm ci
+      # two copies: _site is what the deploy publishes (home page minified by scripts/minify.mjs),
+      # _plain is the site as it is in the repo, which is what the Apple apps bundle and what ships if minifying ever fails
       - name: Build the site like the deploy does
         run: |
           mkdir _site && git archive HEAD | tar -x -C _site
           rm -rf _site/.github _site/scripts _site/docs _site/tests _site/apps
+          cp -r _site _plain
+          node scripts/minify.mjs _site
+          grep -q '<script defer src="js/core.js"' _site/index.html || { echo "The home page was not minified"; exit 1; }
           node scripts/stamp.mjs _site
-      - name: Smoke test
+          node scripts/stamp.mjs _plain
+      - name: Smoke test (as deployed)
         run: |
           (cd _site && python3 -m http.server 8765 >/dev/null 2>&1 &)
           sleep 1
           node tests/smoke.mjs
-      - name: Hostile input test
+          node tests/keyboard-offline.mjs
+      - name: Hostile input test (as deployed)
         run: node tests/hostile.mjs
+      - name: Smoke test (as in the repo)
+        run: |
+          (cd _plain && python3 -m http.server 8766 >/dev/null 2>&1 &)
+          sleep 1
+          SITE=http://localhost:8766/ node tests/smoke.mjs
+      - name: Hostile input test (as in the repo)
+        run: SITE=http://localhost:8766/ node tests/hostile.mjs

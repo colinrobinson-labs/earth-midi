@@ -67,8 +67,8 @@ function buildSheet(){
   addEventListener("keydown",e=>{if(e.key==="Escape"&&!el.hidden)closeSheet()});
   $("rsGo").onclick=startCapture;$("rpStop").onclick=stopCapture;
   $("rsShare").onclick=shareLast;$("rsSave").onclick=()=>{if(LAST){download(LAST.name,LAST.blob);note2(`Saved ${LAST.name}`)}};
-  $("rsCap").onclick=async()=>{try{await navigator.clipboard.writeText(caption());note2("Caption copied. Paste it with your post")}catch(_){prompt("Copy this caption",caption())}};
-  $("rsLink").onclick=async()=>{const u=shareURL();try{await navigator.clipboard.writeText(u);note2("Link copied: opens Earth MIDI with your exact settings")}catch(_){prompt("Copy this link",u)}};
+  $("rsCap").onclick=async()=>{try{await navigator.clipboard.writeText(caption());note2("Caption copied. Paste it with your post")}catch(_){EMAsk.copy({title:"Copy this caption",text:caption()})}};
+  $("rsLink").onclick=async()=>{const u=shareURL();try{await navigator.clipboard.writeText(u);note2("Link copied: opens Earth MIDI with your exact settings")}catch(_){EMAsk.copy({title:"Copy this link",text:u})}};
   $("rsAgain").onclick=()=>{showStep("setup")};
   $("rsTitle2").onclick=()=>{if(LAST&&LAST.title){download(LAST.title.name,LAST.title.blob);note2(`Saved ${LAST.title.name}`)}};
 }
@@ -218,9 +218,7 @@ const shortName=k=>REC_SHORT[k]||(LNAME[k]||k).slice(0,5).toUpperCase();
 /* ---------------- wire up ---------------- */
 (function initRecord(){
   buildSheet();
-  const tools=document.querySelector(".tools");
-  if(tools&&!$("bRecord")){const b=document.createElement("button");b.id="bRecord";b.className="rec-btn";b.setAttribute("aria-haspopup","dialog");b.innerHTML="<b>●</b> Record";tools.prepend(b)}
-  $("bRecord").onclick=()=>openSheet();
+  $("bRecord").onclick=()=>openSheet(); // the button is in index.html, so the bar doesn't jump when this file loads
   const m=$("mRec");if(m){m.innerHTML="<b>●</b>Record";m.setAttribute("aria-label","Record video or audio");m.onclick=()=>openSheet()}
   // Export panel shortcuts open the sheet pre-set
   const av=$("bVid"),aa=$("bAac");if(av)av.onclick=()=>openSheet("video");if(aa)aa.onclick=()=>{CAP.afmt="small";openSheet("audio")};

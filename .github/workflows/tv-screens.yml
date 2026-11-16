@@ -92,5 +92,7 @@ jobs:
           OUT=apps/apple/AppStore/screenshots/tv-1.1
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$OUT"; git diff --cached --quiet && exit 0
-          git commit -m "Apple TV simulator screenshots [skip ci]"
+          # No "[skip ci]" here: a push made with the workflow's own token never starts other workflows anyway, and
+          # that tag ends up in the squash-merge message on main, where it silently skips the site deploy.
+          git commit -m "Apple TV simulator screenshots"
           git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"
