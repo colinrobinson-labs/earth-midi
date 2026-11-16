@@ -68,7 +68,7 @@ if(manual==null){
     const struggling=lvl===0?med>22:slow>.3;
     bad=struggling?bad+1:0;
     if(bad>=2){bad=0;FX.set(lvl+1);SS("em.fxAuto",lvl+":"+Date.now());
-      const say=()=>{if(typeof xs==="function")xs("Switched to lighter effects so it runs smoothly here · footer has Effects: Full to switch back")};
+      const say=()=>{if(typeof xs==="function")xs("Lighter effects on so this device keeps up · Effects: Full in the footer switches back")};
       document.readyState==="complete"?say():addEventListener("load",say)}};
   requestAnimationFrame(tick);
 }
