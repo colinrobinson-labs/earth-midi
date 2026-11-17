@@ -6,6 +6,18 @@ struct RootView: View {
     @EnvironmentObject var hub: PlayerHub
     @State private var sheet: Sheet?
     enum Sheet: String, Identifiable { case readings, midi, settings; var id: String { rawValue } }
+    #if os(iOS)
+    /// iPhone Duo: the hinge in screen coordinates while the phone is partly folded (nil when flat, closed or any other phone),
+    /// and the bottom of the screen, so a sheet can sit on the lower page in tent pose instead of across the fold.
+    @State private var hinge: CGRect?
+    @State private var screenBottom: CGFloat = 0
+    /// Lower edge of a side-to-side fold (tent / stand pose), when the page under it is big enough for a sheet.
+    /// Nil in every other case, where sheets stay as they were. In book pose the system already keeps sheets on one page.
+    private var foldBottom: CGFloat? {
+        guard let h = hinge, h.width > h.height, screenBottom - h.maxY >= 280 else { return nil }
+        return h.maxY
+    }
+    #endif
 
     var body: some View {
         content
@@ -21,8 +33,18 @@ struct RootView: View {
                 .preferredColorScheme(.dark)
                 #if os(macOS)
                 .frame(minWidth: 560, minHeight: 640)
+                #else
+                .modifier(BelowFoldSheet(foldBottom: foldBottom, screenBottom: screenBottom))
                 #endif
             }
+            #if os(iOS)
+            .background {
+                GeometryReader { p in
+                    Color.clear.onChange(of: p.frame(in: .global).maxY, initial: true) { _, y in screenBottom = y }
+                }
+                .ignoresSafeArea()
+            }
+            #endif
     }
 
     @ViewBuilder private var content: some View {
@@ -30,7 +52,7 @@ struct RootView: View {
         // System bars, not a hand-built strip: on iPhone Duo they move to a vertical rail on the outer
         // display and in landscape on the inner display. Every item has a symbol and a title.
         NavigationStack {
-            FoldAwareWeb(engine: hub.web)
+            FoldAwareWeb(engine: hub.web) { hinge = $0 }
                 .background(Theme.bg.ignoresSafeArea())
                 .toolbar(.hidden, for: .navigationBar)
                 .toolbar { bottomBar }
@@ -108,6 +130,8 @@ struct RootView: View {
 /// so the page can lay out around the hinge: js/fold.js (Book = globe + Console, Tent = Planet Clock).
 struct FoldAwareWeb: View {
     let engine: WebEngine
+    /// The hinge in global (screen) coordinates, or nil when there is none. Used to keep native sheets off the fold.
+    var onHinge: (CGRect?) -> Void = { _ in }
     @State private var lastFold = ""
     var body: some View {
         #if DUO_SDK || compiler(>=6.4.2)
@@ -117,8 +141,12 @@ struct FoldAwareWeb: View {
             // on the physical fold in book and tent. It can run past the proxy's bounds, so only minX/minY and the thickness are used.
             GeometryReader { proxy in
                 let fold = proxy.reservedRegions(kind: .division).first(where: { $0.isActive })?.frame
+                let origin = proxy.frame(in: .global).origin
                 WebEngineView(engine: engine)
-                    .onChange(of: fold, initial: true) { _, f in send(f) }
+                    .onChange(of: fold, initial: true) { _, f in
+                        send(f)
+                        onHinge(f.flatMap { $0.width > 0 && $0.height > 0 ? $0.offsetBy(dx: origin.x, dy: origin.y) : nil })
+                    }
             }
         } else {
             WebEngineView(engine: engine)
@@ -207,6 +235,42 @@ struct SheetChrome<Content: View>: View {
         #endif
     }
 }
+
+#if os(iOS)
+/// iPhone Duo in tent / stand pose: the sheet sits on the lower page, its top just under the hinge, instead of running
+/// across the fold. With no fold (flat, closed, book, every other phone) the sheet is left exactly as the system shows it.
+struct BelowFoldSheet: ViewModifier {
+    /// Global y of the hinge's lower edge in tent pose, nil otherwise.
+    let foldBottom: CGFloat?
+    let screenBottom: CGFloat
+    /// What the sheet adds outside its detent height (bottom inset, floating margins). Measured on screen once and kept,
+    /// so later sheets open in the right place straight away; 42 pt is what the iPhone Duo simulator measured.
+    private static var chrome: CGFloat = 42
+    @State private var extra = BelowFoldSheet.chrome
+    @State private var top: CGFloat = 0
+    func body(content: Content) -> some View {
+        if let foldBottom {
+            content
+                .presentationDetents([.height(max(240, screenBottom - foldBottom - extra))])
+                .background {
+                    GeometryReader { p in
+                        Color.clear.onChange(of: p.frame(in: .global).minY, initial: true) { _, y in top = y }
+                    }
+                }
+                .task(id: foldBottom) {
+                    // once the sheet has settled, move its top edge onto the hinge's lower edge
+                    try? await Task.sleep(for: .milliseconds(700))
+                    let fixed = extra + (foldBottom - top)
+                    guard top > 0, abs(foldBottom - top) > 1, (0...160).contains(fixed) else { return }
+                    extra = fixed
+                    BelowFoldSheet.chrome = fixed
+                }
+        } else {
+            content
+        }
+    }
+}
+#endif
 
 struct SheetHeader: View {
     let title: String

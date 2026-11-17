@@ -31,11 +31,12 @@ const FOLD = (() => {
     }
   };
   const css = `
-html.fold-book,html.fold-tent{--fa:50vh;--fw:0px;--fp:calc(var(--fa) + var(--fw))}
+html.fold-book,html.fold-tent{--fa:50vh;--fw:0px;--fp:calc(var(--fa) + var(--fw));-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html.fold-book{--pw:calc(100vw - var(--fp))}
 html.fold-clock body{overflow:hidden}
 html.fold-book body{margin-left:var(--fp)}
 html.fold-tent body{padding-top:var(--fp)}
+html.fold-tent{scroll-padding-top:var(--fp)}
 html.fold-book .dock,html.fold-book .side,html.fold-book .rsheet,html.fold-book #godFrame,html.fold-book body.imm #znPanel{left:var(--fp)}
 html.fold-book .vpop{left:calc(var(--fp) + 12px)}
 html.fold-book .rpill,html.fold-book .resumepill{left:calc(var(--fp) + var(--pw) / 2)}
@@ -49,7 +50,7 @@ html.fold-book .mapwrap,html.fold-tent .mapwrap{position:fixed;z-index:79;backgr
 html.fold-book .mapwrap{left:0;top:0;bottom:0;width:var(--fa)}
 html.fold-tent .mapwrap{left:0;right:0;top:0;height:var(--fa)}
 html.fold-book #map,html.fold-tent #map{height:100%;aspect-ratio:auto}
-html.fold-book .immb,html.fold-tent .immb,html.fold-tent .hud2,html.fold-tent .hud .hint2{display:none}
+html.fold-book .immb,html.fold-tent .immb,html.fold-clock .hud2,html.fold-tent .hud .hint2{display:none}
 html.fold-book .cns{left:var(--fp)}
 html.fold-tent .cns{top:var(--fp)}
 .fold-hinge{position:fixed;z-index:80;background:#000;pointer-events:none}
@@ -62,6 +63,8 @@ html.fold-tent #wlc .wlc-card{max-height:calc(100dvh - var(--fa) - var(--fw) - 1
 .fold-x button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(8,12,17,.85);color:var(--fg2);font:inherit;letter-spacing:inherit;cursor:pointer}
 html.fold-book .fold-x{left:calc(var(--fa) - 12px);transform:translateX(-100%);bottom:calc(64px + env(safe-area-inset-bottom,0px))}
 html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));top:calc(var(--fa) - 42px)}
+html.fold-book body.god .fold-x{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+html.fold-tent body.god .fold-x{top:calc(var(--fa) - 100px)}
 .fold-x [data-f=view]{color:var(--fg);border-color:var(--fg2)}
 .pclock{position:fixed;left:0;right:0;bottom:0;top:calc(var(--fa) + var(--fw));z-index:79;display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,3vh,22px);
   padding:12px max(18px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
@@ -115,7 +118,7 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));top:calc(v
   pc.className = "pclock";
   pc.hidden = true;
   pc.setAttribute("aria-label", "Planet Clock");
-  pc.innerHTML = `<div class="pc-ev"><span class="pc-note" id="pcNote">·</span><span class="pc-txt" id="pcTxt">Press play and the planet starts playing.</span></div>
+  pc.innerHTML = `<div class="pc-ev"><span class="pc-note" id="pcNote">♪</span><span class="pc-txt" id="pcTxt">Press play and the planet starts playing.</span></div>
 <div class="pc-meta" id="pcMeta"></div>
 <div class="pc-row"><button class="go" type="button" aria-label="Play or stop"><i></i><span>PLAY</span></button>
 <div class="seg"><button data-style="ambient" aria-pressed="true">Ambient</button><button data-style="pulse" aria-pressed="false">Pulse</button></div>

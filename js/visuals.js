@@ -7,13 +7,18 @@ let LAND_DOTS = [],
   STARS = [];
 function sizeMap() {
   const w = cv.clientWidth,
-    h = cv.clientHeight || w / 2;
-  cv.width = Math.round(w * DPR);
-  cv.height = Math.round(h * DPR);
+    h = cv.clientHeight || w / 2,
+    W = Math.round(w * DPR),
+    H = Math.round(h * DPR);
+  if (cv.width !== W) cv.width = W;
+  if (cv.height !== H) cv.height = H;
 }
 addEventListener("resize", () => {
   sizeMap();
 });
+/* The map box can change size without a window resize (a folding phone switching between book and tent while it
+   turns), which would leave the drawing stretched, so follow the canvas's own size too. */
+if (window.ResizeObserver) new ResizeObserver(() => sizeMap()).observe(cv);
 window.onLand = () => {
   const W = 720,
     H = 360,
