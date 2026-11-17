@@ -51,7 +51,7 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
 .pclock[hidden]{display:none}
 .pclock.dim{opacity:.42}
 .pc-ev{display:flex;align-items:baseline;gap:14px;min-width:0}
-.pc-note{font:800 clamp(34px,9vh,72px)/1 var(--disp);letter-spacing:-.02em;color:var(--c,var(--fg));text-shadow:0 0 28px color-mix(in srgb,var(--c,var(--fg)) 45%,transparent);flex:none}
+.pc-note{font:800 clamp(34px,9vh,72px)/1 var(--disp);letter-spacing:-.02em;color:var(--pcc,var(--fg));text-shadow:0 0 28px color-mix(in srgb,var(--pcc,var(--fg)) 45%,transparent);flex:none}
 .pc-txt{min-width:0;font:500 clamp(14px,3.2vh,22px)/1.3 var(--body);color:var(--fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pc-meta{font:500 clamp(11px,2vh,14px) var(--mono);color:var(--mute);letter-spacing:.04em}
 .pc-row{display:flex;align-items:center;gap:12px}
@@ -154,7 +154,7 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
     const m = /→\s*([A-G]#?-?\d)/.exec(last.text);
     $("pcNote").textContent = m ? m[1] : "♪";
     $("pcTxt").textContent = last.text.replace(/\s*→.*$/, "");
-    pc.style.setProperty("--c", last.layer ? `var(--${last.layer})` : "var(--fg)");
+    pc.style.setProperty("--pcc", last.layer ? `var(--${last.layer})` : "var(--fg)");
   };
 
   /* stays awake while playing in the clock, dims after a minute without a touch */
