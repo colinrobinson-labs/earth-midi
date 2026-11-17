@@ -41,6 +41,9 @@ html.fold-book .cns{left:calc(var(--fa) + var(--fw))}
 .fold-hinge{position:fixed;z-index:80;background:#000;pointer-events:none}
 html.fold-book .fold-hinge{top:0;bottom:0;left:var(--fa);width:var(--fw)}
 html.fold-tent .fold-hinge{left:0;right:0;top:var(--fa);height:var(--fw)}
+html.fold-book #wlc{margin:auto 8px auto calc(var(--fa) + var(--fw) + 8px);max-width:calc(100vw - var(--fa) - var(--fw) - 16px)}
+html.fold-tent #wlc{margin:calc(var(--fa) + var(--fw) + 8px) auto 8px;max-height:calc(100dvh - var(--fa) - var(--fw) - 16px)}
+html.fold-tent #wlc .wlc-card{max-height:calc(100dvh - var(--fa) - var(--fw) - 16px)}
 .fold-x{position:fixed;z-index:81;display:flex;gap:6px;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase}
 .fold-x button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(8,12,17,.85);color:var(--fg2);font:inherit;letter-spacing:inherit;cursor:pointer}
 html.fold-book .fold-x{left:calc(var(--fa) - 12px);transform:translateX(-100%);bottom:calc(64px + env(safe-area-inset-bottom,0px))}
