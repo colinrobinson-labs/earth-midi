@@ -94,7 +94,7 @@ struct ReadingsView: View {
         .frame(height: fill ? nil : 300)
         .frame(maxHeight: fill ? .infinity : nil)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(alignment: .bottomLeading) {
+        .overlay(alignment: .topLeading) { // top: the Apple Maps logo and Legal link sit bottom left and must stay visible
             Text("\(store.data.quakes24h.count) QUAKES · 24 H").font(Theme.caps(10)).padding(6).background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 6)).padding(8).foregroundStyle(Theme.fg)
         }
     }
