@@ -98,7 +98,7 @@ const CONSOLE = (() => {
 
   const css = `
 html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
-.cns{position:fixed;inset:0;z-index:78;display:flex;flex-direction:column;background:radial-gradient(120% 60% at 50% -10%,#0d1620,var(--bg) 60%);color:var(--fg);
+.cns{container-type:inline-size;position:fixed;inset:0;z-index:78;display:flex;flex-direction:column;background:radial-gradient(120% 60% at 50% -10%,#0d1620,var(--bg) 60%);color:var(--fg);
  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;--fh:240px;--mh:150px;animation:cnsIn .35s cubic-bezier(.2,.8,.2,1)}
 .cns[hidden]{display:none}
@@ -137,7 +137,7 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 .cns-body{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-wrap:wrap;align-content:flex-start;gap:10px;padding:10px 12px 14px}
 .cx{--ac:var(--fg);position:relative;flex:1 1 0;min-width:min(280px,100%);border:1px solid color-mix(in srgb,var(--ac) 18%,var(--line));border-radius:var(--r3);padding:10px 12px 12px;background:radial-gradient(90% 60% at 0% 0%,color-mix(in srgb,var(--ac) 9%,transparent),transparent 70%),var(--sf1);overflow:hidden}
 .cx::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--ac),transparent 75%);opacity:.8}
-.cx.ch{flex-basis:100%}
+.cx.ch{flex-basis:100%;display:block} /* not the page's reading-strip grid (.ch) */
 .cx.master{flex-grow:1.5;min-width:min(350px,100%)}
 .cx.pulse.dim .cx-h small{display:none}
 .cx-h{display:flex;align-items:center;gap:9px;margin:0 0 8px;font:700 12px var(--disp);letter-spacing:.08em;text-transform:uppercase}
@@ -281,9 +281,9 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
 .cns.tight .pbig .bpm b{font-size:24px}
 .cns.tight .mfs{gap:5px}.cns.tight .mf{flex-basis:40px;min-width:40px}.cns.tight .mf.vol{flex-basis:54px;min-width:54px}.cns.tight .mf>span{font-size:9.5px;letter-spacing:0}
 .cns.tight .cs{gap:4px;padding-top:6px}.cns.tight .cs-h{min-height:36px}.cns.tight .cs-ms button{height:40px}
-@media (max-width:900px){.cs{flex-basis:54px;min-width:54px;padding-left:4px;padding-right:4px}.cs-ms{grid-template-columns:1fr}.cs-ms button,.cns.tight .cs-ms button{height:36px}.cs-h b{font-size:9.5px}}
-@media (max-width:820px){.cns-top h2 small,.cns-rd .rk{display:none}.cns-tb .lbl{display:none}.cns-tb{width:44px;padding:0;justify-content:center}}
-@media (max-width:560px){.cns-top{flex-wrap:wrap}.cns-rd{order:9;flex-basis:100%}.cns-top h2{display:none}.cs{flex-basis:58px;min-width:58px}}
+@container (max-width:900px){.cs{flex-basis:54px;min-width:54px;padding-left:4px;padding-right:4px}.cs-ms{grid-template-columns:1fr}.cs-ms button,.cns.tight .cs-ms button{height:36px}.cs-h b{font-size:9.5px}}
+@container (max-width:820px){.cns-top h2 small,.cns-rd .rk{display:none}.cns-tb .lbl{display:none}.cns-tb{width:44px;padding:0;justify-content:center}}
+@container (max-width:560px){.cns-top{flex-wrap:wrap}.cns-rd{order:9;flex-basis:100%}.cns-top h2{display:none}.cs{flex-basis:58px;min-width:58px}}
 @media (prefers-reduced-motion:reduce){.cns,.vsw.nudge button::after,.vtip{animation:none}}
 /* clean pass (Nov 6): no micro-captions; colour on the channel strips only */
 .cns .cs-ic,.cns .cx-h .gi,.cns-top h2 small,.cns .cs-snd small,.cns .cx-h small{display:none}
