@@ -41,6 +41,9 @@ html.fold-book .cns{left:calc(var(--fa) + var(--fw))}
 .fold-hinge{position:fixed;z-index:80;background:#000;pointer-events:none}
 html.fold-book .fold-hinge{top:0;bottom:0;left:var(--fa);width:var(--fw)}
 html.fold-tent .fold-hinge{left:0;right:0;top:var(--fa);height:var(--fw)}
+html.fold-book #wlc{margin:auto 8px auto calc(var(--fa) + var(--fw) + 8px);max-width:calc(100vw - var(--fa) - var(--fw) - 16px)}
+html.fold-tent #wlc{margin:calc(var(--fa) + var(--fw) + 8px) auto 8px;max-height:calc(100dvh - var(--fa) - var(--fw) - 16px)}
+html.fold-tent #wlc .wlc-card{max-height:calc(100dvh - var(--fa) - var(--fw) - 16px)}
 .fold-x{position:fixed;z-index:81;display:flex;gap:6px;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase}
 .fold-x button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(8,12,17,.85);color:var(--fg2);font:inherit;letter-spacing:inherit;cursor:pointer}
 html.fold-book .fold-x{left:calc(var(--fa) - 12px);transform:translateX(-100%);bottom:calc(64px + env(safe-area-inset-bottom,0px))}
@@ -51,7 +54,7 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
 .pclock[hidden]{display:none}
 .pclock.dim{opacity:.42}
 .pc-ev{display:flex;align-items:baseline;gap:14px;min-width:0}
-.pc-note{font:800 clamp(34px,9vh,72px)/1 var(--disp);letter-spacing:-.02em;color:var(--c,var(--fg));text-shadow:0 0 28px color-mix(in srgb,var(--c,var(--fg)) 45%,transparent);flex:none}
+.pc-note{font:800 clamp(34px,9vh,72px)/1 var(--disp);letter-spacing:-.02em;color:var(--pcc,var(--fg));text-shadow:0 0 28px color-mix(in srgb,var(--pcc,var(--fg)) 45%,transparent);flex:none}
 .pc-txt{min-width:0;font:500 clamp(14px,3.2vh,22px)/1.3 var(--body);color:var(--fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pc-meta{font:500 clamp(11px,2vh,14px) var(--mono);color:var(--mute);letter-spacing:.04em}
 .pc-row{display:flex;align-items:center;gap:12px}
@@ -154,7 +157,7 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
     const m = /→\s*([A-G]#?-?\d)/.exec(last.text);
     $("pcNote").textContent = m ? m[1] : "♪";
     $("pcTxt").textContent = last.text.replace(/\s*→.*$/, "");
-    pc.style.setProperty("--c", last.layer ? `var(--${last.layer})` : "var(--fg)");
+    pc.style.setProperty("--pcc", last.layer ? `var(--${last.layer})` : "var(--fg)");
   };
 
   /* stays awake while playing in the clock, dims after a minute without a touch */

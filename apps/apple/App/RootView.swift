@@ -112,7 +112,9 @@ struct FoldAwareWeb: View {
     var body: some View {
         #if DUO_SDK || compiler(>=6.4.2)
         if #available(iOS 27.1, *) {
-            // iOS 27.1 SDK: the hinge is a .division reserved region. Assumes its frame is in this proxy's (= the web view's) space, like safeAreaInsets; not yet confirmed on a Duo.
+            // iOS 27.1 SDK: the hinge is a .division reserved region. Its frame is in this proxy's local space (= the web view's),
+            // checked on the iPhone Duo simulator: with the proxy at global y 82 the region reported y -82, and the hinge lands
+            // on the physical fold in book and tent. It can run past the proxy's bounds, so only minX/minY and the thickness are used.
             GeometryReader { proxy in
                 let fold = proxy.reservedRegions(kind: .division).first(where: { $0.isActive })?.frame
                 WebEngineView(engine: engine)
