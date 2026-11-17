@@ -13,7 +13,7 @@
   if ((saved === "pulse" || saved === "ambient") && !/^s=/.test(hash) && S.style !== saved) setStyle(saved);
 
   const css = `
-#wlc{border:0;padding:0;margin:auto;background:transparent;color:var(--fg);max-width:min(520px,calc(100vw - 32px));width:100%;max-height:calc(100dvh - 32px);overflow:visible}
+#wlc{border:0;padding:0;margin:auto;background:transparent;color:var(--fg);max-width:min(520px,calc(var(--pw,100vw) - 32px));width:100%;max-height:calc(100dvh - 32px);overflow:visible}
 #wlc::backdrop{background:rgba(5,7,10,.66);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
 #wlc[open]{animation:wlcIn .55s cubic-bezier(.2,.8,.2,1) both}#wlc[open]::backdrop{animation:wlcFade .5s ease both}
 #wlc.out{animation:wlcOut .32s ease both}#wlc.out::backdrop{animation:wlcFade .32s ease reverse both}

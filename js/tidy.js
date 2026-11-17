@@ -60,7 +60,7 @@
     const place = () => {
       const r = btn.getBoundingClientRect(),
         w = wrap.getBoundingClientRect();
-      if (innerWidth > 700) {
+      if ((PAGE_W || innerWidth) > 700) {
         pop.style.left = Math.max(8, r.left - w.left) + "px";
         pop.style.top = r.bottom - w.top + 6 + "px";
       } else {

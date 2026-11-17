@@ -12,6 +12,57 @@ addEventListener("fxchange", () => {
   dispatchEvent(new Event("resize"));
 });
 const VERSION = "1.0";
+/* Width media queries follow the page, not the window. On a folding phone held like a book the page is one half of
+   the screen, so the phone layout should apply there even though the window is wide. FOLD sets PAGE_W (0 = the window). */
+let PAGE_W = 0;
+const WIDTH_MQ = (() => {
+  const mm = window.matchMedia.bind(window),
+    T = /\((min|max)-width:\s*(\d+(?:\.\d+)?)px\)/g,
+    ONLY = /^\s*\((min|max)-width:\s*\d+(?:\.\d+)?px\)(\s+and\s+\((min|max)-width:\s*\d+(?:\.\d+)?px\))*\s*$/,
+    cache = new Map();
+  const test = (q, w) => {
+    let ok = true;
+    q.replace(T, (_, k, v) => ((ok = ok && (k === "min" ? w >= +v : w <= +v)), ""));
+    return ok;
+  };
+  window.matchMedia = (q) => {
+    if (!ONLY.test(q)) return mm(q);
+    if (cache.has(q)) return cache.get(q);
+    const real = mm(q),
+      ls = new Set(),
+      val = () => (PAGE_W ? test(q, PAGE_W) : real.matches);
+    let last = val();
+    const o = {
+      media: q,
+      onchange: null,
+      get matches() {
+        return val();
+      },
+      addEventListener: (t, f) => t === "change" && ls.add(f),
+      removeEventListener: (t, f) => ls.delete(f),
+      addListener: (f) => ls.add(f),
+      removeListener: (f) => ls.delete(f),
+      fire() {
+        const v = val();
+        if (v === last) return;
+        last = v;
+        const e = { matches: v, media: q };
+        ls.forEach((f) => f(e));
+        if (typeof o.onchange === "function") o.onchange(e);
+      },
+    };
+    real.addEventListener ? real.addEventListener("change", o.fire) : real.addListener(o.fire);
+    cache.set(q, o);
+    return o;
+  };
+  return {
+    test,
+    set(w) {
+      PAGE_W = w || 0;
+      cache.forEach((o) => o.fire());
+    },
+  };
+})();
 /* Phone or desktop tuning (tap radius, particle counts, share sheet…). Re-checked whenever the window changes size,
    so a folding phone, iPad Split View or a resized window gets the right one without a reload. */
 const MQ_MOBILE = matchMedia("(max-width:700px)");

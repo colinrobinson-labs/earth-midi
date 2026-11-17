@@ -61,7 +61,7 @@ header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 40px;align
 .hmeter{display:flex;gap:3px;height:12px;align-items:flex-end;margin:10px 0 0}
 .hmeter i{flex:1;height:100%;border-radius:1px;background:var(--c);transform-origin:50% 100%;transform:scaleY(calc(.16 + var(--hit,0)*.84));opacity:calc(.35 + var(--hit,0)*.65);transition:transform .09s linear,opacity .25s}
 .hmeter i.off{opacity:.1}
-h1{font:900 min(176px,calc((min(100vw,1392px) - 40px)/7.55))/.8 var(--disp);margin:0;letter-spacing:-.035em;white-space:nowrap;user-select:none}
+h1{font:900 min(176px,calc((min(var(--pw,100vw),1392px) - 40px)/7.55))/.8 var(--disp);margin:0;letter-spacing:-.035em;white-space:nowrap;user-select:none}
 h1 .L{display:inline-block;background:linear-gradient(100deg,var(--q),var(--s) 22%,var(--k) 44%,var(--o) 66%,var(--x) 88%,var(--q));background-size:1100% 100%;background-position:calc(var(--i)*10%) 0;-webkit-background-clip:text;background-clip:text;color:transparent;
  animation:hue 16s linear infinite;transform:translateY(calc(var(--h,0)*-10px)) scale(calc(1 + var(--h,0)*.06));transition:transform .08s;
  filter:drop-shadow(0 0 calc(4px + var(--glow)*26px) rgba(255,140,90,calc(.2 + var(--glow)*.6))) drop-shadow(0 0 calc(var(--h,0)*34px) var(--c))}
@@ -340,7 +340,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  .wxl{top:44px;right:8px;font-size:9px;line-height:1.3;padding:4px 7px;width:112px}.wxl .wxh,.wxl .wxk,.wxl .wxs{display:none}.wxl .wxg{gap:0 4px}.wxl.err{width:auto;max-width:210px;font-size:10.5px}.wxl.err .wxs{display:block}
  :root{--dock:calc(70px + env(safe-area-inset-bottom,0px))}
  header{grid-template-columns:1fr}
- h1{font-size:calc((100vw - 32px)/7.55)}
+ h1{font-size:calc((var(--pw,100vw) - 32px)/7.55)}
  .tag{justify-self:start;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;cursor:pointer}.tag.open{-webkit-line-clamp:unset}
  .stage{margin:0 calc(-1*max(16px,env(safe-area-inset-right,0px))) 0 calc(-1*max(16px,env(safe-area-inset-left,0px)));border-radius:0;border-left:0;border-right:0}
  .immb{bottom:10px;right:10px}
