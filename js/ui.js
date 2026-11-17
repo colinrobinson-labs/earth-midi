@@ -1227,14 +1227,26 @@ function boot() {
         sizeMap();
       }),
   );
-  const panel = (id, btn) => () => {
+  const panel = (id) => () => {
     const p = $(id);
     p.hidden = !p.hidden;
-    $(btn).setAttribute("aria-expanded", !p.hidden);
     if (!p.hidden) p.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
-  $("bPro").onclick = panel("pro", "bPro");
-  $("bExp").onclick = panel("exp", "bExp");
+  /* every button that opens Producer or Export (top bar and phone dock) shows whether it's open, whoever opened or closed it */
+  [
+    ["pro", "bPro"],
+    ["exp", "bExp"],
+  ].forEach(([id, btn]) => {
+    const p = $(id),
+      sync = () =>
+        document
+          .querySelectorAll(`#${btn},[data-jump="${id}"]`)
+          .forEach((b) => b.setAttribute("aria-expanded", String(!p.hidden)));
+    new MutationObserver(sync).observe(p, { attributes: true, attributeFilter: ["hidden"] });
+    sync();
+  });
+  $("bPro").onclick = panel("pro");
+  $("bExp").onclick = panel("exp");
   $("bRec").onclick = () => toggleRec(false);
   $("bStems").onclick = () => toggleRec(true);
   $("bMid").onclick = exportPerfMidi;
@@ -1252,11 +1264,12 @@ function boot() {
     (b) =>
       (b.onclick = () => {
         const t = $(b.dataset.jump);
-        if (t.hidden) {
-          t.hidden = false;
-          const x = $(t.id === "pro" ? "bPro" : "bExp");
-          x && x.setAttribute("aria-expanded", "true");
+        // a second tap closes it, same as the Producer button in the top bar
+        if (!t.hidden) {
+          t.hidden = true;
+          return;
         }
+        t.hidden = false;
         t.scrollIntoView({ behavior: "smooth", block: "start" });
       }),
   );

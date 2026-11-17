@@ -1,8 +1,9 @@
 /* Earth MIDI · Fold: layouts for folding phones (iPhone Duo and others) when they're partly folded.
-   Book pose (fold runs top to bottom): Instrument + Desk. The globe plays on the left page, the Console on the right.
-   Tent / stand pose (fold runs side to side): Planet Clock. A full-bleed globe on top with the last thing the planet
-   played in big type, and a one-row transport (play, Ambient/Pulse, volume) underneath. The screen stays awake while
-   it plays and dims itself after a minute without a touch.
+   Book pose (fold runs top to bottom): the globe stays on the left page and the whole app (transport, Layers, Producer,
+   Export, Console, Zeus, Zones, dialogs) lives on the right page, laid out as it is on a phone, because that's the page's size.
+   Tent / stand pose (fold runs side to side): the globe on top. Underneath, the Planet Clock: the last thing the planet
+   played in big type and a one-row transport (play, Ambient/Pulse, volume). "Controls" swaps the clock for the whole app,
+   top to bottom; "Clock" brings it back. The screen stays awake while the clock plays and dims after a minute without a touch.
    Where the fold is comes from, in order:
      1. the Earth MIDI app, which reads it from the system and calls FOLD.set({axis:"v"|"h", a, w})
         (a = size of the first page in CSS px, w = width of the hinge), or FOLD.set(null) when flat or closed
@@ -18,7 +19,7 @@ const FOLD = (() => {
     dev = (/[?&#]fold=(v|h)\b/.exec(location.search + location.hash) || [])[1] || null,
     cur = null,
     dismissed = null,
-    openedCns = false,
+    clock = true,
     wake = null,
     dimT = 0,
     last = null;
@@ -30,24 +31,38 @@ const FOLD = (() => {
     }
   };
   const css = `
-html.fold-book,html.fold-tent{--fa:50vh;--fw:0px}
-html.fold-book body,html.fold-tent body{overflow:hidden}
+html.fold-book,html.fold-tent{--fa:50vh;--fw:0px;--fp:calc(var(--fa) + var(--fw))}
+html.fold-book{--pw:calc(100vw - var(--fp))}
+html.fold-clock body{overflow:hidden}
+html.fold-book body{margin-left:var(--fp)}
+html.fold-tent body{padding-top:var(--fp)}
+html.fold-book .dock,html.fold-book .side,html.fold-book .rsheet,html.fold-book #godFrame,html.fold-book body.imm #znPanel{left:var(--fp)}
+html.fold-book .vpop{left:calc(var(--fp) + 12px)}
+html.fold-book .rpill,html.fold-book .resumepill{left:calc(var(--fp) + var(--pw) / 2)}
+html.fold-tent .rsheet,html.fold-tent #godFrame{top:var(--fp)}
+html.fold-tent .rpill{top:calc(var(--fp) + 10px)}
+html.fold-tent .side{height:calc(100vh - var(--fp) - var(--dock,0px) - 8px)}
+html.fold-tent body.imm #znPanel{max-height:calc(100vh - var(--fp) - var(--dock,0px) - var(--peek,0px) - 8px)}
+html.fold-book dialog:modal{margin:auto 8px auto calc(var(--fp) + 8px);max-width:calc(100vw - var(--fp) - 16px)}
+html.fold-tent dialog:modal{margin:calc(var(--fp) + 8px) auto 8px;max-height:calc(100dvh - var(--fp) - 16px)}
 html.fold-book .mapwrap,html.fold-tent .mapwrap{position:fixed;z-index:79;background:var(--bg);margin:0}
 html.fold-book .mapwrap{left:0;top:0;bottom:0;width:var(--fa)}
 html.fold-tent .mapwrap{left:0;right:0;top:0;height:var(--fa)}
 html.fold-book #map,html.fold-tent #map{height:100%;aspect-ratio:auto}
 html.fold-book .immb,html.fold-tent .immb,html.fold-tent .hud2,html.fold-tent .hud .hint2{display:none}
-html.fold-book .cns{left:calc(var(--fa) + var(--fw))}
+html.fold-book .cns{left:var(--fp)}
+html.fold-tent .cns{top:var(--fp)}
 .fold-hinge{position:fixed;z-index:80;background:#000;pointer-events:none}
 html.fold-book .fold-hinge{top:0;bottom:0;left:var(--fa);width:var(--fw)}
 html.fold-tent .fold-hinge{left:0;right:0;top:var(--fa);height:var(--fw)}
-html.fold-book #wlc{margin:auto 8px auto calc(var(--fa) + var(--fw) + 8px);max-width:calc(100vw - var(--fa) - var(--fw) - 16px)}
-html.fold-tent #wlc{margin:calc(var(--fa) + var(--fw) + 8px) auto 8px;max-height:calc(100dvh - var(--fa) - var(--fw) - 16px)}
+html.fold-book #wlc{margin:auto 8px auto calc(var(--fp) + 8px);max-width:calc(100vw - var(--fp) - 16px)}
+html.fold-tent #wlc{margin:calc(var(--fp) + 8px) auto 8px;max-height:calc(100dvh - var(--fp) - 16px)}
 html.fold-tent #wlc .wlc-card{max-height:calc(100dvh - var(--fa) - var(--fw) - 16px)}
 .fold-x{position:fixed;z-index:81;display:flex;gap:6px;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase}
 .fold-x button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(8,12,17,.85);color:var(--fg2);font:inherit;letter-spacing:inherit;cursor:pointer}
 html.fold-book .fold-x{left:calc(var(--fa) - 12px);transform:translateX(-100%);bottom:calc(64px + env(safe-area-inset-bottom,0px))}
-html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max(12px,env(safe-area-inset-bottom,0px))}
+html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));top:calc(var(--fa) - 42px)}
+.fold-x [data-f=view]{color:var(--fg);border-color:var(--fg2)}
 .pclock{position:fixed;left:0;right:0;bottom:0;top:calc(var(--fa) + var(--fw));z-index:79;display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,3vh,22px);
   padding:12px max(18px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
   background:radial-gradient(120% 90% at 50% 0%,#0b1420,var(--bg) 70%);transition:opacity 1.2s}
@@ -73,11 +88,18 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
   const bar = document.createElement("div");
   bar.className = "fold-x";
   bar.hidden = true;
-  bar.innerHTML = `<button type="button" data-f="exit">Exit</button><button type="button" data-f="off">Always off</button>`;
+  bar.innerHTML = `<button type="button" data-f="view" hidden>Controls</button><button type="button" data-f="exit">Exit</button><button type="button" data-f="off">Always off</button>`;
+  const viewB = bar.querySelector("[data-f=view]");
   document.body.appendChild(bar);
   bar.onclick = (e) => {
     const b = e.target.closest("[data-f]");
     if (!b) return;
+    if (b.dataset.f === "view") {
+      clock = !clock;
+      apply();
+      if (!clock) scrollTo(0, 0);
+      return;
+    }
     if (b.dataset.f === "off") {
       try {
         localStorage.setItem(KEY, "off");
@@ -190,6 +212,42 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
     }
   });
 
+  /* the page's own width media rules follow the page half, not the whole window (see PAGE_W in core.js) */
+  const orig = new WeakMap(),
+    WQ = /^\s*\((min|max)-width:\s*\d+(?:\.\d+)?px\)(\s+and\s+\((min|max)-width:\s*\d+(?:\.\d+)?px\))*\s*$/;
+  let pageW = 0;
+  const walk = (rules) => {
+    for (const r of rules) {
+      if (!(r instanceof CSSMediaRule)) continue;
+      let o = orig.get(r);
+      if (o === undefined) orig.set(r, (o = r.media.mediaText));
+      if (WQ.test(o)) {
+        const want = pageW ? (WIDTH_MQ.test(o, pageW) ? "all" : "not all") : o;
+        if (r.media.mediaText !== want) r.media.mediaText = want;
+      }
+      walk(r.cssRules);
+    }
+  };
+  const media = () => {
+    for (const sh of document.styleSheets) {
+      let rs;
+      try {
+        rs = sh.cssRules;
+      } catch (_) {
+        continue;
+      }
+      walk(rs);
+    }
+  };
+  new MutationObserver(() => pageW && media()).observe(document.head, { childList: true });
+  function setPage(w) {
+    w = Math.round(w) || 0;
+    if (w === pageW) return;
+    pageW = w;
+    media();
+    if (typeof WIDTH_MQ !== "undefined") WIDTH_MQ.set(w);
+  }
+
   function fromWeb() {
     const s = window.viewport && window.viewport.segments;
     if (!s || s.length !== 2) return null;
@@ -226,17 +284,15 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
       R.style.removeProperty("--fw");
     }
     hinge.hidden = bar.hidden = !f;
-    pc.hidden = !(f && f.axis === "h");
     const now = f && f.axis;
+    if (now === "h" && was !== "h") clock = true; // tent opens on the Planet Clock; "Controls" swaps in the full app
+    const showClock = now === "h" && clock;
+    pc.hidden = !showClock;
+    R.classList.toggle("fold-clock", showClock);
+    viewB.hidden = now !== "h";
+    viewB.textContent = showClock ? "Controls" : "Clock";
+    setPage(now === "v" ? innerWidth - f.a - f.w : 0);
     if (now !== was) {
-      if (now === "v" && typeof CONSOLE !== "undefined" && !CONSOLE.isOpen) {
-        openedCns = true;
-        CONSOLE.open();
-      }
-      if (now !== "v" && openedCns) {
-        openedCns = false;
-        if (typeof CONSOLE !== "undefined" && CONSOLE.isOpen) CONSOLE.close();
-      }
       if (now === "h") {
         hook();
         syncPC();
@@ -248,14 +304,6 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));bottom:max
       requestAnimationFrame(() => dispatchEvent(new Event("resize")));
     }
   }
-  /* closing the Console from its own Globe button in book pose leaves the book layout until the pose changes */
-  new MutationObserver(() => {
-    if (cur && cur.axis === "v" && !R.classList.contains("cns-on")) {
-      openedCns = false;
-      dismissed = "v";
-      apply();
-    }
-  }).observe(R, { attributes: true, attributeFilter: ["class"] });
   let rt = 0;
   addEventListener("resize", () => {
     clearTimeout(rt);

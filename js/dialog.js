@@ -9,7 +9,7 @@
 (() => {
   const css = document.createElement("style");
   css.textContent = `
-.emd{border:1px solid var(--line2);border-radius:16px;background:var(--sf2);color:var(--fg);padding:18px 18px 14px;width:min(400px,calc(100vw - 32px));box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.emd{border:1px solid var(--line2);border-radius:16px;background:var(--sf2);color:var(--fg);padding:18px 18px 14px;width:min(400px,calc(var(--pw,100vw) - 32px));box-shadow:0 24px 80px rgba(0,0,0,.6)}
 .emd::backdrop{background:rgba(3,5,8,.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .emd h3{font:700 17px var(--disp);margin:0 0 6px}
 .emd p{font:13.5px/1.5 var(--body);color:var(--mute);margin:0 0 12px}
