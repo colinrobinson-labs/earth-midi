@@ -33,20 +33,7 @@ struct RootView: View {
             FoldAwareWeb(engine: hub.web)
                 .background(Theme.bg.ignoresSafeArea())
                 .toolbar(.hidden, for: .navigationBar)
-                .toolbar {
-                    ToolbarItemGroup(placement: .bottomBar) {
-                        railButton(hub.isPlaying ? "Stop" : "Play", hub.isPlaying ? "stop.fill" : "play.fill", primary: true) { hub.toggle() }
-                        Spacer()
-                        railButton("Readings", "globe.americas") { sheet = .readings }
-                        Spacer()
-                        railButton("MIDI", "pianokeys") { sheet = .midi }
-                        Spacer()
-                        // AirPlay is a system custom view, so a vertical rail can't show it; it is also in Settings.
-                        RoutePicker().frame(width: 28, height: 24).accessibilityLabel("AirPlay")
-                        Spacer()
-                        railButton("Settings", "slider.horizontal.3") { sheet = .settings }
-                    }
-                }
+                .toolbar { bottomBar }
                 .toolbarBackground(Theme.sf0, for: .bottomBar)
                 .toolbarBackground(.visible, for: .bottomBar)
                 .toolbarColorScheme(.dark, for: .bottomBar)
@@ -66,15 +53,52 @@ struct RootView: View {
     }
 
     #if os(iOS)
-    @ViewBuilder private func railButton(_ title: String, _ icon: String, primary: Bool = false, _ action: @escaping () -> Void) -> some View {
-        let b = Button(action: action) { Label(title, systemImage: icon) }
-            .tint(primary ? Theme.hex(0x3cc8ff) : Theme.fg2)
-        #if DUO_SDK
-        // ⚠️ iOS 27.1 SDK: keep Play and Readings on the rail longest when it overflows
-        b.visibilityPriority(primary || title == "Readings" ? .high : .automatic)
+    @ToolbarContentBuilder private var bottomBar: some ToolbarContent {
+        #if DUO_SDK || compiler(>=6.4.2)
+        if #available(iOS 27.0, *) { prioritizedBar } else { classicBar }
         #else
-        b
+        classicBar
         #endif
+    }
+
+    @ToolbarContentBuilder private var classicBar: some ToolbarContent {
+        ToolbarItemGroup(placement: .bottomBar) {
+            railButton(hub.isPlaying ? "Stop" : "Play", hub.isPlaying ? "stop.fill" : "play.fill", primary: true) { hub.toggle() }
+            Spacer()
+            railButton("Readings", "globe.americas") { sheet = .readings }
+            Spacer()
+            railButton("MIDI", "pianokeys") { sheet = .midi }
+            Spacer()
+            // AirPlay is a system custom view, so a vertical rail can't show it; it is also in Settings.
+            RoutePicker().frame(width: 28, height: 24).accessibilityLabel("AirPlay")
+            Spacer()
+            railButton("Settings", "slider.horizontal.3") { sheet = .settings }
+        }
+    }
+
+    #if DUO_SDK || compiler(>=6.4.2)
+    /// iOS 27: the same bar as separate items, so Play and Readings stay on the rail longest when it overflows
+    /// (iPhone Duo outer display / vertical rail).
+    @available(iOS 27.0, *)
+    @ToolbarContentBuilder private var prioritizedBar: some ToolbarContent {
+        ToolbarItem(placement: .bottomBar) {
+            railButton(hub.isPlaying ? "Stop" : "Play", hub.isPlaying ? "stop.fill" : "play.fill", primary: true) { hub.toggle() }
+        }.visibilityPriority(.high)
+        ToolbarSpacer(.flexible, placement: .bottomBar)
+        ToolbarItem(placement: .bottomBar) { railButton("Readings", "globe.americas") { sheet = .readings } }.visibilityPriority(.high)
+        ToolbarSpacer(.flexible, placement: .bottomBar)
+        ToolbarItem(placement: .bottomBar) { railButton("MIDI", "pianokeys") { sheet = .midi } }
+        ToolbarSpacer(.flexible, placement: .bottomBar)
+        // AirPlay is a system custom view, so a vertical rail can't show it; it is also in Settings.
+        ToolbarItem(placement: .bottomBar) { RoutePicker().frame(width: 28, height: 24).accessibilityLabel("AirPlay") }.visibilityPriority(.low)
+        ToolbarSpacer(.flexible, placement: .bottomBar)
+        ToolbarItem(placement: .bottomBar) { railButton("Settings", "slider.horizontal.3") { sheet = .settings } }
+    }
+    #endif
+
+    private func railButton(_ title: String, _ icon: String, primary: Bool = false, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) { Label(title, systemImage: icon) }
+            .tint(primary ? Theme.hex(0x3cc8ff) : Theme.fg2)
     }
     #endif
 }
@@ -86,13 +110,16 @@ struct FoldAwareWeb: View {
     let engine: WebEngine
     @State private var lastFold = ""
     var body: some View {
-        #if DUO_SDK
-        // ⚠️ iOS 27.1 SDK. API names follow Apple's iPhone Duo docs; confirm labels in Xcode before turning DUO_SDK on.
-        GeometryReader { proxy in
-            let folds = proxy.reservedRegions(kind: .division, options: [])
-            let fold = folds.first(where: { $0.isActive })?.frame
+        #if DUO_SDK || compiler(>=6.4.2)
+        if #available(iOS 27.1, *) {
+            // iOS 27.1 SDK: the hinge is a .division reserved region. Assumes its frame is in this proxy's (= the web view's) space, like safeAreaInsets; not yet confirmed on a Duo.
+            GeometryReader { proxy in
+                let fold = proxy.reservedRegions(kind: .division).first(where: { $0.isActive })?.frame
+                WebEngineView(engine: engine)
+                    .onChange(of: fold, initial: true) { _, f in send(f) }
+            }
+        } else {
             WebEngineView(engine: engine)
-                .onChange(of: fold, initial: true) { _, f in send(f) }
         }
         #else
         WebEngineView(engine: engine)

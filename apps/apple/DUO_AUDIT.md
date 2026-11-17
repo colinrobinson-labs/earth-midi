@@ -12,7 +12,7 @@ Status (Nov 11): **plan approved by Colin, phases 2–5 and both wow features bu
 | M2 bottom stacking | Partly: native bar is now a system bar. Web dock as a side rail waits for real outer-display sizes |
 | M3 safe areas | ✅ Both sides (site PR #70) |
 | M4 two panes | ✅ From 900px (site PR #70); confirm the inner display's width in the simulator |
-| M5 fold | ✅ `js/fold.js` + native `FoldAwareWeb` (behind `DUO_SDK` until the API names are confirmed in Xcode) |
+| M5 fold | ✅ `js/fold.js` + native `FoldAwareWeb` (API names confirmed against the iOS 27.2 SDK; on with Xcode 27.2+; not yet run in a Duo simulator) |
 | M6 Readings split | ✅ Map and numbers side by side at regular width |
 | L1 console tip | ✅ Viewport-based |
 | L2 Live Activity, L3 widgets, L4 Dynamic Type | Open: needs the Duo simulator |
