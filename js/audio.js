@@ -1639,6 +1639,28 @@ function midiOn(ch, n, v) {
 function midiOff(ch, n) {
   tx([0x80 + ch - 1, n & 127, 0]);
 }
+/* Let go of everything Earth MIDI is holding on the MIDI side: the pad's root note and the ten chord voices are
+   long notes with no set length, so without this they rang on in the DAW or synth after Stop. Also sends
+   "all notes off" on every channel in use, for anything a timed note-off hasn't reached yet. */
+function midiRelease() {
+  if (!A) return;
+  if (A.pad && A.pad.rootNote) {
+    midiOff(CH("s"), A.pad.rootNote);
+    A.pad.rootNote = null;
+  }
+  if (A.choir)
+    A.choir.voices.forEach((v) => {
+      if (v.note) midiOff(CH("c"), v.note);
+      v.note = null;
+    });
+  // start again from the top on the next Play, so the held notes come straight back
+  if (A.pad) A.pad.lastChord = -99;
+  if (A.choir) A.choir.last = -99;
+  if (out)
+    try {
+      new Set([...Object.values(CFG.ch), 16]).forEach((ch) => out.send([0xb0 + ch - 1, 123, 0]));
+    } catch (_) {}
+}
 function midiPB(ch, x) {
   if (!Number.isFinite(x)) return;
   const v = Math.round(8192 + clamp(x, -1, 1) * 8191 * 0.25);

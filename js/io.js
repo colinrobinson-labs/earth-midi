@@ -69,6 +69,50 @@ const ascii = (s) =>
     .replace(/→/g, "->")
     .replace(/×/g, "x")
     .replace(/[^\x20-\x7e]/g, "");
+/* One track's events, ready for a DAW: in time order, and every note opens once and closes once.
+   Two cities on the same pitch, or a note struck again while it still rings, used to land in the file as stacked
+   notes on one key, and anything still sounding at export had no ending. Now a repeat at the same instant becomes
+   one note (the louder velocity, the later ending), a re-strike ends the ringing note first, a stray note-off is
+   dropped, and whatever is still held is closed at the last event. Notes, pitches and start times don't change. */
+function tidyNotes(ev) {
+  const kind = (b) =>
+      (b[0] & 0xf0) === 0x80 || ((b[0] & 0xf0) === 0x90 && !b[2]) ? 0 : (b[0] & 0xf0) === 0x90 ? 2 : 1,
+    list = ev
+      .map(([tk, b], i) => [Math.max(0, Math.round(tk)), b, i])
+      .sort((a, c) => a[0] - c[0] || kind(a[1]) - kind(c[1]) || a[2] - c[2]),
+    out = [],
+    held = new Map();
+  let end = 0;
+  for (const [tk, b] of list) {
+    end = tk;
+    const k = kind(b),
+      id = (b[0] & 15) * 128 + b[1],
+      h = held.get(id);
+    if (k === 1) out.push([tk, b]);
+    else if (k === 2) {
+      if (!h) {
+        const on = [tk, b.slice()];
+        out.push(on);
+        held.set(id, { on, extra: 0 });
+      } else if (h.on[0] === tk) {
+        h.on[1][2] = Math.max(h.on[1][2], b[2]);
+        h.extra++;
+      } else {
+        const on = [tk, b.slice()];
+        out.push([tk, [0x80 | (b[0] & 15), b[1], 0]], on);
+        held.set(id, { on, extra: h.extra + 1 });
+      }
+    } else if (h) {
+      if (h.extra) h.extra--;
+      else {
+        out.push([tk, [0x80 | (b[0] & 15), b[1], 0]]);
+        held.delete(id);
+      }
+    }
+  }
+  held.forEach((h, id) => out.push([end, [0x80 | (id >> 7), id & 127, 0]]));
+  return out;
+}
 function smf(tracks, tpq, bpm) {
   const enc = { encode: (s) => new TextEncoder().encode(ascii(s)) },
     out = [
@@ -114,10 +158,9 @@ function smf(tracks, tpq, bpm) {
       vlq(0);
       b.push(0xff, 0x58, 4, 4, 2, 24, 8);
     }
-    const ev = (tr.ev || []).slice().sort((a, c) => a[0] - c[0] || ((a[1][0] & 0xf0) === 0x80 ? -1 : 1));
+    const ev = tidyNotes(tr.ev || []);
     let prev = 0;
     ev.forEach(([tk, bytes]) => {
-      tk = Math.max(0, Math.round(tk));
       vlq(tk - prev);
       prev = tk;
       b.push(...bytes);
@@ -478,7 +521,12 @@ function exportPerfMidi() {
   ];
   Object.keys(byCh)
     .sort((a, b) => a - b)
-    .forEach((ch) => tracks.push({ name: `ch ${ch} · ${chName[ch] || "layer"}`, ev: byCh[ch] }));
+    .forEach((ch) =>
+      tracks.push({
+        name: `ch ${ch} · ${chName[ch] || (+ch === 16 ? "EARTH MIDI title + globe camera" : "layer")}`,
+        ev: byCh[ch],
+      }),
+    );
   download(`earth-midi-performance_${stamp()}.mid`, smf(tracks, tpq, bpm));
   xs(`Saved ${MREC.length} MIDI events on ${tracks.length - 1} tracks`);
 }

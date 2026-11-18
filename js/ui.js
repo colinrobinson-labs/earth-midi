@@ -1132,6 +1132,7 @@ async function startStop() {
     if (!S.frozen) refresh();
     initMIDI();
   } else {
+    midiRelease();
     S.on = false;
     if (UNLOCK) UNLOCK.pause();
     A.out.gain.setTargetAtTime(0, A.ctx.currentTime, 0.4);
@@ -1165,6 +1166,23 @@ function boot() {
     )
     .join("");
   document.querySelectorAll(".go").forEach((b) => (b.onclick = startStop));
+  // the playback menu works while it plays too: pick a replay and it starts from 24 hours ago, pick Live and it jumps to now
+  $("mode").onchange = (e) => {
+    if (!S.on) return;
+    const v = +e.target.value;
+    if (v === 0) {
+      if (S.frozen)
+        e.target.value = String(S.mode || 180); // a saved session has no "now" to go to
+      else goLive();
+      return;
+    }
+    S.mode = v;
+    S.liveSince = 0;
+    if (!S.frozen) S.endT = Date.now();
+    S.replayFrom = S.endT - 864e5;
+    seekTo(0);
+    xs(`Replaying the last 24 hours in ${v >= 120 ? v / 60 + " minutes" : v + " seconds"}, then live`);
+  };
   document.querySelectorAll("[data-style]").forEach((b) => (b.onclick = () => setStyle(b.dataset.style)));
   // one volume, two sliders (bar on desktop, dock on phones), remembered per browser
   const setVol = (v, src) => {
@@ -1215,6 +1233,7 @@ function boot() {
     mo.addEventListener("keydown", ask);
   }
   $("midiOut").onchange = (e) => {
+    midiRelease(); // nothing left ringing on the port being switched away from
     out = midi && e.target.value ? midi.outputs.get(e.target.value) : null;
     $("midiState").textContent = out ? "sending MIDI" : "";
     clk.on = false;
@@ -1281,6 +1300,8 @@ function boot() {
   if (location.hash === "#how") $("how").open = true;
   addEventListener("keydown", (e) => {
     if (e.target.matches("input,select,textarea")) return;
+    // Cmd+F, Ctrl+P and friends belong to the browser, not to the g / f / p shortcuts
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.code === "Space") {
       if (e.target.closest('button,a[href],summary,[role="button"],[role="tab"],dialog')) return;
       /* Space on a focused control presses that control */ e.preventDefault();
