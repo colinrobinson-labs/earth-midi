@@ -1608,8 +1608,9 @@ body.god .mapwrap{touch-action:none;-webkit-user-select:none;user-select:none;-w
 body.god #map{cursor:crosshair}
 body.god .hud .hint2{display:none}
 body.god #wxl,body.god #motionLbl{display:none}
-body.god #tl,body.god .tlh{opacity:.3}
-body.god .grid,body.god .row2,body.god #trace,body.god .zero{opacity:.4}
+/* real-data areas step back in Zeus Mode, but their text stays readable */
+body.god #tl{opacity:.3}body.god .tlh>span{opacity:.6}
+body.god .grid,body.god .row2,body.god #trace,body.god .zero{opacity:.8;filter:saturate(.35)}
 .grid,.row2,#trace,.zero{transition:opacity .6s}
 body.god h1 .L{background-image:linear-gradient(100deg,#fff6cf,#ffc83d 25%,#a86a00 50%,#ffe28a 75%,#fff6cf);filter:drop-shadow(0 0 calc(10px + var(--glow)*30px) rgba(255,190,40,.75))}
 body.god::before{background:radial-gradient(60% 40% at 50% 0%,rgba(255,190,40,.2),transparent 70%),radial-gradient(40% 40% at 50% 60%,rgba(255,170,30,.07),transparent 70%)!important}
