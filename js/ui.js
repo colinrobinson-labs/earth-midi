@@ -826,6 +826,18 @@ function renderPresets() {
     renderPresets();
     xs(LEARN.on ? "MIDI learn on: touch a slider, then move a knob" : "MIDI learn off");
   };
+  // tap a mapped knob to forget it
+  g.querySelectorAll("[data-uncc]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        const cc = b.dataset.uncc;
+        delete LEARN.map[cc];
+        saveLearn();
+        renderPresets();
+        xs(`CC ${cc} unmapped`);
+        $("bLearn")?.focus();
+      }),
+  );
   g.classList.toggle("enter", TABIN);
   TABIN = false;
 }

@@ -178,7 +178,8 @@ const STUDIO = (() => {
 #bLearn[aria-pressed="true"]{border-color:var(--k);color:var(--k);background:color-mix(in srgb,var(--k) 10%,var(--sf2))}
 #bLearn[aria-pressed="true"] .lled{background:var(--k);box-shadow:0 0 10px var(--k);animation:bl 1s infinite}
 .lmap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:8px;font:11px var(--mono);color:var(--mute)}
-.lmap em{font-style:normal;padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--k) 40%,transparent);color:var(--k)}
+.lmap .lmx{font:inherit;background:none;cursor:pointer;padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--k) 40%,transparent);color:var(--k);display:inline-flex;align-items:center;gap:4px}
+.lmap .lmx:hover,.lmap .lmx:focus-visible{background:color-mix(in srgb,var(--k) 14%,transparent)}.lmap .lmx i{font-style:normal;opacity:.6}.lmap .lmx:hover i{opacity:1}
 /* mixer */
 .mixer .strip{--lv:0;position:relative;overflow:hidden;border-top-width:1px;border-color:color-mix(in srgb,var(--c) calc(18% + var(--lv)*60%),var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--c) calc(6% + var(--lv)*16%),var(--sf1)),var(--sf1) 60%);transition:opacity .25s;box-shadow:0 0 calc(var(--lv)*26px) color-mix(in srgb,var(--c) 30%,transparent)}
 .mixer .strip::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--c);box-shadow:0 0 calc(4px + var(--lv)*18px) var(--c)}
@@ -575,7 +576,7 @@ const STUDIO = (() => {
   <div class="psec" style="--ac:var(--k);--i:2"><div class="psh"><span class="gi">${ic("save")}</span>Yours<small>saved in this browser · share them with Share</small></div>
    <div class="fps">${up || `<div class="fpempty">${ic("save")}<span>Nothing saved yet. Dial in a sound, then <b>Save current as preset</b> and it lands here with its own mix bars.</span></div>`}</div>
    <div class="ptools"><button id="bUP" class="pri">${ic("save")}Save current as preset</button><button id="bEP">${ic("down")}Export preset file</button><label class="btnlike">${ic("up")}Import preset<input type="file" accept=".json" hidden id="fPre"></label><button id="bLearn" aria-pressed="${LEARN.on}"><span class="lled"></span>${ic("knob")}MIDI learn ${LEARN.on ? "on" : "off"}</button></div>
-   <div class="lmap">${LEARN.on ? "Touch any slider, then move a knob on your controller." : "MIDI learn maps your controller's knobs to any slider."} ${lm.length ? "Mapped: " + lm.map(([cc, k]) => `<em>CC${esc(cc)} → ${esc(k)}</em>`).join("") : "Nothing mapped yet."}</div></div>`;
+   <div class="lmap">${LEARN.on ? "Touch any slider, then move a knob on your controller." : "MIDI learn maps your controller's knobs to any slider."} ${lm.length ? "Mapped: " + lm.map(([cc, k]) => `<button class="lmx" data-uncc="${esc(cc)}" title="Remove this mapping" aria-label="Remove CC ${esc(cc)} mapped to ${esc(k)}">CC${esc(cc)} → ${esc(k)}<i aria-hidden="true">×</i></button>`).join("") : "Nothing mapped yet."}</div></div>`;
   }
 
   /* ---------- enhance native controls after a render ---------- */

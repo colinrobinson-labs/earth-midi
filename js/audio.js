@@ -1716,17 +1716,23 @@ let LEARN = { armed: null, on: false, map: {} };
 try {
   LEARN.map = JSON.parse(localStorage.getItem("em5.learn") || "{}");
 } catch (_) {}
+function saveLearn() {
+  try {
+    localStorage.setItem("em5.learn", JSON.stringify(LEARN.map));
+  } catch (_) {}
+}
 function onMidiIn(e) {
   const [st, d1, d2] = e.data,
     typ = st & 0xf0;
   if (typ === 0xb0) {
     if (LEARN.on && LEARN.armed) {
+      // one knob per slider: a new knob for a slider replaces the old one, so both don't fight over it
+      for (const c of Object.keys(LEARN.map)) if (LEARN.map[c] === LEARN.armed) delete LEARN.map[c];
       LEARN.map[d1] = LEARN.armed;
-      try {
-        localStorage.setItem("em5.learn", JSON.stringify(LEARN.map));
-      } catch (_) {}
+      saveLearn();
       xs(`CC ${d1} → ${LEARN.armed}`);
       LEARN.armed = null;
+      if (typeof renderPresets === "function") renderPresets(); // the new mapping shows in the list right away
       return;
     }
     const k = LEARN.map[d1];
