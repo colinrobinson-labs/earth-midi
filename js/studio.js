@@ -502,10 +502,10 @@ const STUDIO = (() => {
   function group(t, inner, i, lk) {
     if (lk) {
       const col = COLS[lk] || "#d9dce6";
-      return `<div class="pgrp lyr" data-l="${lk}" style="--ac:${col};--i:${i}"><h5><span class="gi">${svg(LIC[lk] || "")}</span>${t}<small class="lch">ch ${CH(lk === "r" ? "d" : lk)}</small></h5>${inner}</div>`;
+      return `<div class="pgrp lyr" data-l="${lk}" style="--ac:${col};--i:${i}"><h5 aria-level="3"><span class="gi">${svg(LIC[lk] || "")}</span>${t}<small class="lch">ch ${CH(lk === "r" ? "d" : lk)}</small></h5>${inner}</div>`;
     }
     const [col, icn] = GRP[t] || ["var(--fg)", "sound"];
-    return `<div class="pgrp" style="--ac:${col};--i:${i}"><h5><span class="gi">${ic(icn)}</span>${t}</h5>${inner}</div>`;
+    return `<div class="pgrp" style="--ac:${col};--i:${i}"><h5 aria-level="3"><span class="gi">${ic(icn)}</span>${t}</h5>${inner}</div>`;
   }
   function mixer() {
     return PAN_KEYS.map(
