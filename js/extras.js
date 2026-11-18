@@ -86,7 +86,7 @@
   };
   function nowLine() {
     if (!playing() || !S.cur) {
-      if (nl.textContent) nl.textContent = "";
+      if (nl.textContent) nl.textContent = nl._html = "";
       return;
     }
     const c = S.cur,
@@ -105,7 +105,8 @@
           ? `<b>M${e.q.mag.toFixed(1)}</b> ${esc(String(e.q.place).replace(/^\d+\s*km\s+[NSEW]{1,3}\s+of\s+/i, ""))} rang <b>${esc((e.txt.match(/→\s*([A-G]#?-?\d)/) || [])[1] || "a bell")}</b>`
           : esc(((t) => (t.length > 48 ? t.slice(0, 46).replace(/[\s,:;]+\S*$/, "") + "…" : t))(e.txt.split(" · ")[0])),
       );
-    nl.innerHTML = parts.join("<i>·</i>");
+    const html = parts.join("<i>·</i>");
+    if (nl._html !== html) nl.innerHTML = nl._html = html; // unchanged most of the time: skip the rewrite and relayout
   }
   setInterval(nowLine, 2000);
 
