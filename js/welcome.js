@@ -98,11 +98,14 @@
     const parts = [];
     if (sun) parts.push(`solar wind <b>${fmt(sun)} km/s</b>`);
     if (q) parts.push(`<b>${fmt(q)}</b> earthquakes in the last 24 h`);
-    el.innerHTML = parts.length
+    const html = parts.length
       ? `<i></i>Right now: ${parts.join(" · ")}`
       : S.demo.s && S.demo.q
         ? ""
         : "Reading the sensors…";
+    // only touch the line when the reading changes: rewriting it every second restarted the dot's 2 s blink
+    // before it could finish, and gave the browser a "new" paint each time
+    if (el._html !== html) el.innerHTML = el._html = html;
   }
 
   function close(choice) {
