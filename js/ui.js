@@ -1246,10 +1246,25 @@ function boot() {
         sizeMap();
       }),
   );
+  /* The top bar sticks to the top of the window on wide screens and its height changes with the status lines.
+     --barh tells the stylesheet where it ends, so an opened panel or the Layers column never sits underneath it. */
+  {
+    const bar = document.querySelector(".bar"),
+      set = () => {
+        const st = bar && getComputedStyle(bar).position === "sticky";
+        document.documentElement.style.setProperty(
+          "--barh",
+          (st ? Math.round(bar.getBoundingClientRect().height) + 8 : 0) + "px",
+        );
+      };
+    if (bar && window.ResizeObserver) new ResizeObserver(set).observe(bar);
+    addEventListener("resize", set);
+    set();
+  }
   const panel = (id) => () => {
     const p = $(id);
     p.hidden = !p.hidden;
-    if (!p.hidden) p.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (!p.hidden) p.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   /* every button that opens Producer or Export (top bar and phone dock) shows whether it's open, whoever opened or closed it */
   [
