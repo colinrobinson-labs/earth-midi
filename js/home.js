@@ -35,7 +35,7 @@ body.imm #homeBtn{display:none}
   const b = document.createElement("button");
   b.id = "homeBtn";
   b.type = "button";
-  b.setAttribute("aria-label", "Back to the main view");
+  b.setAttribute("aria-label", "Home, back to the main view");
   b.title = "Back to the main view";
   b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h4.5v-5.5h3V20H18V9.5"/></svg><span>Home</span>`;
   document.body.appendChild(b);
