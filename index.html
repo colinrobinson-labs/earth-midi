@@ -95,7 +95,7 @@ body.imm .hud2{top:calc(10px + env(safe-area-inset-top,0px))}
 
 /* how it works (quiet, expandable) */
 .b.syn{--bc:var(--o)}.b.more{color:var(--mute);text-decoration:underline;text-decoration-color:var(--line3);text-underline-offset:3px}.b.more::before{display:none}.b.more::after{content:"→"}.b.more:hover{color:var(--fg);text-decoration-color:currentColor}
-.how{margin-top:26px;border:1px solid var(--line);border-radius:var(--r2);background:var(--panel);scroll-margin-top:120px}
+.how{margin-top:26px;border:1px solid var(--line);border-radius:var(--r2);background:var(--panel);scroll-margin-top:calc(var(--barh,100px) + 20px)}
 .how summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px}
 .how summary::-webkit-details-marker{display:none}
 .hs-t{font:700 18px var(--disp)}.hs-s{font:12px var(--mono);color:var(--mute);flex:1 1 300px}
@@ -189,7 +189,9 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .hud2 .seg button{font:500 12px var(--body);height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;background:transparent}.hud2 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}.hud2 .seg .ic{width:14px;height:14px}
 .hud2{right:52px;flex-wrap:wrap}.vmix{align-items:center;order:5}.vmix .vlbl{font:500 11px var(--body);color:var(--mute);padding:0 4px 0 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}.hud2 .vmix button{padding:0 10px}.vmix.dim{opacity:.4}
 #motionLbl{position:absolute;bottom:52px;left:12px;font:11px var(--mono);color:var(--fg);background:rgba(5,7,10,.7);border:1px solid var(--line);border-radius:8px;padding:5px 9px;opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s;pointer-events:none;max-width:calc(100% - 24px)}#motionLbl.on{opacity:1;transform:none}.hud2 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
-#bpmLbl{font:600 12px var(--mono);color:var(--fg);text-shadow:0 0 12px var(--q)}
+/* the tempo sits under the toolbar, out of its row, so the buttons stay put when Pulse starts and Zeus Mode stays on screen on phones */
+#bpmLbl{position:absolute;top:50px;left:12px;font:600 11px var(--mono);color:var(--fg);text-shadow:0 0 12px var(--q);background:rgba(5,7,10,.62);border:1px solid var(--line);border-radius:8px;padding:4px 9px;pointer-events:none;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;transition:top .4s}#bpmLbl:empty{display:none}
+body.imm #bpmLbl{top:calc(50px + env(safe-area-inset-top,0px))}body.god #bpmLbl{top:74px}html.simple #bpmLbl{display:none}
 #clock{font:600 13px var(--mono);color:var(--fg)}
 .prog{position:absolute;left:0;top:0;height:2px;background:linear-gradient(90deg,var(--q),var(--s));width:0;box-shadow:0 0 12px var(--q);z-index:2}
 .tip{position:absolute;pointer-events:none;background:#0b1016ee;border:1px solid var(--line2);border-radius:10px;padding:7px 10px;font:11px/1.45 var(--mono);display:none;max-width:250px;z-index:3;box-shadow:0 10px 30px rgba(0,0,0,.5)}
@@ -232,7 +234,7 @@ select:disabled{opacity:.55;cursor:not-allowed}
 .lrow.off .lname,.lrow.off .lvl{opacity:.38}.lrow.off .lname i{box-shadow:none;background:transparent;border:1px solid var(--c)}
 .lrow.solo{background:color-mix(in srgb,var(--c) 16%,transparent)}
 .hint{font:11px var(--mono);color:var(--mute);margin:6px 0 0}
-@media (min-width:900px){.side{position:sticky;top:124px;max-height:calc(100vh - 136px);overflow:auto}#pads{grid-template-columns:1fr}.shint{margin-left:0;flex-basis:100%}}
+@media (min-width:900px){.side{position:sticky;top:calc(var(--barh,112px) + 20px);max-height:calc(100vh - var(--barh,112px) - 32px);overflow:auto}#pads{grid-template-columns:1fr}.shint{margin-left:0;flex-basis:100%}}
 
 /* cards */
 .grid{margin-top:12px}
@@ -287,7 +289,7 @@ body:not(.playing) .ipane[data-ip="scope"]::after{content:"Press Play to see the
 .ai0{color:var(--k)!important}
 
 /* producer + export */
-.pro{background:var(--panel);border:1px solid var(--line);border-radius:var(--r3);padding:12px 14px;margin-bottom:12px;scroll-margin-top:80px}
+.pro{background:var(--panel);border:1px solid var(--line);border-radius:var(--r3);padding:12px 14px;margin-bottom:12px;scroll-margin-top:calc(var(--barh,140px) + 20px)}
 .pro h2,.exph{font:700 18px var(--disp);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .pro h2 small,.exph small{font:500 11px var(--mono);color:var(--mute)}
 #ptabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none}
@@ -316,6 +318,8 @@ body:not(.playing) .ipane[data-ip="scope"]::after{content:"Press Play to see the
 .exp{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
 .exp .pgrp p{margin:0 0 8px;font-size:12.5px;color:var(--mute)}
 .exp .pgrp.hero{border-color:rgba(124,255,158,.35);background:linear-gradient(135deg,rgba(124,255,158,.08),transparent 60%),var(--sf1);grid-column:span 2}
+/* wide screens: data pack and credit on the left, the tall Record card in the middle, session files on the right, no stray card on a row of its own */
+@media (min-width:1000px){.exp{grid-template-columns:1.25fr 1.2fr 1fr}.exp .pgrp.hero{grid-column:1;grid-row:1}.exp>.pgrp:nth-child(2){grid-column:2;grid-row:1/span 2}.exp>.pgrp:nth-child(3){grid-column:3;grid-row:1}.exp>.pgrp:nth-child(4){grid-column:3;grid-row:2}.exp>.pgrp:nth-child(5){grid-column:1;grid-row:2}}
 .exp .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .exp select{font-size:12px;padding:7px 8px}
 .exp button.primary{background:var(--k);color:var(--bg);border-color:var(--k);font-weight:700}
@@ -364,7 +368,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  #map{aspect-ratio:1/1}
  body.flat #map{aspect-ratio:2/1}
  .hud{font-size:10px}.hud .hint2{display:none}
- .hud2{left:0;right:44px;top:8px;padding:0 12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;touch-action:pan-x;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}.hud2::-webkit-scrollbar{display:none}.hud2>*{flex:none}.vmix .vtx{display:none}.vmix .vlbl{padding:0 2px 0 8px}.hud2 .vmix button{padding:0 9px}#motionLbl{bottom:78px}.wxl{top:50px}
+ .hud2{left:0;right:44px;top:8px;padding:0 12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;touch-action:pan-x;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}.hud2::-webkit-scrollbar{display:none}.hud2>*{flex:none}.vmix .vtx{display:none}.vmix .vlbl{padding:0 2px 0 8px}.hud2 .vmix button{padding:0 9px}#motionLbl{bottom:78px}.wxl{top:50px}#bpmLbl{top:48px;max-width:calc(100% - 170px)}
  #tl{height:58px}
  .main{gap:10px}
  :root{--peek:64px}
@@ -693,7 +697,8 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
   <div class="prog" id="prog"></div>
   <div class="mapwrap">
     <canvas id="map"></canvas>
-    <div class="hud2"><div class="seg"><button data-view="globe" aria-pressed="true">Globe</button><button data-view="flat" aria-pressed="false">Flat</button></div><div class="seg"><button id="wxBtn" aria-pressed="true" title="Live weather (w)">Weather</button></div><div class="seg vmix" id="vmixWrap" title="How much the view shapes the sound"><span class="vlbl"><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M3 9.5V8a5 5 0 0 1 10 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="9" width="3" height="5" rx="1" fill="currentColor"/><rect x="11" y="9" width="3" height="5" rx="1" fill="currentColor"/></svg><span class="vtx">Sound follows view</span></span><button data-vmix="off" aria-pressed="false">Off</button><button data-vmix="focus" aria-pressed="false">Focus</button><button data-vmix="full" aria-pressed="false">Full</button></div><span id="bpmLbl"></span></div>
+    <div class="hud2"><div class="seg"><button data-view="globe" aria-pressed="true">Globe</button><button data-view="flat" aria-pressed="false">Flat</button></div><div class="seg"><button id="wxBtn" aria-pressed="true" title="Live weather (w)">Weather</button></div><div class="seg vmix" id="vmixWrap" title="How much the view shapes the sound"><span class="vlbl"><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M3 9.5V8a5 5 0 0 1 10 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><rect x="2" y="9" width="3" height="5" rx="1" fill="currentColor"/><rect x="11" y="9" width="3" height="5" rx="1" fill="currentColor"/></svg><span class="vtx">Sound follows view</span></span><button data-vmix="off" aria-pressed="false">Off</button><button data-vmix="focus" aria-pressed="false">Focus</button><button data-vmix="full" aria-pressed="false">Full</button></div></div>
+    <span id="bpmLbl"></span>
     <div class="wxl" id="wxl" hidden></div>
     <div id="motionLbl" aria-live="polite"></div><div class="hud"><span class="clk"><b id="clock">--:--:-- UTC</b> · <span id="modeLbl">idle</span><span id="demoTag" class="demotag" hidden title="The live feeds didn't answer, so this is built-in demo data"> · demo data</span></span><span class="hint2">drag or flick to spin · tap anywhere to hear its weather</span></div>
     <div class="tip" id="tip"></div>
