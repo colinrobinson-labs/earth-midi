@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- Connection policy: the browser only lets this page talk to the data sources below (plus the anonymous visit counter). Any other host, AI services included, is refused by the browser itself. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://earthmidi.goatcounter.com; media-src 'self' data: blob:; connect-src 'self' data: blob: https://earthquake.usgs.gov https://services.swpc.noaa.gov https://api.tidesandcurrents.noaa.gov https://api.open-meteo.com https://marine-api.open-meteo.com https://air-quality-api.open-meteo.com https://eonet.gsfc.nasa.gov https://api.wheretheiss.at https://celestrak.org https://earthmidi.goatcounter.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://earthmidi.goatcounter.com; media-src 'self' data: blob:; connect-src 'self' data: blob: https://earthquake.usgs.gov https://services.swpc.noaa.gov https://api.tidesandcurrents.noaa.gov https://api.open-meteo.com https://marine-api.open-meteo.com https://air-quality-api.open-meteo.com https://eonet.gsfc.nasa.gov https://api.wheretheiss.at https://celestrak.org https://earthmidi.goatcounter.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Earth MIDI · the planet as a live instrument</title>
 <meta name="description" content="The planet as an instrument. Earthquakes, solar wind, flares, ocean swell, tides, the jet stream, the ISS and seven more live feeds, played as sound and sent as MIDI. Same reading, same note, synthesized in your browser.">
@@ -821,7 +821,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
 <script src="js/title.js"></script>
 <script src="js/record.js"></script>
 <script src="js/welcome.js"></script>
-<script data-goatcounter="https://earthmidi.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://earthmidi.goatcounter.com/count" async src="vendor/goatcounter-2.7.0.js"></script>
 <script src="js/procta.js"></script>
 <script src="js/beat.js"></script>
 <script src="js/home.js"></script>
