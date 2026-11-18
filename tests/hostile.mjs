@@ -101,6 +101,10 @@ async function run(name, { hash = "", storage = null, file = null, check = null 
 }
 
 await run("share link with junk settings", { hash: "#s=" + b64(`{"cfg":${junkCfg},"style":${JSON.stringify(BAD)},"mode":${JSON.stringify(BAD)}}`) });
+await run("share link with a playback mode the menu doesn't have", {
+  hash: "#s=" + b64(`{"cfg":{},"mode":999}`),
+  check: () => ($("mode").value === "0" ? [] : [`playback menu reads "${$("mode").value}", expected Live`]),
+});
 await run("share link that is not an object", { hash: "#s=" + b64(`[1,2,3]`) });
 await run("share link with junk instead of settings", { hash: "#s=" + b64(`{"cfg":${JSON.stringify(BAD)},"style":{"a":1},"mode":{"a":1}}`) });
 await run("preset file with junk settings", { file: `{"app":"Earth MIDI","preset":true,"name":${JSON.stringify(BAD)},"style":${JSON.stringify(BAD)},"cfg":${junkCfg}}` });

@@ -1805,7 +1805,7 @@ body.god #godFrame{opacity:1}
   G.set = setGod;
   addEventListener("keydown", (e) => {
     if (e.target.matches && e.target.matches("input,select,textarea")) return;
-    if ((e.key === "z" || e.key === "h") && !e.metaKey && !e.ctrlKey) setGod(!G.on);
+    if ((e.key === "z" || e.key === "h") && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat) setGod(!G.on);
     else if (e.key === "Escape" && G.on) setGod(false);
   });
   if (location.hash === "#god")

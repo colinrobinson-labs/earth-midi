@@ -1234,7 +1234,8 @@ function boot() {
   }
   $("midiOut").onchange = (e) => {
     midiRelease(); // nothing left ringing on the port being switched away from
-    out = midi && e.target.value ? midi.outputs.get(e.target.value) : null;
+    out = midi && e.target.value ? midi.outputs.get(e.target.value) || null : null;
+    midiWant = { id: out ? out.id : "", name: out ? out.name : "" };
     $("midiState").textContent = out ? "sending MIDI" : "";
     clk.on = false;
   };
@@ -1320,8 +1321,10 @@ function boot() {
     if (e.code === "Space") {
       if (e.target.closest('button,a[href],summary,[role="button"],[role="tab"],dialog')) return;
       /* Space on a focused control presses that control */ e.preventDefault();
-      startStop();
-    } else if (e.key === "g") document.querySelector('[data-view="globe"]').click();
+      // holding Space repeats the key: start or stop once, not over and over
+      if (!e.repeat) startStop();
+    } else if (e.repeat) return;
+    else if (e.key === "g") document.querySelector('[data-view="globe"]').click();
     else if (e.key === "f") document.querySelector('[data-view="flat"]').click();
     else if (e.key === "p") setStyle(S.style === "pulse" ? "ambient" : "pulse");
   });

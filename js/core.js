@@ -11,6 +11,22 @@ addEventListener("fxchange", () => {
   DPR = FX.dpr();
   dispatchEvent(new Event("resize"));
 });
+/* Browser zoom and dragging the window to a screen with a different pixel density both change devicePixelRatio.
+   Keep DPR current (this listener runs before the canvases' own resize handlers, since core.js loads first), and
+   send a resize when only the density changed, so the globe and meters redraw sharp instead of soft or oversized. */
+addEventListener("resize", () => {
+  DPR = window.FX ? FX.dpr() : Math.min(2, window.devicePixelRatio || 1);
+});
+(function watchDensity() {
+  if (!window.matchMedia) return;
+  const mq = matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`);
+  const on = () => {
+    if (mq.removeEventListener) mq.removeEventListener("change", on);
+    dispatchEvent(new Event("resize"));
+    watchDensity();
+  };
+  if (mq.addEventListener) mq.addEventListener("change", on);
+})();
 const VERSION = "1.0";
 /* Width media queries follow the page, not the window. On a folding phone held like a book the page is one half of
    the screen, so the phone layout should apply there even though the window is wide. FOLD sets PAGE_W (0 = the window). */
