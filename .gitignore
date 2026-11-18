@@ -2,3 +2,8 @@ node_modules/
 _site/
 .DS_Store
 _plain/
+.env*
+*.p8
+*.p12
+*.pem
+*.mobileprovision
