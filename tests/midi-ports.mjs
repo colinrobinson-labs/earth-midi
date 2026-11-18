@@ -12,8 +12,9 @@ await page.route(/gc\.zgo\.at|goatcounter/, r => r.abort());
 // a fake MIDI device the test can plug and unplug, already allowed so Play connects to it quietly
 await page.addInitScript(() => {
   const port = { id: "p1", name: "Test synth", state: "connected", sent: 0, send() { port.sent++; } };
-  const access = { outputs: new Map([["p1", port]]), inputs: new Map(), onstatechange: null };
-  window.__midi = { port, plug(on) { port.state = on ? "connected" : "disconnected"; access.onstatechange && access.onstatechange({ port }); } };
+  const input = { id: "i1", name: "Test knobs", state: "connected", onmidimessage: null };
+  const access = { outputs: new Map([["p1", port]]), inputs: new Map([["i1", input]]), onstatechange: null };
+  window.__midi = { port, cc(n, v) { input.onmidimessage && input.onmidimessage({ data: new Uint8Array([0xb0, n, v]) }); }, plug(on) { port.state = on ? "connected" : "disconnected"; access.onstatechange && access.onstatechange({ port }); } };
   Object.defineProperty(navigator, "requestMIDIAccess", { configurable: true, value: () => Promise.resolve(access) });
   const q = navigator.permissions.query.bind(navigator.permissions);
   navigator.permissions.query = d => (d && d.name === "midi" ? Promise.resolve({ state: "granted" }) : q(d));
@@ -47,6 +48,25 @@ await page.selectOption("#midiOut", "");
 await page.evaluate(() => window.__midi.plug(true));
 await page.waitForTimeout(300);
 check("after choosing Off, a replug doesn't pick the port again", (await state()).menu === "");
+
+// MIDI learn: a new knob for a slider replaces its old knob, and a mapping can be removed from the list
+const learn = await page.evaluate(() => {
+  LEARN.map = {};
+  LEARN.on = true;
+  LEARN.armed = "duck";
+  window.__midi.cc(20, 64);
+  LEARN.armed = "duck";
+  window.__midi.cc(21, 64);
+  return JSON.stringify(LEARN.map);
+});
+check("learning a second knob for the same slider replaces the first", learn === '{"21":"duck"}');
+await page.evaluate(() => {
+  document.getElementById("pro").hidden = false;
+  TAB = TABS.findIndex((t) => t[0] === "Presets");
+  buildPro();
+});
+await page.click('[data-uncc="21"]');
+check("tapping a mapping in the list removes it", await page.evaluate(() => !Object.keys(LEARN.map).length && !document.querySelector("[data-uncc]") && localStorage.getItem("em5.learn") === "{}"));
 
 await browser.close();
 if (fails.length) { console.log(`\n${fails.length} MIDI port check(s) failed`); process.exit(1); }
