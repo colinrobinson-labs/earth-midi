@@ -24,6 +24,13 @@ const open = async () => {
   const { ctx, page } = await open();
   await page.focus("#bPro"); await page.keyboard.press("Space"); await page.waitForTimeout(300);
   check("Space on the Producer button opens Producer and does not start playback", await page.evaluate(() => !document.getElementById("pro").hidden && !S.on));
+  // holding Space sends one press and then repeats: it should start playback once, not toggle with every repeat
+  await page.evaluate(() => { document.activeElement.blur(); for (let i = 0; i < 6; i++) document.body.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", key: " ", repeat: i > 0, bubbles: true })); });
+  await page.waitForTimeout(800);
+  check("holding Space starts playback once", await page.evaluate(() => S.on));
+  await page.evaluate(() => document.body.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", key: " ", bubbles: true })));
+  await page.waitForTimeout(500);
+  check("pressing Space again stops it", await page.evaluate(() => !S.on));
   await page.focus("#ptabs [role=tab][aria-selected=true]"); await page.keyboard.press("ArrowRight"); await page.waitForTimeout(300);
   check("arrow keys move between Producer tabs", await page.evaluate(() => { const t = [...document.querySelectorAll("#ptabs [role=tab]")]; return t[1].getAttribute("aria-selected") === "true" && document.activeElement === t[1]; }));
   await page.focus('.lname[data-k="q"]'); await page.keyboard.press("Enter");

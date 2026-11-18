@@ -1606,18 +1606,31 @@ async function initMIDI(ask) {
     $("midiState").textContent = "MIDI is blocked for this site in your browser settings";
   }
 }
+/* Runs on every plug and unplug. The port picked in the menu is remembered (midiWant): when it is unplugged the
+   menu and the sending stop together, and when it comes back it is picked again on its own. */
+let midiWant = { id: "", name: "" };
 function fillPorts() {
   const s = $("midiOut"),
-    v = s.value;
+    v = s.value || midiWant.id;
   s.innerHTML = '<option value="">Off</option>';
+  let live = 0;
   midi.outputs.forEach((o) => {
+    if (o.state === "disconnected") return;
+    live++;
     const op = document.createElement("option");
     op.value = o.id;
     op.textContent = o.name;
     s.appendChild(op);
   });
   s.value = v;
-  if (!midi.outputs.size) $("midiState").textContent = "no MIDI ports (see “Use it in your DAW”)";
+  if (s.value !== v) s.value = "";
+  const was = out;
+  out = s.value ? midi.outputs.get(s.value) || null : null;
+  if (midiWant.id && !out && was) {
+    clk.on = false;
+    $("midiState").textContent = `${midiWant.name || "MIDI port"} unplugged. Sending resumes when it's back`;
+  } else if (midiWant.id && out && !was) $("midiState").textContent = "sending MIDI";
+  else if (!live) $("midiState").textContent = "no MIDI ports (see “Use it in your DAW”)";
   midi.inputs.forEach((i) => (i.onmidimessage = onMidiIn));
 }
 function tx(b, when) {
@@ -1725,10 +1738,12 @@ function onMidiIn(e) {
       } else if (typeof CONSOLE !== "undefined") CONSOLE.cc(k, d2 / 127);
     }
   } else if (typ === 0x90 && d2 > 0 && CFG.playAlong && A) {
-    const sc = scaleFor(S.cur.kp || 2),
+    const sc = scaleFor((S.cur && S.cur.kp) || 2),
       pc = (((d1 - ROOT) % 12) + 12) % 12;
+    // nearest note of the scale, counting the root an octave up too: a B with no B in the scale goes up to C,
+    // not down to A
     let best = sc[0];
-    sc.forEach((s) => {
+    [...sc, sc[0] + 12].forEach((s) => {
       if (Math.abs(s - pc) < Math.abs(best - pc)) best = s;
     });
     const n = d1 - pc + best;

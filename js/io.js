@@ -1029,7 +1029,8 @@ function readHash() {
     if (!isObj(j)) return false;
     CFG = mergeCFG(j.cfg);
     if (fitStyle(j.style)) setStyle(j.style);
-    if (typeof j.mode === "number" && Number.isFinite(j.mode)) $("mode").value = String(j.mode);
+    // only a mode the menu offers: any other value would leave the menu blank
+    if ([...$("mode").options].some((o) => o.value === String(j.mode))) $("mode").value = String(j.mode);
     return true;
   } catch (_) {
     return false;

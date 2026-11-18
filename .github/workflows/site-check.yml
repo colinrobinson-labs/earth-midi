@@ -57,6 +57,7 @@ jobs:
           node tests/smoke.mjs
           node tests/keyboard-offline.mjs
           node tests/panels.mjs
+          node tests/midi-ports.mjs
       - name: Hostile input test (as deployed)
         run: node tests/hostile.mjs
       - name: Smoke test (as in the repo)

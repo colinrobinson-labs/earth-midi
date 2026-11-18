@@ -878,7 +878,7 @@ window.wxToggle = function () {
 }
 addEventListener("keydown", (e) => {
   if (e.target.matches("input,select,textarea")) return;
-  if (e.key === "w" && !e.metaKey && !e.ctrlKey) wxToggle();
+  if (e.key === "w" && !e.metaKey && !e.ctrlKey && !e.altKey && !e.repeat) wxToggle();
 });
 document.addEventListener("click", (e) => {
   const b = e.target.closest && e.target.closest(".wxretry");
