@@ -20,6 +20,7 @@ const FOLD = (() => {
     cur = null,
     dismissed = null,
     clock = true,
+    fromClock = false,
     wake = null,
     dimT = 0,
     last = null;
@@ -71,7 +72,7 @@ html.fold-book .vtip,html.fold-tent .vtip{display:none}
    its title and tabs pinned and only the controls scrolling. The dock stays underneath for Play, Ambient/Pulse and Record. */
 html.fold-pane body{overflow:hidden}
 html.fold-pane .side,html.fold-pane #homeBtn{display:none!important}
-html.fold-pane .pro:not([hidden]){position:fixed;z-index:60;right:0;bottom:var(--dock,0px);margin:0;border:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;
+html.fold-pane .pro:not([hidden]){position:fixed;z-index:60;right:0;bottom:var(--fdock,0px);margin:0;border:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;
   padding:10px max(14px,env(safe-area-inset-right,0px)) 0 14px;box-shadow:0 -1px 0 var(--line2)}
 html.fold-book.fold-pane .pro:not([hidden]){left:var(--fp);top:0;padding-top:max(10px,env(safe-area-inset-top,0px))}
 html.fold-tent.fold-pane .pro:not([hidden]){left:0;top:var(--fp);padding-left:max(14px,env(safe-area-inset-left,0px))}
@@ -82,6 +83,7 @@ html.fold-pane #ptabs::-webkit-scrollbar{display:none}
 html.fold-pane #ptabs button{flex:none}
 html.fold-pane #pgrid,html.fold-pane #exp>.exp{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding-bottom:14px;margin:0 -14px;padding-left:14px;padding-right:14px}
 html.fold-pane #exp>.exp,html.fold-pane #pgrid{grid-auto-rows:max-content;align-content:start}
+html.fold-pane #pgrid.mas{columns:auto}
 .fold-close{display:none;flex:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--line2);background:var(--sf1);color:var(--fg);font:20px/1 var(--body);cursor:pointer;margin-left:6px}
 html.fold-pane .fold-close{display:inline-grid;place-items:center}
 .pc-desk{display:flex;gap:8px}
@@ -119,6 +121,7 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
     if (!b) return;
     if (b.dataset.f === "view") {
       clock = !clock;
+      fromClock = false;
       apply();
       if (!clock) scrollTo(0, 0);
       return;
@@ -307,13 +310,37 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
       panes.forEach((p) => p !== r.target && !p.hidden && (p.hidden = true));
       if (cur.axis === "h" && clock) re = !(clock = false);
     });
+    // a panel opened from the Planet Clock goes back to the clock when it closes
+    if (fromClock && cur && cur.axis === "h" && panes.every((p) => p.hidden)) {
+      fromClock = false;
+      clock = re = true;
+    }
     re ? apply() : paneSync();
   });
   panes.forEach((p) => po.observe(p, { attributes: true, attributeFilter: ["hidden"] }));
+  // the desk ends where the dock begins (--fdock: the dock's height from the bottom edge, safe area included)
+  const dock = document.querySelector(".dock");
+  const dockH = () => {
+    if (!dock) return;
+    const r = dock.getBoundingClientRect(),
+      h = r.height ? Math.max(0, Math.round(innerHeight - r.top)) : 0;
+    R.style.setProperty("--fdock", h + "px");
+  };
+  if (dock && window.ResizeObserver) new ResizeObserver(dockH).observe(dock);
+  addEventListener("resize", dockH);
+  dockH();
+  // in the desk only the controls scroll, so a new tab starts at its top
+  const ptabs = $("ptabs"),
+    pgrid = $("pgrid");
+  if (ptabs && pgrid)
+    ptabs.addEventListener("click", () => {
+      if (R.classList.contains("fold-pane")) requestAnimationFrame(() => (pgrid.scrollTop = 0));
+    });
   pc.querySelector(".pc-desk").onclick = (e) => {
     const b = e.target.closest("[data-d]");
     if (!b) return;
     clock = false;
+    fromClock = b.dataset.d !== "cns";
     if (b.dataset.d === "cns") {
       apply();
       if (typeof CONSOLE !== "undefined") CONSOLE.open();
@@ -343,7 +370,7 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
     }
     hinge.hidden = bar.hidden = !f;
     const now = f && f.axis;
-    if (now === "h" && was !== "h") clock = true; // tent opens on the Planet Clock; "Controls" swaps in the full app
+    if (now === "h" && was !== "h") ((clock = true), (fromClock = false)); // tent opens on the Planet Clock; "Controls" swaps in the full app
     const showClock = now === "h" && clock;
     pc.hidden = !showClock;
     R.classList.toggle("fold-clock", showClock);
