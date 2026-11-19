@@ -66,6 +66,26 @@ html.fold-tent .fold-x{right:max(12px,env(safe-area-inset-right,0px));top:calc(v
 html.fold-book body.god .fold-x{bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 html.fold-tent body.god .fold-x{top:calc(var(--fa) - 100px)}
 .fold-x [data-f=view]{color:var(--fg);border-color:var(--fg2)}
+html.fold-book .vtip,html.fold-tent .vtip{display:none}
+/* Sound desk: folded with Producer or Export open, the panel takes the whole page half (beside or under the globe),
+   its title and tabs pinned and only the controls scrolling. The dock stays underneath for Play, Ambient/Pulse and Record. */
+html.fold-pane body{overflow:hidden}
+html.fold-pane .side,html.fold-pane #homeBtn{display:none!important}
+html.fold-pane .pro:not([hidden]){position:fixed;z-index:60;right:0;bottom:var(--dock,0px);margin:0;border:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;
+  padding:10px max(14px,env(safe-area-inset-right,0px)) 0 14px;box-shadow:0 -1px 0 var(--line2)}
+html.fold-book.fold-pane .pro:not([hidden]){left:var(--fp);top:0;padding-top:max(10px,env(safe-area-inset-top,0px))}
+html.fold-tent.fold-pane .pro:not([hidden]){left:0;top:var(--fp);padding-left:max(14px,env(safe-area-inset-left,0px))}
+html.fold-pane .pro>h2,html.fold-pane .pro>.exph{flex:none;margin:0 0 8px;font-size:16px}
+html.fold-pane .pro>h2 small,html.fold-pane .pro>.exph small{display:none}
+html.fold-pane #ptabs{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:2px 14px 8px}
+html.fold-pane #ptabs::-webkit-scrollbar{display:none}
+html.fold-pane #ptabs button{flex:none}
+html.fold-pane #pgrid,html.fold-pane #exp>.exp{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding-bottom:14px;margin:0 -14px;padding-left:14px;padding-right:14px}
+html.fold-pane #exp>.exp,html.fold-pane #pgrid{grid-auto-rows:max-content;align-content:start}
+.fold-close{display:none;flex:none;width:34px;height:34px;border-radius:10px;border:1px solid var(--line2);background:var(--sf1);color:var(--fg);font:20px/1 var(--body);cursor:pointer;margin-left:6px}
+html.fold-pane .fold-close{display:inline-grid;place-items:center}
+.pc-desk{display:flex;gap:8px}
+.pc-desk button{height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:var(--sf1);color:var(--fg);font:600 12px var(--body);cursor:pointer}
 .pclock{position:fixed;left:0;right:0;bottom:0;top:calc(var(--fa) + var(--fw));z-index:79;display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,3vh,22px);
   padding:12px max(18px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
   background:radial-gradient(120% 90% at 50% 0%,#0b1420,var(--bg) 70%);transition:opacity 1.2s}
@@ -122,7 +142,8 @@ html.fold-tent body.god .fold-x{top:calc(var(--fa) - 100px)}
 <div class="pc-meta" id="pcMeta"></div>
 <div class="pc-row"><button class="go" type="button" aria-label="Play or stop"><i></i><span>PLAY</span></button>
 <div class="seg"><button data-style="ambient" aria-pressed="true">Ambient</button><button data-style="pulse" aria-pressed="false">Pulse</button></div>
-<input type="range" min="0" max="1" step=".01" aria-label="Volume" id="pcVol"></div>`;
+<input type="range" min="0" max="1" step=".01" aria-label="Volume" id="pcVol"></div>
+<div class="pc-desk"><button type="button" data-d="pro">Producer</button><button type="button" data-d="exp">Export</button><button type="button" data-d="cns">Console</button></div>`;
   document.body.appendChild(pc);
   const pv = pc.querySelector("#pcVol"),
     mv = $("vol");
@@ -266,6 +287,40 @@ html.fold-tent body.god .fold-x{top:calc(var(--fa) - 100px)}
       w = Math.round(Math.min(W, H) * 0.02);
     return dev === "v" ? { axis: "v", a: Math.round((W - w) / 2), w } : { axis: "h", a: Math.round((H - w) / 2), w };
   }
+  /* the sound desk (see the CSS above): one panel at a time, and opening one from the Planet Clock puts the clock away */
+  const panes = [$("pro"), $("exp")].filter(Boolean);
+  panes.forEach((p) => {
+    const h = p.querySelector("h2,.exph"),
+      x = document.createElement("button");
+    x.type = "button";
+    x.className = "fold-close";
+    x.setAttribute("aria-label", "Close");
+    x.textContent = "×";
+    x.onclick = () => (p.hidden = true);
+    if (h) h.appendChild(x);
+  });
+  const paneSync = () => R.classList.toggle("fold-pane", !!cur && panes.some((p) => !p.hidden));
+  const po = new MutationObserver((recs) => {
+    let re = false;
+    recs.forEach((r) => {
+      if (!cur || r.target.hidden) return;
+      panes.forEach((p) => p !== r.target && !p.hidden && (p.hidden = true));
+      if (cur.axis === "h" && clock) re = !(clock = false);
+    });
+    re ? apply() : paneSync();
+  });
+  panes.forEach((p) => po.observe(p, { attributes: true, attributeFilter: ["hidden"] }));
+  pc.querySelector(".pc-desk").onclick = (e) => {
+    const b = e.target.closest("[data-d]");
+    if (!b) return;
+    clock = false;
+    if (b.dataset.d === "cns") {
+      apply();
+      if (typeof CONSOLE !== "undefined") CONSOLE.open();
+    } else $(b.dataset.d).hidden = false;
+    apply();
+  };
+
   function apply() {
     let f = nat !== undefined ? nat : fromWeb() || fromDev();
     if (f && !(f.axis === "v" || f.axis === "h")) f = null;
@@ -295,6 +350,7 @@ html.fold-tent body.god .fold-x{top:calc(var(--fa) - 100px)}
     viewB.hidden = now !== "h";
     viewB.textContent = showClock ? "Controls" : "Clock";
     setPage(now === "v" ? innerWidth - f.a - f.w : 0);
+    paneSync();
     if (now !== was) {
       if (now === "h") {
         hook();
