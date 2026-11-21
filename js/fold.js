@@ -2,14 +2,15 @@
    Book pose (fold runs top to bottom): the globe stays on the left page and the whole app (transport, Layers, Producer,
    Export, Console, Zeus, Zones, dialogs) lives on the right page, laid out as it is on a phone, because that's the page's size.
    Tent / stand pose (fold runs side to side): the globe on top. Underneath, the Planet Clock: the last thing the planet
-   played in big type and a one-row transport (play, Ambient/Pulse, volume). "Controls" swaps the clock for the whole app,
+   played in big type and a one-row transport (play, Ambient/Pulse, volume). It also shows the three notes before it,
+   and a strip of 13 layer lights that flash as each layer plays. "Full app" swaps the clock for the whole app,
    top to bottom; "Clock" brings it back. The screen stays awake while the clock plays and dims after a minute without a touch.
    Where the fold is comes from, in order:
      1. the Earth MIDI app, which reads it from the system and calls FOLD.set({axis:"v"|"h", a, w})
         (a = size of the first page in CSS px, w = width of the hinge), or FOLD.set(null) when flat or closed
      2. the browser's Viewport Segments API, where a browser has it
      3. ?fold=v or ?fold=h in the address, for testing on any screen
-   Nothing changes on a flat screen. "Exit" leaves the layout until the pose changes; "Always off" remembers it. */
+   Nothing changes on a flat screen. "Flat view" leaves the layout until the pose changes; "Always flat" remembers it. */
 "use strict";
 const FOLD = (() => {
   const R = document.documentElement,
@@ -101,7 +102,28 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
 .pc-row .go{flex:none}
 .pc-row .seg{flex:none}
 .pc-row input[type=range]{flex:1;min-width:80px;height:44px}
-@media (prefers-reduced-motion:reduce){.pclock{transition:none}}
+.pclock{justify-content:space-between}
+.pc-now{display:flex;flex-direction:column;gap:clamp(6px,1.6vh,12px);min-height:0}
+.pc-hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;min-height:0;overflow:hidden}
+.pc-hist li{display:flex;align-items:center;gap:9px;font:500 clamp(11px,1.8vh,13.5px)/1.3 var(--body);color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:pcIn .5s ease-out both}
+.pc-hist li:nth-child(2){opacity:.75}.pc-hist li:nth-child(3){opacity:.5}
+.pc-hist i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.pc-hist b{flex:none;font:600 1em var(--mono);color:var(--c)}
+.pc-hist span{overflow:hidden;text-overflow:ellipsis}
+.pc-lv{display:grid;grid-template-columns:repeat(13,1fr);gap:4px;align-items:end;height:clamp(44px,11vh,120px)}
+.pc-lv span{--a:0;position:relative;height:100%;border-radius:5px;background:color-mix(in srgb,var(--c) calc(10% + var(--a)*55%),#0d141c);box-shadow:0 0 calc(var(--a)*18px) color-mix(in srgb,var(--c) 60%,transparent)}
+.pc-lv span::before{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--a)*100%);border-radius:5px;background:linear-gradient(to top,color-mix(in srgb,var(--c) 70%,transparent),transparent)}
+.pc-lv span::after{content:"";position:absolute;left:50%;bottom:5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--c);opacity:calc(.35 + var(--a)*.65)}
+.pc-ctl{display:flex;flex-direction:column;gap:clamp(8px,2vh,14px)}
+.pc-desk{flex-wrap:wrap}
+.pc-desk button{display:inline-flex;align-items:center;gap:7px}
+.pc-desk button[data-d=god]{border-color:color-mix(in srgb,#ffc53d 55%,var(--line2));color:#ffd77a}
+.pc-desk button[data-d=full]{margin-left:auto;background:var(--fg);color:var(--bg);border-color:var(--fg)}
+@keyframes pcIn{from{opacity:0;transform:translateY(-6px)}}
+@media (max-height:900px){.pc-hist li:nth-child(3){display:none}}
+@media (max-height:760px){.pc-hist{display:none}}
+html.fold-tent .hud #modeLbl,html.fold-tent .hud .demotag{display:none}
+@media (prefers-reduced-motion:reduce){.pclock{transition:none}.pc-hist li{animation:none}}
 `;
   const st = document.createElement("style");
   st.textContent = css;
@@ -113,7 +135,7 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
   const bar = document.createElement("div");
   bar.className = "fold-x";
   bar.hidden = true;
-  bar.innerHTML = `<button type="button" data-f="view" hidden>Controls</button><button type="button" data-f="exit">Exit</button><button type="button" data-f="off">Always off</button>`;
+  bar.innerHTML = `<button type="button" data-f="view" hidden>Full app</button><button type="button" data-f="exit" title="Use the normal layout until the phone changes pose">Flat view</button><button type="button" data-f="off" title="Never use the folded layouts on this device">Always flat</button>`;
   const viewB = bar.querySelector("[data-f=view]");
   document.body.appendChild(bar);
   bar.onclick = (e) => {
@@ -130,7 +152,7 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
       try {
         localStorage.setItem(KEY, "off");
       } catch (_) {}
-      if (typeof xs === "function") xs("Fold layouts off. Clear site data to turn them back on");
+      if (typeof xs === "function") xs("Folded layouts off on this device. Clear site data to turn them back on");
     }
     dismissed = cur && cur.axis;
     apply();
@@ -141,13 +163,43 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
   pc.className = "pclock";
   pc.hidden = true;
   pc.setAttribute("aria-label", "Planet Clock");
-  pc.innerHTML = `<div class="pc-ev"><span class="pc-note" id="pcNote">♪</span><span class="pc-txt" id="pcTxt">Press play and the planet starts playing.</span></div>
+  pc.innerHTML = `<div class="pc-now"><div class="pc-ev"><span class="pc-note" id="pcNote">♪</span><span class="pc-txt" id="pcTxt">Press play and the planet starts playing.</span></div>
 <div class="pc-meta" id="pcMeta"></div>
-<div class="pc-row"><button class="go" type="button" aria-label="Play or stop"><i></i><span>PLAY</span></button>
+<ol class="pc-hist" id="pcHist" aria-label="Played just before"></ol></div>
+<div class="pc-lv" id="pcLv" aria-hidden="true"></div>
+<div class="pc-ctl"><div class="pc-row"><button class="go" type="button" aria-label="Play or stop"><i></i><span>PLAY</span></button>
 <div class="seg"><button data-style="ambient" aria-pressed="true">Ambient</button><button data-style="pulse" aria-pressed="false">Pulse</button></div>
 <input type="range" min="0" max="1" step=".01" aria-label="Volume" id="pcVol"></div>
-<div class="pc-desk"><button type="button" data-d="pro">Producer</button><button type="button" data-d="exp">Export</button><button type="button" data-d="cns">Console</button></div>`;
+<div class="pc-desk"><button type="button" data-d="pro">Producer</button><button type="button" data-d="exp">Export</button><button type="button" data-d="cns">Console</button><button type="button" data-d="god">Zeus Mode</button><button type="button" data-d="full">Full app</button></div></div>`;
   document.body.appendChild(pc);
+  const lv = pc.querySelector("#pcLv"),
+    lights = {};
+  if (typeof LAYERS !== "undefined")
+    LAYERS.forEach(([k, name, col]) => {
+      const sp = document.createElement("span");
+      sp.style.setProperty("--c", col);
+      sp.title = name;
+      lv.appendChild(sp);
+      lights[k] = sp;
+    });
+  // each light rides its layer's live level (S.hit, the same numbers the Producer button's faders follow)
+  const lvA = {};
+  let lvT = 0;
+  const lvFrame = (now) => {
+    requestAnimationFrame(lvFrame);
+    if (pc.hidden || document.hidden || now - lvT < 60) return;
+    lvT = now;
+    const hit = typeof S !== "undefined" && S.on && S.hit ? S.hit : {},
+      still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    for (const k in lights) {
+      const v = Math.min(1, Math.sqrt((hit[k] || 0) + (k === "r" ? hit.b || 0 : 0)) * 1.3),
+        a = lvA[k] || 0,
+        n = still ? (v > 0.05 ? 0.6 : 0) : a + (v - a) * (v > a ? 0.6 : 0.12);
+      if (Math.abs(n - a) > 0.004) lights[k].style.setProperty("--a", (lvA[k] = n).toFixed(3));
+    }
+  };
+  requestAnimationFrame(lvFrame);
+  const hist = [];
   const pv = pc.querySelector("#pcVol"),
     mv = $("vol");
   const syncPC = () => {
@@ -193,6 +245,10 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
     window.logEv = function (text, layer) {
       const r = orig.apply(this, arguments);
       try {
+        if (last) {
+          hist.unshift(last);
+          hist.length = Math.min(hist.length, 3);
+        }
         last = { text: String(text || "").replace(/<[^>]+>/g, ""), layer: layer || "" };
         if (cur && cur.axis === "h") showLast();
       } catch (_) {}
@@ -207,6 +263,21 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
     $("pcNote").textContent = m ? m[1] : "♪";
     $("pcTxt").textContent = last.text.replace(/\s*→.*$/, "");
     pc.style.setProperty("--pcc", last.layer ? `var(--${last.layer})` : "var(--fg)");
+    const ol = $("pcHist");
+    ol.textContent = "";
+    hist.forEach((h) => {
+      const li = document.createElement("li"),
+        n = /→\s*([A-G]#?-?\d)/.exec(h.text);
+      li.style.setProperty(
+        "--c",
+        h.layer && typeof COLS !== "undefined" && COLS[h.layer] ? COLS[h.layer] : "var(--fg2)",
+      );
+      li.innerHTML = "<i></i><b></b><span></span>";
+      li.querySelector("b").textContent = n ? n[1] : "";
+      li.querySelector("span").textContent = h.text.replace(/\s*→.*$/, "");
+      ol.appendChild(li);
+    });
+    meta();
   };
 
   /* stays awake while playing in the clock, dims after a minute without a touch */
@@ -340,7 +411,18 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
     const b = e.target.closest("[data-d]");
     if (!b) return;
     clock = false;
-    fromClock = b.dataset.d !== "cns";
+    fromClock = b.dataset.d === "pro" || b.dataset.d === "exp";
+    if (b.dataset.d === "full") {
+      apply();
+      scrollTo(0, 0);
+      return;
+    }
+    if (b.dataset.d === "god") {
+      apply();
+      if (window.GOD && GOD.set) GOD.set(true);
+      else if ($("godBtn")) $("godBtn").click();
+      return;
+    }
     if (b.dataset.d === "cns") {
       apply();
       if (typeof CONSOLE !== "undefined") CONSOLE.open();
@@ -374,8 +456,8 @@ html.fold-pane .fold-close{display:inline-grid;place-items:center}
     const showClock = now === "h" && clock;
     pc.hidden = !showClock;
     R.classList.toggle("fold-clock", showClock);
-    viewB.hidden = now !== "h";
-    viewB.textContent = showClock ? "Controls" : "Clock";
+    viewB.hidden = now !== "h" || showClock; // the clock has its own "Full app" button
+    viewB.textContent = showClock ? "Full app" : "Clock";
     setPage(now === "v" ? innerWidth - f.a - f.w : 0);
     paneSync();
     if (now !== was) {
