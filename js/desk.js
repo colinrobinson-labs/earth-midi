@@ -18,14 +18,14 @@ const DESK = (() => {
   if (!panes.length) return { wants: () => false };
   const css = document.createElement("style");
   css.textContent = `
-html.desk .pro:not([hidden]){position:fixed;z-index:62;margin:0;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px var(--line2)}
-html.desk .pro>h2,html.desk .pro>.exph{position:static;flex:none;margin:0 0 8px;padding-right:46px;flex-wrap:wrap;justify-content:flex-start}
-html.desk .pro>h2 small,html.desk .pro>.exph small{flex-basis:100%}
-html.desk #ptabs{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px 8px;padding:2px 14px 6px}
-html.desk #ptabs::-webkit-scrollbar{display:none}
-html.desk #ptabs button{flex:none}
-html.desk #pgrid,html.desk #exp>.exp{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;margin:0 -14px;padding:0 14px 16px;grid-auto-rows:max-content;align-content:start}
-html.desk #pgrid.mas{columns:auto}
+:is(html.desk,html.room-panel) .pro:not([hidden]){position:fixed;z-index:62;margin:0;display:flex;flex-direction:column;overflow:hidden;background:var(--panel);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 0 1px var(--line2)}
+:is(html.desk,html.room-panel) .pro>h2,:is(html.desk,html.room-panel) .pro>.exph{position:static;flex:none;margin:0 0 8px;padding-right:46px;flex-wrap:wrap;justify-content:flex-start}
+:is(html.desk,html.room-panel) .pro>h2 small,:is(html.desk,html.room-panel) .pro>.exph small{flex-basis:100%}
+:is(html.desk,html.room-panel) #ptabs{flex:none;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px 8px;padding:2px 14px 6px}
+:is(html.desk,html.room-panel) #ptabs::-webkit-scrollbar{display:none}
+:is(html.desk,html.room-panel) #ptabs button{flex:none}
+:is(html.desk,html.room-panel) #pgrid,:is(html.desk,html.room-panel) #exp>.exp{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;margin:0 -14px;padding:0 14px 16px;grid-auto-rows:max-content;align-content:start}
+:is(html.desk,html.room-panel) #pgrid.mas{columns:auto}
 html.desk-side #pgrid.mas{columns:2 250px}
 @media (min-width:761px){html.desk-sheet #pgrid.mas{columns:2 250px}}
 html.desk .fold-close{display:inline-grid;place-items:center;position:absolute;right:max(14px,env(safe-area-inset-right,0px));top:12px;margin:0;width:38px;height:38px;border-radius:12px}
@@ -62,8 +62,10 @@ html.desk-sheet .desk-scrim{opacity:1;pointer-events:auto}
   scrim.setAttribute("aria-hidden", "true");
   document.body.appendChild(scrim);
 
-  // folded phones, Simple and embed keep their own layouts
+  // folded phones, Simple and embed keep their own layouts. wants(): the panel opens in place, so nobody scrolls to it.
+  // On phones and big screens js/rooms.js places the panels (tabs and the studio rail), so the desk only handles the rest.
   const wants = () => !/\b(fold-book|fold-tent|simple|embed)\b/.test(R.className);
+  const mine = () => wants() && !/\brooms-(phone|rail)\b/.test(R.className);
   const open = () => panes.find((p) => !p.hidden);
   let pushed = false;
   const close = () => panes.forEach((p) => (p.hidden = true));
@@ -81,7 +83,7 @@ html.desk-sheet .desk-scrim{opacity:1;pointer-events:auto}
   if (dock && window.ResizeObserver) new ResizeObserver(dockH).observe(dock);
 
   function sync() {
-    const p = wants() && open(),
+    const p = mine() && open(),
       sheet = !!p && SHEET.matches;
     R.classList.toggle("desk", !!p);
     R.classList.toggle("desk-sheet", sheet);

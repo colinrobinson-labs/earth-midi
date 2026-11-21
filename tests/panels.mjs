@@ -33,7 +33,10 @@ for (const [view, opts] of Object.entries(VIEWS)) {
     if (all.length) failures.push(`${view} ${where}`);
   };
   const desk = view === "desktop";
-  const toggle = id => page.click(desk ? (id === "pro" ? "#bPro" : "#bExp") : `.dock [data-jump="${id}"]`);
+  // phones: the Mix and Export tabs open the panels and Listen puts them away
+  let open = null;
+  const toggle = id => { const on = open !== id; open = on ? id : null;
+    return page.click(desk ? (id === "pro" ? "#bPro" : "#bExp") : `.rtabs [data-room="${on ? (id === "pro" ? "mix" : "export") : "listen"}"]`); };
   try {
     await toggle("pro");
     const tabs = page.locator("#ptabs button");
