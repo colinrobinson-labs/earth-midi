@@ -33,6 +33,8 @@ const open = async () => {
   check("pressing Space again stops it", await page.evaluate(() => !S.on));
   await page.focus("#ptabs [role=tab][aria-selected=true]"); await page.keyboard.press("ArrowRight"); await page.waitForTimeout(300);
   check("arrow keys move between Producer tabs", await page.evaluate(() => { const t = [...document.querySelectorAll("#ptabs [role=tab]")]; return t[1].getAttribute("aria-selected") === "true" && document.activeElement === t[1]; }));
+  // with Producer open the studio rail shows Producer; its Layers tab brings the layer list back
+  if (await page.locator('.rail-tabs [data-rail="layers"]').isVisible()) await page.click('.rail-tabs [data-rail="layers"]');
   await page.focus('.lname[data-k="q"]'); await page.keyboard.press("Enter");
   check("Enter on a layer name mutes it", await page.evaluate(() => S.mute.q === true));
   await page.keyboard.press("Enter"); await page.keyboard.press("s");
@@ -47,6 +49,7 @@ const open = async () => {
   check("timeline: End returns to live", await page.evaluate(() => !!S.liveSince || S.mode === 0));
   await page.evaluate(() => { if (S.on) startStop(); });
   // dialogs: the site's own, never prompt()
+  if (await page.locator("#pro").isHidden()) await page.click("#bPro");
   await page.locator("#ptabs [role=tab]").last().click(); await page.waitForTimeout(300);
   await page.click("#bUP"); await page.waitForTimeout(200);
   check("Save preset opens the site's dialog with the name field focused", await page.evaluate(() => !!document.querySelector("dialog.emd[open]") && document.activeElement.tagName === "INPUT"));
