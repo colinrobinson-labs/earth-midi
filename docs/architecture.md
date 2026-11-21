@@ -90,6 +90,7 @@ Changing a setting from new code is always the same three steps: write to `CFG`,
 | 23 | `simple.js` | Simple view (`#simple`, `#embed`) | ui |
 | 24 | `console.js` | Console, the touch mixing desk (`#console`) | ui, reset, studio |
 | 25 | `fold.js` | Folding-phone layouts: Book and Planet Clock. Wraps `logEv` | console, visuals |
+| 25b | `desk.js` | Producer and Export open as a sheet (phone, tablet) or right drawer (desktop) on flat screens. Exposes `DESK.wants()` so `ui.js` skips scrolling | ui, fold |
 | 26 | `tidy.js` | Moves controls into the globe HUD and the tabbed inspector | ui, zones, god |
 | 27 | `extras.js` | Lock-screen controls, wake lock, "what's driving the sound" line, screen-reader announcements, action counts, story image. Wraps `logEv` | ui, visuals |
 
