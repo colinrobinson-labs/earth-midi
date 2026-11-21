@@ -634,6 +634,13 @@ footer .links{margin-top:14px;font-size:12px}
 /* embed mode: earthmidi.com/#embed shows the globe, Play and a credit link */
 html.embed header,html.embed .refs,html.embed .sback,html.embed footer,html.embed .grid,html.embed .side,html.embed .stag,html.embed #homeBtn,html.embed .dock [data-jump],html.embed .dock #mFull,html.embed .dock #mRec,html.embed #godBtn,html.embed .godbtn,html.embed #viewSw,html.embed .procta,html.embed #nowLine,html.embed .bar .tools,html.embed .bar .status,html.embed .ctl-mode,html.embed .ctl-midi{display:none!important}
 html.embed .bar{padding-right:min(330px,40vw)}
+/* big screens: ultrawide and 4K use the width instead of a 1360 px column in the middle */
+@media (min-width:1900px){.wrap{max-width:min(2600px,calc(100vw - 96px))}.main{grid-template-columns:minmax(0,1fr) 440px}
+ body:not(.imm):not(.flat) #map{aspect-ratio:auto;height:clamp(560px,calc(100vh - 300px),1000px)}
+ header{justify-items:center;text-align:center}.brand{justify-self:center}
+ .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.grid>*{margin:0!important}}
+@media (min-width:2900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:1024px) and (max-height:960px){h1{font-size:min(176px,calc((min(var(--pw,100vw),1392px) - 40px)/7.55),15vh)}}
 html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
 .embcred{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));z-index:60;font:12px var(--mono);color:var(--fg2);background:rgba(12,15,18,.85);border:1px solid var(--line2);border-radius:999px;padding:6px 12px;text-decoration:none}
 .embcred b{color:var(--fg)}
@@ -829,6 +836,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
 <script src="js/simple.js"></script>
 <script src="js/console.js"></script>
 <script src="js/fold.js"></script>
+<script src="js/desk.js"></script>
 <script src="js/tidy.js"></script>
 <script src="js/extras.js"></script>
 <script src="js/a11y.js"></script>

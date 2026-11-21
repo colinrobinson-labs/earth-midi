@@ -1277,7 +1277,9 @@ function boot() {
   const panel = (id) => () => {
     const p = $(id);
     p.hidden = !p.hidden;
-    if (!p.hidden) p.scrollIntoView({ behavior: "smooth", block: "start" });
+    // on a flat screen it opens as a sheet or drawer over the page (js/desk.js), so the page stays put
+    if (!p.hidden && !(typeof DESK !== "undefined" && DESK.wants()))
+      p.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   /* every button that opens Producer or Export (top bar and phone dock) shows whether it's open, whoever opened or closed it */
   [
@@ -1317,7 +1319,7 @@ function boot() {
           return;
         }
         t.hidden = false;
-        t.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (!(typeof DESK !== "undefined" && DESK.wants())) t.scrollIntoView({ behavior: "smooth", block: "start" });
       }),
   );
   document.querySelectorAll('a[href="#how"]').forEach((l) =>
