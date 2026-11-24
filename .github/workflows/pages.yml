@@ -13,6 +13,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: read # lets the deploy wait until GitHub lists the uploaded site package
   contents: read
   pages: write
   id-token: write
@@ -25,10 +26,10 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     steps:
       # Until Pages is switched to "GitHub Actions", skip quietly so the schedule doesn't send failure emails
       - name: Check Pages source
@@ -93,6 +94,34 @@ jobs:
         with:
           path: _site
 
+      # Why this wait exists: deploy-pages looks up the uploaded package once, about a second after the upload.
+      # Since ~Nov 19 2026 GitHub's artifact list often lags that long, so about 1 deploy in 3 failed with
+      # "No artifacts named github-pages" (or, rarely, "Multiple artifacts") even though the upload worked.
+      # Wait until GitHub lists exactly one package for this run (up to ~90 s) before deploying.
+      - name: Wait until the upload is listed
+        if: steps.mode.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 30); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts?name=github-pages" --jq .total_count 2>/dev/null || echo "?")
+            if [ "$n" = 1 ]; then echo "Listed after ${i} check(s)."; sleep 3; exit 0; fi
+            echo "Check $i: GitHub lists $n package(s), waiting"; sleep 3
+          done
+          echo "::warning::GitHub still doesn't list the upload; deploying anyway (the retry below covers it)."
+
       - id: deployment
         if: steps.mode.outputs.ready == 'true'
+        # a failed first try only means GitHub wasn't ready; the retry below decides whether the run fails
+        continue-on-error: true
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+      - name: Pause before retrying
+        if: steps.mode.outputs.ready == 'true' && steps.deployment.outcome == 'failure'
+        run: |
+          echo "::warning::First deploy try failed; trying once more in 45 seconds."
+          sleep 45
+
+      - id: deployment_retry
+        if: steps.mode.outputs.ready == 'true' && steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
