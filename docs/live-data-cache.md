@@ -23,6 +23,7 @@ Upstream load is now roughly constant (one fetcher) no matter how many people ar
 - **Open-Meteo:** the weather grid counts as 408 calls per fetch, so it refreshes every ~2 hours (~5k calls/day), plus ~2k/day for the other Open-Meteo feeds. Free tier is non-commercial; a paid plan is needed if the site is monetized.
 - **Scheduled workflows pause after 60 days without repo activity** (public repos). Any commit re-arms it; the page simply goes direct meanwhile.
 - **Bandwidth:** Pages has a soft 100 GB/month limit. `live.json` is ~50–80 KB gzipped, fetched ~6×/hour per active listener. If the site goes truly viral, put Cloudflare (free) in front of earthmidi.com.
+- **Deploy hiccups:** GitHub's artifact list can lag a second or two behind the upload, which used to fail about 1 deploy in 3 ("No artifacts named github-pages"). The workflow now waits until the upload is listed, then retries the deploy once if it still fails.
 - **Health check:** https://earthmidi.com/data/status.json shows each feed's last fetch time and any error.
 
 ## Reusing this on other sites
