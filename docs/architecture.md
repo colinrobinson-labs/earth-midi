@@ -76,6 +76,7 @@ Changing a setting from new code is always the same three steps: write to `CFG`,
 | 10 | `io.js` | Export (MIDI, WAV, stems, CSV, data pack), sessions, presets, share links, credit line, the network ledger | everything above |
 | 11 | `god.js` | Zeus Mode, the "not real data" sandbox. Wraps `initAudio` and `drawMap` | audio, visuals |
 | 12 | `reset.js` | Reset per control, card, tab or everything | `DEF`, `CFG` |
+| 12b | `arrange.js` | Arrange the Producer panel: drag cards, pin cards first, pin controls into the Pinned row. Saved per browser in `em.lay`, never in presets or links. `buildPro()` calls `ARRANGE.after()` | ui (`TABS`, `ctl`, `bindCtls`), studio |
 | 13 | `ui.js` | Layer cards, Producer panel, `afterCFG`, the 50 ms playback loop, transport, and `boot()` | everything above |
 | 14 | `audition.js` | Short previews when you pick an instrument, scale or preset | audio, ui |
 | 15 | `zones.js` | Limit a layer to part of the planet. Wraps `afterCFG` | ui, visuals |

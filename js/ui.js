@@ -656,8 +656,8 @@ const PRESETS = {
     revType: "room",
   },
 };
-function ctl(k, label, type, o) {
-  const id = "p_" + k.replace(".", "_"),
+function ctl(k, label, type, o, pre) {
+  const id = (pre || "p_") + k.replace(".", "_"),
     v = getP(CFG, k);
   if (k === "note") return `<p class="xs tnow" id="${label}" aria-live="off"></p>`;
   if (type === "info") return `<p class="xs linfo">${label}</p>`;
@@ -670,6 +670,63 @@ function ctl(k, label, type, o) {
   if (type === "sel")
     return `<div class="pc"><label for="${id}">${label}</label><span></span><select id="${id}" data-k="${k}" data-t="sel">${o[0].map(([a, b]) => `<option value="${a}" ${String(a) === String(v) ? "selected" : ""}>${b}</option>`).join("")}</select></div>`;
   return `<div class="pc ck"><input type="checkbox" id="${id}" data-k="${k}" data-t="ck" ${v ? "checked" : ""}><label for="${id}">${label}</label></div>`;
+}
+/* wire Producer inputs to CFG: the panel grid, and the pinned row from js/arrange.js */
+function bindCtls(root) {
+  root.querySelectorAll("[data-k]").forEach((el) => {
+    const k = el.dataset.k,
+      ty = el.dataset.t;
+    if (!ty) return;
+    el.addEventListener("focus", () => {
+      if (LEARN.on) {
+        LEARN.armed = k;
+        xs(`Move a knob to map it to “${k}”`);
+      }
+    });
+    el.addEventListener("pointerdown", () => {
+      if (LEARN.on) {
+        LEARN.armed = k;
+        xs(`Move a knob to map it to “${k}”`);
+      }
+    });
+    el.oninput = el.onchange = () => {
+      let val = ty === "ck" ? el.checked : ty === "rng" ? +el.value : el.value;
+      if (k === "key") val = +val;
+      if (k === "genre") {
+        applyGenre(val);
+        return;
+      }
+      setP(CFG, k, val);
+      if ((k === "clock" || k === "playAlong") && val && !midi) initMIDI(true);
+      if (k === "tempoSrc" || k === "tempoArea") {
+        if (NEEDS_WX.has(CFG.tempoSrc) && typeof loadWX === "function") loadWX();
+        TEMPO.lt = 0;
+      }
+      const ot = $(el.id + "_o");
+      if (ot) ot.textContent = val;
+      twinCtls(el, k, val);
+      afterCFG(true);
+    };
+    if (ty === "sel" || (ty === "rng" && /^(oct|tune|coct|qoct|snd\.)/.test(k)))
+      el.addEventListener("change", () => AUD.pick(k));
+  });
+}
+/* the same setting can sit in the grid and in the pinned row: keep the other copy in step */
+function twinCtls(src, k, val) {
+  document.querySelectorAll(`#pro [data-t][data-k="${CSS.escape(k)}"]`).forEach((e) => {
+    if (e === src) return;
+    if (e.type === "checkbox") e.checked = !!val;
+    else e.value = val;
+    if (e.type === "range")
+      e.style.setProperty("--p", (((+e.value - +e.min) / (+e.max - +e.min || 1)) * 100).toFixed(1) + "%");
+    const o = $(e.id + "_o");
+    if (o) o.textContent = val;
+    const sg = e.closest(".pc") && e.closest(".pc").querySelector(".segc");
+    if (sg)
+      sg.querySelectorAll("button").forEach((b) =>
+        b.setAttribute("aria-pressed", String(b.dataset.v === String(e.value))),
+      );
+  });
 }
 let TAB = 0,
   TABIN = true;
@@ -701,43 +758,10 @@ function buildPro() {
     g.innerHTML = groups
       .map(([t, cs, lk], i) => STUDIO.group(t, cs.map(([k, l, ty, ...o]) => ctl(k, l, ty, o)).join(""), i, lk))
       .join("");
+    // each card gets a stable name so the saved layout (js/arrange.js) can find it again
+    [...g.children].forEach((e, i) => groups[i] && (e.dataset.box = groups[i][0]));
   }
-  g.querySelectorAll("[data-k]").forEach((el) => {
-    const k = el.dataset.k,
-      ty = el.dataset.t;
-    if (!ty) return;
-    el.addEventListener("focus", () => {
-      if (LEARN.on) {
-        LEARN.armed = k;
-        xs(`Move a knob to map it to “${k}”`);
-      }
-    });
-    el.addEventListener("pointerdown", () => {
-      if (LEARN.on) {
-        LEARN.armed = k;
-        xs(`Move a knob to map it to “${k}”`);
-      }
-    });
-    el.oninput = el.onchange = () => {
-      let val = ty === "ck" ? el.checked : ty === "rng" ? +el.value : el.value;
-      if (k === "key") val = +val;
-      if (k === "genre") {
-        applyGenre(val);
-        return;
-      }
-      setP(CFG, k, val);
-      if ((k === "clock" || k === "playAlong") && val && !midi) initMIDI(true);
-      if (k === "tempoSrc" || k === "tempoArea") {
-        if (NEEDS_WX.has(CFG.tempoSrc) && typeof loadWX === "function") loadWX();
-        TEMPO.lt = 0;
-      }
-      const ot = $(el.id + "_o");
-      if (ot) ot.textContent = val;
-      afterCFG(true);
-    };
-    if (ty === "sel" || (ty === "rng" && /^(oct|tune|coct|qoct|snd\.)/.test(k)))
-      el.addEventListener("change", () => AUD.pick(k));
-  });
+  bindCtls(g);
   if (name !== "Presets") STUDIO.enhance(g);
   if (name !== "Presets" && name !== "Mixer")
     g.querySelectorAll(".pgrp").forEach((grp) => {
@@ -764,6 +788,7 @@ function buildPro() {
       grp.appendChild(b);
     });
   if (typeof RESET !== "undefined") RESET.decorate(g);
+  if (typeof ARRANGE !== "undefined") ARRANGE.after(g, name);
   g.classList.toggle("enter", TABIN);
   TABIN = false;
 }

@@ -513,7 +513,7 @@ const STUDIO = (() => {
       (
         k,
         i,
-      ) => `<div class="strip" data-k="${k}" style="--c:${COLS[k]};--i:${i}"><b><i></i>${LNAME[k]}</b><span class="mtr">${"<i></i>".repeat(12)}</span>${ctl("vol." + k, "Level", "rng", [0, 1.5, 0.05])}${ctl("send." + k, "Reverb send", "rng", [0, 1, 0.05])}
+      ) => `<div class="strip" data-k="${k}" data-box="${k}" style="--c:${COLS[k]};--i:${i}"><b><i></i>${LNAME[k]}</b><span class="mtr">${"<i></i>".repeat(12)}</span>${ctl("vol." + k, "Level", "rng", [0, 1.5, 0.05])}${ctl("send." + k, "Reverb send", "rng", [0, 1, 0.05])}
   <div class="ms"><button data-m="${k}" aria-pressed="false">Mute</button><button data-s="${k}" aria-pressed="false">Solo</button></div></div>`,
     ).join("");
   }
