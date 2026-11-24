@@ -41,6 +41,10 @@ for (const [view, opts] of Object.entries(VIEWS)) {
     await toggle("pro");
     const tabs = page.locator("#ptabs button");
     for (let i = 0; i < (await tabs.count()); i++) { await tabs.nth(i).click(); await check(`Producer tab ${i + 1}`); }
+    // Arrange (js/arrange.js): pin a card and a control, then check the panel while arranging
+    await tabs.nth(1).click(); await page.click(".arbtn");
+    await page.locator("#pgrid .arp").first().click(); await page.locator("#pgrid .arc").first().click();
+    await check("Producer arrange"); await page.click(".arbtn");
     await toggle("pro");
     await toggle("exp"); await check("Export"); await toggle("exp");
     await page.click(desk ? "#bRecord" : "#mRec"); await check("Record"); await page.keyboard.press("Escape");
