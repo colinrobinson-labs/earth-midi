@@ -22,7 +22,7 @@ const CARDS = [
   ],
   ["x", "Solar X-rays", "CC 6 + notes", "<b>X-ray flux → shimmer</b> · a C, M or X class flare rings a bell swell"],
   ["w", "Jet stream", "CC 7", "<b>250 hPa wind (~10 km up) → wind roar + filter</b> · 6 points, both hemispheres"],
-  ["t", "Ocean tides", "CC 8 + bend", "<b>measured water level → drone pitch</b> (±50 cents) · NOAA gauges"],
+  ["t", "Ocean tides", "CC 8 + bend", "<b>measured water level → drone pitch</b> (±20 cents) · NOAA gauges"],
   [
     "c",
     "Planet chord",
@@ -1135,6 +1135,26 @@ function iosUnlock() {
   UNLOCK.setAttribute("playsinline", "");
   UNLOCK.play().catch(() => {});
 }
+/* Live can be quiet for minutes after Play: quakes arrive every few minutes. So the three latest quakes ring
+   once as Play starts, oldest first, a couple of seconds apart. They are real readings and play the same notes
+   they would have when they happened; after that, events play as the sensors publish them. */
+function openingPhrase() {
+  const t = Date.now(),
+    last = S.quakes
+      .filter((q) => q.time <= t && passQ(q))
+      .sort((a, b) => a.time - b.time)
+      .slice(-3);
+  last.forEach((q, i) =>
+    setTimeout(
+      () => {
+        if (!S.on || S.mode !== 0) return;
+        if (CFG.quant && S.style === "pulse" && A && seq.next > A.ctx.currentTime) playQuake(q, seq.next);
+        else playQuake(q);
+      },
+      1100 + i * 2300,
+    ),
+  );
+}
 async function startStop() {
   if (!S.on) {
     iosUnlock();
@@ -1158,6 +1178,7 @@ async function startStop() {
       S.quakes.forEach((q) => S.played.add(q.id));
       S.events.forEach((e) => S.evPlayed.add(e.id));
       S.liveSince = Date.now();
+      setTimeout(openingPhrase, 0);
     }
     S.on = true;
     document.body.classList.add("playing");

@@ -22,6 +22,18 @@ function scaleLabel(kp) {
     ? `${kpScaleName(kp)} (Kp ${kp.toFixed(1)})`
     : $("p_scale")?.selectedOptions?.[0]?.textContent || CFG.scale;
 }
+/* The frequency of the scale note (in the current key) nearest to hz, for the layers that are pitched noise. */
+function snapHz(hz, sc) {
+  const m = 69 + 12 * Math.log2(hz / (+CFG.tune || 440));
+  let best = m,
+    gap = 99;
+  for (let n = Math.floor(m) - 2; n <= Math.ceil(m) + 2; n++)
+    if (sc.includes((((n - ROOT) % 12) + 12) % 12) && Math.abs(n - m) < gap) {
+      gap = Math.abs(n - m);
+      best = n;
+    }
+  return mtof(best);
+}
 function degree(sc, i, base = ROOT) {
   const o = Math.floor(i / sc.length);
   return base + 12 * o + sc[((i % sc.length) + sc.length) % sc.length];
@@ -365,6 +377,15 @@ function buildPad() {
       vg.gain.value = 0.05;
       const p = ctx.createStereoPanner();
       p.pan.value = W_(det < 0 ? -0.45 : 0.45);
+      // each oscillator drifts on its own slow cycle (±3 cents, 9-25 s): the ensemble breathes like an analog pad
+      // instead of eight perfectly locked saws. The rates are fixed per voice, so it is the same every time.
+      const dr = ctx.createOscillator(),
+        drg = ctx.createGain();
+      dr.frequency.value = 0.04 + ((v * 2 + (det > 0)) % 8) * 0.0095;
+      drg.gain.value = 3;
+      dr.connect(drg);
+      drg.connect(o.detune);
+      dr.start();
       o.connect(vg);
       vg.connect(p);
       p.connect(flt);
@@ -372,6 +393,19 @@ function buildPad() {
       voices.push({ o, vg, v, p, det });
     }
   A.pad = { flt, flt3, g, voices, lfo, chordIx: 0, lastChord: 0, type: CFG.inst.s };
+}
+/* Open voicing for the pad. Close thirds low down turn to mud (the "low interval limit" arrangers work to): the
+   first chord used to stack D2 and F#2 74 and 92 Hz apart, a growl on headphones and nothing but buzz on a phone.
+   Below the pad's middle (ROOT) an upper voice that sits less than a fifth from another note moves up an octave,
+   and so does one that would double a note already there. The root voice, and so the MIDI root note, is unchanged. */
+function padVoicing(sc, ch) {
+  const out = [];
+  ch.forEach((d, i) => {
+    let n = degree(sc, d, ROOT - 12);
+    if (i) while (out.includes(n) || (n < ROOT && out.some((m) => Math.abs(n - m) < 7))) n += 12;
+    out.push(n);
+  });
+  return out;
 }
 /* ---------- Ocean: filtered noise surf at the real swell period ---------- */
 function buildSurf() {
@@ -468,13 +502,15 @@ function buildWind() {
   bp2.type = "bandpass";
   bp2.Q.value = 9;
   bp2.frequency.value = 1100;
+  // gusts sway the two resonances about a whole tone either side of their note (in cents, so both move alike).
+  // The old ±220 Hz swing dragged a 600 Hz whistle through seven semitones of off-key pitches every cycle.
   const lfo = ctx.createOscillator();
   lfo.frequency.value = 0.09;
   const lg = ctx.createGain();
-  lg.gain.value = 220;
+  lg.gain.value = 190;
   lfo.connect(lg);
-  lg.connect(bp.frequency);
-  lg.connect(bp2.frequency);
+  lg.connect(bp.detune);
+  lg.connect(bp2.detune);
   lfo.start();
   const g = ctx.createGain();
   g.gain.value = 0;
@@ -767,7 +803,7 @@ function buildMag() {
     g = ctx.createGain(),
     f = ctx.createBiquadFilter();
   a.frequency.value = mtof(ROOT);
-  b.frequency.value = mtof(ROOT) * 1.414;
+  b.frequency.value = mtof(ROOT) * 2;
   rm.gain.value = 0;
   b.connect(rm.gain);
   a.connect(rm);
@@ -901,15 +937,19 @@ function updateEngine() {
     A.pad.flt3.frequency.setTargetAtTime(Math.min(16000, pc * 2), c, 1.5);
     A.pad.flt.Q.setTargetAtTime(map(de, 0, 25, 1, 6), c, 2); // density → resonance (was 1…9: dense wind made the pad whistle)
     A.pad.lfo.frequency.setTargetAtTime(map(Number.isFinite(bt) ? bt : 5, 0, 30, 0.04, 0.5), c, 2);
-    A.pad.g.gain.setTargetAtTime(muted("s") ? 0 : map(de, 0, 20, 0.32, 0.55), c, 1);
+    // the pad is the bed everything else sits on, so it leads the drones in Ambient (+1.5 dB) and sits 4 dB up
+    // in Pulse: under the full kit it was 19 dB below the drums, so the chords vanished and the beat played alone.
+    // The kick still ducks it, which is the breathing you hear.
+    A.pad.g.gain.setTargetAtTime(muted("s") ? 0 : map(de, 0, 20, 0.32, 0.55) * (S.style === "pulse" ? 1.6 : 1.2), c, 1);
   }
   const sc = scaleFor(kp),
     prog = CFG.prog === "kp" ? (kp >= 4 ? PROGS.minor : PROGS.classic) : PROGS[CFG.prog] || PROGS.classic;
   if (c - A.pad.lastChord > +CFG.chordEvery) {
     A.pad.lastChord = c;
     A.pad.chordIx = (A.pad.chordIx + 1) % prog.length;
-    const ch = prog[A.pad.chordIx];
-    A.pad.voices.forEach((x) => x.o.frequency.setTargetAtTime(mtof(degree(sc, ch[x.v], ROOT - 12)), c, 0.12)); // a quick legato move; the old .9 s glide smeared every chord change into a seasick slide
+    const ch = prog[A.pad.chordIx],
+      vn = padVoicing(sc, ch);
+    A.pad.voices.forEach((x) => x.o.frequency.setTargetAtTime(mtof(vn[x.v]), c, 0.12)); // a quick legato move; the old .9 s glide smeared every chord change into a seasick slide
     const bzDark = Number.isFinite(bz) && bz < -8;
     A.pad.voices.forEach((x) => x.vg.gain.setTargetAtTime(0.05 * (bzDark && x.v === 3 ? 1.4 : 1), c, 1));
     midiCC(CH("s"), 1, map(sp, 250, 900, 0, 127));
@@ -956,10 +996,13 @@ function updateEngine() {
   A.dly.gain.setTargetAtTime(0.3 + FX.dly, c, 0.08);
   const jv = viewJet(t);
   if (Number.isFinite(jv)) {
-    A.wind.bp.frequency.setTargetAtTime(map(jv, 60, 320, 280, 1500) * TM("wTone"), c, 2);
-    A.wind.bp2.frequency.setTargetAtTime(map(jv, 60, 320, 600, 2600) * TM("wTone"), c, 2);
-    A.wind.bp.Q.setTargetAtTime(5 * SN("wQ"), c, 0.2);
-    A.wind.bp2.Q.setTargetAtTime(9 * SN("wQ"), c, 0.2);
+    // the wind sings in the key: each resonance sits on the scale note nearest its measured frequency, and
+    // glides there as the jet speeds up or slows down. Same jet speed, same two notes. Q 4 and 6 (was 5 and 9) is
+    // breathier: a whistle that narrow read as a test tone over the pad.
+    A.wind.bp.frequency.setTargetAtTime(snapHz(map(jv, 60, 320, 280, 1500) * TM("wTone"), sc), c, 2);
+    A.wind.bp2.frequency.setTargetAtTime(snapHz(map(jv, 60, 320, 600, 2600) * TM("wTone"), sc), c, 2);
+    A.wind.bp.Q.setTargetAtTime(4 * SN("wQ"), c, 0.2);
+    A.wind.bp2.Q.setTargetAtTime(6 * SN("wQ"), c, 0.2);
     A.wind.g.gain.setTargetAtTime(muted("w") ? 0 : map(jv, 60, 320, 0.08, 0.5), c, 1.5);
     A.wind.lfo.frequency.setTargetAtTime(map(jv, 60, 320, 0.05, 0.3), c, 2);
   }
@@ -971,12 +1014,14 @@ function updateEngine() {
   A.tide.o2.frequency.setTargetAtTime(mtof(ROOT + tO), c, 0.5);
   if (A.tide.o.type !== SN("tWave")) A.tide.o.type = A.tide.o2.type = SN("tWave");
   A.tide.lp.frequency.setTargetAtTime(+SN("tLp"), c, 0.2);
-  A.tide.o.detune.setTargetAtTime(tn * 50, c, 1);
-  A.tide.o2.detune.setTargetAtTime(tn * 50, c, 1);
+  // the water level bends the drone ±20 cents (was ±50). Under an in-tune pad a quarter-tone bend beat about
+  // twice a second against the root and read as out of tune; ±20 cents is a slow, warm sway you can still follow.
+  A.tide.o.detune.setTargetAtTime(tn * 20, c, 1);
+  A.tide.o2.detune.setTargetAtTime(tn * 20, c, 1);
   A.tide.g.gain.setTargetAtTime(
     muted("t")
       ? 0
-      : (S.style === "pulse" ? 0.022 : 0.042) * ({ triangle: 0.85, square: 0.5, sawtooth: 0.55 }[SN("tWave")] || 1),
+      : (S.style === "pulse" ? 0.02 : 0.03) * ({ triangle: 0.85, square: 0.5, sawtooth: 0.55 }[SN("tWave")] || 1),
     c,
     1,
   );
@@ -987,7 +1032,7 @@ function updateEngine() {
     FX.rev > 0.02 ? 0.3 : 3,
   );
   // planet chord
-  A.choir.out.gain.setTargetAtTime(muted("c") ? 0 : 0.9, c, 1.5);
+  A.choir.out.gain.setTargetAtTime(muted("c") ? 0 : S.style === "pulse" ? 1.25 : 0.9, c, 1.5);
   A.choir.voices.forEach((v, i) => {
     const C = CITIES[i];
     v.g.gain.setTargetAtTime(0.03 * FOCUS.gain(C[1], C[2]) * ZN.w("c", C[1], C[2]), c, 0.15);
@@ -1096,7 +1141,13 @@ function updateEngine() {
   A.mag.a.frequency.setTargetAtTime(mtof(ROOT), c, 1);
   A.mag.b.frequency.setTargetAtTime(
     mtof(ROOT) *
-      (SN("gMode") === "fifth" ? 1.5 : SN("gMode") === "octave" ? 2 : map(-(dst || 0), 0, 200, 1.414, 2.618)),
+      (SN("gMode") === "fifth"
+        ? 1.5
+        : SN("gMode") === "octave"
+          ? 2
+          : -(dst || 0) < 30
+            ? 2 // a quiet ring current (most days) rings an octave and a fifth, in key; storms bend it toward clang
+            : map(-dst, 30, 200, 2, 2.618)),
     c,
     2,
   );
@@ -1176,11 +1227,12 @@ function drum(kind, time, vel = 1) {
     const o = ctx.createOscillator(),
       g = ctx.createGain();
     const kt = Math.pow(2, +SN("rKick") / 12),
-      kd = 0.45 * SN("rDec");
-    o.frequency.setValueAtTime(155 * kt, time);
-    o.frequency.exponentialRampToValueAtTime(42 * kt, time + 0.12);
+      kd = 0.38 * SN("rDec");
+    // a faster pitch drop (70 ms, was 120) to a 48 Hz body: a tight thump that phones can still hear, not a long boom
+    o.frequency.setValueAtTime(165 * kt, time);
+    o.frequency.exponentialRampToValueAtTime(48 * kt, time + 0.07);
     g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(0.95 * vel, time + 0.0015);
+    g.gain.linearRampToValueAtTime(0.82 * vel, time + 0.0015);
     g.gain.exponentialRampToValueAtTime(0.001, time + kd);
     g.gain.linearRampToValueAtTime(0, time + kd + 0.01);
     o.connect(g);
@@ -1257,10 +1309,10 @@ function drum(kind, time, vel = 1) {
     const op = kind === "o",
       g = ctx.createGain(),
       p = ctx.createStereoPanner();
-    p.pan.value = W_(0.25);
+    p.pan.value = W_(op ? -0.22 : 0.25); // open hats answer from the other side: the kit has some width instead of sitting in one spot
     g.gain.value = 0; // the metal runs all the time: the gate must be shut until the hit
     g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(0.18 * vel, time + 0.0008);
+    g.gain.linearRampToValueAtTime(0.23 * vel, time + 0.0008);
     g.gain.exponentialRampToValueAtTime(0.001, time + (op ? 0.26 : 0.045));
     g.gain.linearRampToValueAtTime(0, time + (op ? 0.27 : 0.05));
     metal().connect(g);
@@ -1273,7 +1325,7 @@ function drum(kind, time, vel = 1) {
     hp.frequency.value = 8500;
     const ng = ctx.createGain();
     ng.gain.setValueAtTime(0, time);
-    ng.gain.linearRampToValueAtTime(0.05 * vel, time + 0.0008);
+    ng.gain.linearRampToValueAtTime(0.065 * vel, time + 0.0008);
     ng.gain.exponentialRampToValueAtTime(0.001, time + (op ? 0.2 : 0.035));
     n.connect(hp);
     hp.connect(ng);
@@ -1296,15 +1348,16 @@ function bassNote(n, time, len, lv = 1) {
     o2 = ctx.createOscillator(),
     f = ctx.createBiquadFilter(),
     g = ctx.createGain();
+  // body: a sine on the note itself. It used to be a square an octave BELOW the note (18-31 Hz for the default
+  // bass line): too low for any speaker to play, but it still filled the limiter and pumped the whole mix.
   o.type = SN("rBass");
-  o2.type = "square";
-  o2.detune.value = -1200;
+  o2.type = "sine";
   o.frequency.value = mtof(n);
   o2.frequency.value = mtof(n);
   const g2 = ctx.createGain();
-  g2.gain.value = 0.35;
+  g2.gain.value = 0.32;
   f.type = "lowpass";
-  f.Q.value = 5;
+  f.Q.value = 3.2; // was 5: a rounder pluck, less of a squelch on every note
   f.frequency.setValueAtTime(900 * TM("rTone"), time);
   f.frequency.exponentialRampToValueAtTime(140 * TM("rTone"), time + len);
   const bp = 0.3 * lv * (SN("rBass") === "sine" ? 1.4 : 1);

@@ -449,7 +449,7 @@ const AUD = (() => {
       case "snd.gOct": {
         const { ctx, to } = P,
           a = osc(ctx, "sine", mtof(r), t, 2),
-          b = osc(ctx, "sine", mtof(r) * (SN("gMode") === "fifth" ? 1.5 : SN("gMode") === "octave" ? 2 : 1.414), t, 2),
+          b = osc(ctx, "sine", mtof(r) * (SN("gMode") === "fifth" ? 1.5 : 2), t, 2),
           rm = ctx.createGain(),
           f = ctx.createBiquadFilter(),
           g = ctx.createGain();
