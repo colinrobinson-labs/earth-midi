@@ -874,7 +874,8 @@ function applyPreset(p, n) {
     else CFG[k] = v;
   });
   afterCFG();
-  xs(`Preset: ${n}`);
+  if (typeof HIST !== "undefined") HIST.offer(`Preset: ${n}`);
+  else xs(`Preset: ${n}`);
 }
 function afterCFG(soft) {
   setRoot();
@@ -899,9 +900,11 @@ function afterCFG(soft) {
     .querySelectorAll("[data-view]")
     .forEach((b) => b.setAttribute("aria-pressed", b.dataset.view === CFG.mapView));
   document.body.classList.toggle("flat", CFG.mapView === "flat");
+  if (typeof HIST !== "undefined") HIST.note();
 }
 function setStyle(v) {
   S.style = v;
+  if (typeof HIST !== "undefined") HIST.note();
   document.querySelectorAll("[data-style]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.style === v));
   seq = { next: 0, step: 0, fill: false };
 }

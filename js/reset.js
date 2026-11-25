@@ -37,7 +37,12 @@ const RESET = (() => {
     if (list.includes("genre") || list.includes("pattern") || /^bpm/.test(list.join(" "))) TEMPO.bpm = 0;
     if (typeof STUDIO !== "undefined" && STUDIO.setLast) STUDIO.setLast(null);
     afterCFG();
-    if (!quiet) xs(label ? `${label}: back to default` : "Back to default");
+    if (!quiet) {
+      const msg = label ? `${label}: back to default` : "Back to default";
+      // a single control is one double-click away from where it was; whole cards and tabs get an Undo button
+      if (list.length > 1 && typeof HIST !== "undefined") HIST.offer(msg);
+      else xs(msg);
+    }
     if (list.length === 1 && typeof AUD !== "undefined" && AUD.pick && !/^(ch\.|clock|playAlong)/.test(list[0]))
       AUD.pick(list[0]);
     return true;

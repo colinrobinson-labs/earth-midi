@@ -183,6 +183,14 @@ function smf(tracks, tpq, bpm) {
 }
 
 /* ================= DATA-ONLY PACK: the planet's last 24h as MIDI notes + CC automation + tables. No sound. ================= */
+/* Data pack tempo: any BPM a project runs at (40-240, decimals fine), not just a short list */
+function packBpm() {
+  const e = $("dpBpm"),
+    v = parseFloat(e && e.value);
+  const bpm = Number.isFinite(v) ? Math.min(240, Math.max(40, Math.round(v * 100) / 100)) : 120;
+  if (e && String(bpm) !== e.value) e.value = bpm;
+  return bpm;
+}
 function buildDataPack(opt) {
   const bpm = opt.bpm,
     bars = opt.bars,
@@ -451,7 +459,7 @@ function buildDataPack(opt) {
   };
 }
 async function exportDataPack() {
-  const bpm = +($("dpBpm")?.value || 120),
+  const bpm = packBpm(),
     bars = +($("dpBars")?.value || 64);
   xs("Building data pack…");
   try {
@@ -482,7 +490,7 @@ async function exportDataPack() {
   }
 }
 function exportDataMidOnly() {
-  const p = buildDataPack({ bpm: +($("dpBpm")?.value || 120), bars: +($("dpBars")?.value || 64) });
+  const p = buildDataPack({ bpm: packBpm(), bars: +($("dpBars")?.value || 64) });
   download(`earth-midi-data_${stamp()}.mid`, p.mid);
   xs("Saved data MIDI (notes + CC lanes)");
 }
