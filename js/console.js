@@ -518,6 +518,7 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
     <div class="cns-seg" role="group" aria-label="Style"><button type="button" data-style="ambient" aria-pressed="${S.style === "ambient"}">Ambient</button><button type="button" data-style="pulse" aria-pressed="${S.style === "pulse"}">Pulse</button></div>
     <h2>Console<small>13 layers · touch mix</small></h2>
     <div class="cns-rd" id="cnRd" aria-live="off"></div><span class="cns-sp"></span>
+    ${typeof HIST !== "undefined" ? HIST.button("undo", "hb") + HIST.button("redo", "hb") : ""}
     <button type="button" class="cns-tb" id="cnEdit" aria-pressed="false" title="Rearrange or hide sections and channels">${ic("presets")}<span class="lbl">Layout</span></button>
     ${fsOK ? `<button type="button" class="cns-tb" id="cnFs" title="Full screen">${svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>')}<span class="lbl">Full screen</span></button>` : ""}
     <div class="vsw" role="group" aria-label="View"><button type="button" id="cnX" data-vw="globe" aria-pressed="false" title="Back to the globe (Esc)">${ic("globe")}Globe</button><button type="button" data-vw="console" aria-pressed="true">${ic("mixer")}<span class="lbl">Console</span></button></div></div>
@@ -1126,6 +1127,12 @@ html.cns-on,html.cns-on body{overflow:hidden!important;overscroll-behavior:none}
     open,
     close,
     cc,
+    // after an undo or redo: redraw the faders from the settings as they are now
+    refresh() {
+      if (!open_) return;
+      build();
+      setTimeout(fit, 0);
+    },
     get isOpen() {
       return open_;
     },

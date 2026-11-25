@@ -78,6 +78,7 @@ Changing a setting from new code is always the same three steps: write to `CFG`,
 | 12 | `reset.js` | Reset per control, card, tab or everything | `DEF`, `CFG` |
 | 12b | `arrange.js` | Arrange the Producer panel: drag cards, pin cards first, pin controls into the Pinned row. Saved per browser in `em.lay`, never in presets or links. `buildPro()` calls `ARRANGE.after()` | ui (`TABS`, `ctl`, `bindCtls`), studio |
 | 13 | `ui.js` | Layer cards, Producer panel, `afterCFG`, the 50 ms playback loop, transport, and `boot()` | everything above |
+| 13b | `history.js` | Undo and redo for the sound (Cmd/Ctrl+Z, the Producer and Console arrows, the Undo button after a preset or reset). `afterCFG()` and `setStyle()` call `HIST.note()`; a burst of changes settles into one step. View settings are never undone | ui, reset, console |
 | 14 | `audition.js` | Short previews when you pick an instrument, scale or preset | audio, ui |
 | 15 | `zones.js` | Limit a layer to part of the planet. Wraps `afterCFG` | ui, visuals |
 | 16 | `sheet.js` | The Layers drawer on phones | ui |
@@ -94,7 +95,9 @@ Changing a setting from new code is always the same three steps: write to `CFG`,
 | 25b | `desk.js` | Producer and Export open as a sheet on tablets (701 to 899 px) and wherever `rooms.js` doesn't place them. Exposes `DESK.wants()` so `ui.js` skips scrolling | ui, fold |
 | 25c | `rooms.js` | Phone tab bar (Listen, Mix, Readings, Export) and the big-screen studio rail (Layers, Producer, Export). Moves `#pro`/`#exp` into `.side` on the rail, back out otherwise | desk, sheet, ui |
 | 26 | `tidy.js` | Moves controls into the globe HUD and the tabbed inspector | ui, zones, god |
+| 26b | `sleep.js` | Sleep timer in View options: fades out over the last 30 seconds, then stops. Not saved | tidy, ui |
 | 27 | `extras.js` | Lock-screen controls, wake lock, "what's driving the sound" line, screen-reader announcements, action counts, story image. Wraps `logEv` | ui, visuals |
+| 27b | `keys.js` | `?` opens the keyboard shortcut card; L jumps to live, C opens the Console | ui, console |
 
 `boot()` is the last line of `ui.js`. Everything from `audition.js` down runs after the page is already built and attaches itself to what exists. That is why the files up to `ui.js` are the engine and the files after it are features.
 

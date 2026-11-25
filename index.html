@@ -323,6 +323,7 @@ body:not(.playing) .ipane[data-ip="scope"]::after{content:"Press Play to see the
 @media (min-width:1000px){.exp{grid-template-columns:1.25fr 1.2fr 1fr}.exp .pgrp.hero{grid-column:1;grid-row:1}.exp>.pgrp:nth-child(2){grid-column:2;grid-row:1/span 2}.exp>.pgrp:nth-child(3){grid-column:3;grid-row:1}.exp>.pgrp:nth-child(4){grid-column:3;grid-row:2}.exp>.pgrp:nth-child(5){grid-column:1;grid-row:2}}
 .exp .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .exp select{font-size:12px;padding:7px 8px}
+.dpbpm{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px 0 4px;border:1px solid var(--line2);border-radius:8px;background:var(--sf2);font:600 10.5px var(--mono);letter-spacing:.06em;color:var(--mute);cursor:text}.dpbpm:focus-within{border-color:var(--k)}.dpbpm input{width:58px;height:30px;border:0;background:transparent;color:var(--fg);font:500 13px var(--mono);text-align:right;padding:0 2px;-moz-appearance:textfield}.dpbpm input::-webkit-inner-spin-button,.dpbpm input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.dpbpm input:focus{outline:none}
 .exp button.primary{background:var(--k);color:var(--bg);border-color:var(--k);font-weight:700}
 
 .info{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:28px}
@@ -690,7 +691,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
   <div class="exph" role="heading" aria-level="2">Export, import, save, share <small>every file carries the credit</small></div>
   <div class="exp">
     <div class="pgrp hero" style="--ac:var(--k)"><h5 aria-level="3"><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v2M12 7v2M12 11v2"/><rect x="10.5" y="14" width="3" height="4" rx="1"/></svg></span>Data only · no sounds</h5><p>For DJs and producers who want the planet, not my synths. The last 24 hours as <b>MIDI notes + CC automation lanes</b> (one track per measurement), plus CSV and JSON tables, timed to your tempo. Drag it into Ableton, Logic, FL or Bitwig and drive your own instruments.</p>
-      <div class="row"><select id="dpBpm" aria-label="Tempo"><option>90</option><option>100</option><option selected>120</option><option>124</option><option>128</option><option>140</option><option>170</option></select>
+      <div class="row"><label class="dpbpm"><input type="number" id="dpBpm" min="40" max="240" step="any" value="120" inputmode="decimal" list="dpBpmL" aria-label="Tempo in BPM, any value from 40 to 240"><span aria-hidden="true">BPM</span></label><datalist id="dpBpmL"><option value="85"><option value="90"><option value="100"><option value="110"><option value="120"><option value="124"><option value="128"><option value="140"><option value="150"><option value="160"><option value="170"><option value="174"></datalist>
       <select id="dpBars" aria-label="Length"><option value="32">24h → 32 bars</option><option value="64" selected>24h → 64 bars</option><option value="128">24h → 128 bars</option><option value="256">24h → 256 bars</option><option value="1440">24h → 1440 bars</option></select>
       <button class="primary" id="bPack"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>Data pack (.zip)</button><button id="bPackMid"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>.mid only</button></div></div>
     <div class="pgrp" style="--ac:#ff2d55"><h5 aria-level="3"><span class="gi"><svg class="sic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" class="f"/></svg></span>Record</h5><p>WAV and stems start on one press and stop on the next. Video and small audio open the recorder, which shares straight from there. If you play the EARTH MIDI title, the recorder decides where that goes: in the mix, its own file or stem, or nowhere.</p><div class="row"><button id="bRec"><i class="rdot"></i>WAV master</button><button id="bStems"><i class="rdot"></i>Stems (WAV, 3 min)</button><button id="bAac"><i class="rdot"></i>Small audio (M4A)</button><button id="bVid"><i class="rdot"></i>Video for socials</button></div><label class="loudsel">WAV master loudness <select id="loudSel" aria-label="WAV master loudness"><option value="raw">Raw (as played)</option><option value="socials">Socials · −14 LUFS</option><option value="streaming">Streaming · −16 LUFS</option></select></label></div>
@@ -792,7 +793,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
   <p id="privacy"><b>Privacy:</b> no accounts, cookies or ads. Visits and a few button presses are counted anonymously with <a href="https://www.goatcounter.com" target="_blank" rel="noopener">GoatCounter</a>, with no cookies and nothing that identifies you. Your settings and presets stay in this browser. Fonts and code are served from earthmidi.com; your browser fetches live data from the public sources below, which see your IP address like any website. <a href="privacy.html">Privacy policy</a>.</p>
   <p><b>Data:</b> <a href="https://earthquake.usgs.gov/earthquakes/feed/">USGS</a>, <a href="https://www.swpc.noaa.gov/">NOAA SWPC</a>, <a href="https://tidesandcurrents.noaa.gov/">NOAA CO-OPS</a>, <a href="https://eonet.gsfc.nasa.gov/">NASA EONET</a> (public domain)<span data-wk=" · Weather and city temperatures: " hidden></span> · <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>); air quality contains modified Copernicus Atmosphere Monitoring Service information · ISS: <a href="https://wheretheiss.at/">wheretheiss.at</a> / <a href="https://celestrak.org/">CelesTrak</a> · land: <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain) via world-atlas · code libraries: topojson-client (ISC), JSZip (MIT) · type: Archivo, IBM Plex (SIL Open Font License). Not affiliated with or endorsed by any of these agencies.</p>
   <p class="links"><a href="support.html">Support &amp; contact</a> · <a href="press.html">Press kit</a> · <a href="whats-new.html">What's new</a> · <a href="privacy.html">Privacy</a><span id="getApp" class="getapp"> · <a href="https://apps.apple.com/app/id6832020441" target="_blank" rel="noopener">Get the app (iPhone, iPad, Mac, Apple TV)</a></span></p>
-  <p class="keys">keys: space = play, g/f = globe/flat, p = pulse · <a href="#welcome" data-welcome>welcome screen</a></p>
+  <p class="keys">keys: space = play, g/f = globe/flat, p = pulse, ⌘/Ctrl+Z = undo · <a href="#keys" data-keys>all shortcuts (?)</a> · <a href="#welcome" data-welcome>welcome screen</a></p>
 </footer>
 </div>
 
@@ -824,6 +825,7 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
 <script src="js/reset.js"></script>
 <script src="js/arrange.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/history.js"></script>
 <script src="js/audition.js"></script>
 <script src="js/zones.js"></script>
 <script src="js/sheet.js"></script>
@@ -840,7 +842,9 @@ html.embed .wrap{padding-top:8px}html.embed body{padding-bottom:var(--dock)}
 <script src="js/desk.js"></script>
 <script src="js/rooms.js"></script>
 <script src="js/tidy.js"></script>
+<script src="js/sleep.js"></script>
 <script src="js/extras.js"></script>
+<script src="js/keys.js"></script>
 <script src="js/a11y.js"></script>
 <script src="js/offline.js"></script>
 </body>

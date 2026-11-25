@@ -60,6 +60,26 @@ const open = async () => {
   await ctx.close();
 }
 
+{ // undo and redo: a slider drag is one step, a preset gets an Undo button, "?" lists the shortcuts
+  const { ctx, page } = await open();
+  await page.evaluate(() => { const el = document.querySelector('.lvl[data-lvl="q"]'); for (const v of [0.9, 0.6, 0.3]) { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); } });
+  await page.waitForTimeout(700);
+  await page.click("body", { position: { x: 5, y: 5 } });
+  await page.keyboard.press("Control+z"); await page.waitForTimeout(200);
+  check("Ctrl+Z puts a whole slider drag back in one step", await page.evaluate(() => CFG.vol.q === 1));
+  await page.keyboard.press("Control+Shift+z"); await page.waitForTimeout(200);
+  check("Ctrl+Shift+Z redoes it", await page.evaluate(() => CFG.vol.q === 0.3));
+  await page.evaluate(() => applyPreset(PRESETS[Object.keys(PRESETS)[0]], Object.keys(PRESETS)[0])); await page.waitForTimeout(200);
+  check("a preset offers Undo in the status line", await page.locator("#xState .xundo").isVisible());
+  await page.click("#xState .xundo"); await page.waitForTimeout(200);
+  check("Undo after a preset brings the mix back", await page.evaluate(() => CFG.vol.q === 0.3));
+  await page.keyboard.press("?"); await page.waitForTimeout(200);
+  check("? opens the shortcut card", await page.locator("dialog.kbs[open]").isVisible());
+  await page.keyboard.press("Escape"); await page.waitForTimeout(200);
+  check("Esc closes it", await page.evaluate(() => !document.querySelector("dialog.kbs")));
+  await ctx.close();
+}
+
 { // offline: one online visit, then no network
   const { ctx, page } = await open();
   await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration())?.active, null, { timeout: 15000 }).catch(() => {});
