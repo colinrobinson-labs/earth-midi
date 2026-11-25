@@ -216,7 +216,7 @@ body.imm #bpmLbl{top:calc(50px + env(safe-area-inset-top,0px))}body.god #bpmLbl{
 .shint{font:11px var(--mono);color:var(--mute);margin-left:auto}
 .grip,.chev{display:none}
 #pads{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px 12px}
-.lrow{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 78px 48px 46px;gap:6px;align-items:center;padding:3px 4px 3px 0;border-radius:10px;
+.lrow{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 78px 26px 48px 46px;gap:6px;align-items:center;padding:3px 4px 3px 0;border-radius:10px;
  background:linear-gradient(90deg,color-mix(in srgb,var(--c) calc(var(--hit,0)*28%),transparent),transparent 70%);transition:opacity .2s}
 .lname{display:flex;align-items:center;gap:9px;min-width:0;border:0;background:transparent;padding:7px 8px;font:500 13px var(--body);text-align:left;user-select:none;-webkit-user-select:none;touch-action:manipulation;border-radius:8px}
 .lname:hover{background:var(--sf2)}
@@ -234,6 +234,7 @@ body.imm #bpmLbl{top:calc(50px + env(safe-area-inset-top,0px))}body.god #bpmLbl{
 .ls[aria-pressed="true"]{background:var(--c);color:var(--bg);border-color:var(--c)}
 .lrow.off .lname,.lrow.off .lvl{opacity:.38}.lrow.off .lname i{box-shadow:none;background:transparent;border:1px solid var(--c)}
 .lrow.solo{background:color-mix(in srgb,var(--c) 16%,transparent)}
+.lv{font:500 11px var(--mono);color:var(--fg2);text-align:right;font-variant-numeric:tabular-nums}.lv.dflt{color:var(--mute)}.lrow.off .lv{opacity:.38}
 .hint{font:11px var(--mono);color:var(--mute);margin:6px 0 0}
 @media (min-width:900px){.side{position:sticky;top:calc(var(--barh,112px) + 20px);max-height:calc(100vh - var(--barh,112px) - 32px);overflow:auto}#pads{grid-template-columns:1fr}.shint{margin-left:0;flex-basis:100%}}
 
@@ -391,7 +392,7 @@ footer{margin-top:24px;font:11px/1.6 var(--mono);color:var(--mute)}footer p{marg
  .side.nudge{animation:nudge 1.4s cubic-bezier(.3,.7,.2,1) 2}
  @keyframes nudge{0%,100%{transform:translateY(calc(100% - var(--sheetH,64px)))}35%{transform:translateY(calc(100% - var(--sheetH,64px) - 14px))}60%{transform:translateY(calc(100% - var(--sheetH,64px) + 2px))}}
  #pads{flex:1;overflow:auto;overscroll-behavior:contain;grid-template-columns:1fr;gap:2px;padding:4px 12px 16px;-webkit-overflow-scrolling:touch}
- .lrow{grid-template-columns:minmax(0,1fr) minmax(70px,26%) 52px 50px;gap:6px;padding:2px 0}
+ .lrow{grid-template-columns:minmax(0,1fr) minmax(70px,26%) 26px 52px 50px;gap:6px;padding:2px 0}
  .lname{padding:12px 8px;font-size:13px}
  .lvl{height:40px}
  .lvl::-webkit-slider-thumb,.dvol input::-webkit-slider-thumb{width:22px;height:22px;margin-top:-9px}
@@ -548,6 +549,8 @@ footer .fxpick a{color:var(--mute)}footer .fxpick a[aria-current]{color:var(--fg
 /* layers: Mute / Solo appear on hover or focus (always shown on touch screens) */
 @media (hover:hover) and (pointer:fine){
  #pads .lm,#pads .ls{opacity:0;transition:opacity .15s}
+ #pads .lrow{grid-template-columns:minmax(0,1fr) 78px 26px 26px 26px;gap:5px}
+ #pads .lm,#pads .ls{font-size:0;height:24px}#pads .lm::after,#pads .ls::after{font:600 10.5px var(--mono)}#pads .lm::after{content:"M"}#pads .ls::after{content:"S"}
  #pads .lrow:hover .lm,#pads .lrow:hover .ls,#pads .lrow:focus-within .lm,#pads .lrow:focus-within .ls,#pads .lm[aria-pressed="true"],#pads .ls[aria-pressed="true"]{opacity:1}
 }
 .sideh small{font:400 12.5px var(--body);letter-spacing:0;text-transform:none}

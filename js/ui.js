@@ -121,6 +121,7 @@ function buildPads() {
     (k) => `<div class="lrow" data-k="${k}" style="--c:${COLS[k]}">
     <button class="lname" data-k="${k}" title="Tap to mute, hold to solo"><i></i><span>${SHORT[LNAME[k]] || LNAME[k]}</span></button>
     <input type="range" class="lvl" data-lvl="${k}" min="0" max="1.5" step=".05" value="${CFG.vol[k]}" aria-label="${LNAME[k]} level">
+    <output class="lv" data-lv="${k}" aria-hidden="true">${Math.round(CFG.vol[k] * 100)}</output>
     <button class="lm" data-m="${k}" aria-pressed="false" aria-label="Mute ${LNAME[k]}">Mute</button><button class="ls" data-s="${k}" aria-pressed="false" aria-label="Solo ${LNAME[k]}">Solo</button></div>`,
   ).join("");
   document.querySelectorAll(".lname").forEach((b) => {
@@ -148,6 +149,7 @@ function buildPads() {
       (el.oninput = () => {
         const k = el.dataset.lvl;
         setP(CFG, "vol." + k, +el.value);
+        lvShow(k);
         const m = $("p_vol_" + k);
         if (m) {
           m.value = el.value;
@@ -163,7 +165,16 @@ function syncLevels() {
   document.querySelectorAll(".lvl").forEach((el) => {
     const v = CFG.vol[el.dataset.lvl];
     if (document.activeElement !== el && +el.value !== +v) el.value = v;
+    lvShow(el.dataset.lvl);
   });
+}
+// the level as a number beside each Layers slider, on the same 0-150 scale as the Console faders
+function lvShow(k) {
+  const o = document.querySelector(`.lv[data-lv="${k}"]`);
+  if (!o) return;
+  const t = String(Math.round(CFG.vol[k] * 100));
+  if (o.textContent !== t) o.textContent = t;
+  o.classList.toggle("dflt", CFG.vol[k] === DEF.vol[k]);
 }
 function layerCount() {
   const on = PAN_KEYS.filter((k) => !muted(k)).length,
