@@ -277,7 +277,7 @@ body.playing #log:empty::before{content:"Listening. The planet is quiet this sec
 .ipane{position:relative}
 body:not(.playing) .ipane[data-ip="roll"]::after,body:not(.playing) .ipane[data-ip="scope"]::after{content:"Press Play and every note shows up here as it's sent.";position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:0 16px;color:var(--mute);font:12px/1.5 var(--body);pointer-events:none}
 body:not(.playing) .ipane[data-ip="scope"]::after{content:"Press Play to see the spectrum, waveform and stereo field of the mix."}
-@keyframes li{from{background:rgba(255,90,60,.25);transform:translateX(-6px)}}
+@keyframes li{from{box-shadow:inset 3px 0 0 rgba(255,90,60,.9);transform:translateX(-6px)}}
 #log li span:first-child{color:var(--mute);min-width:56px}
 #log li b{color:var(--q);min-width:44px;font-weight:600}
 #log li span:last-child{overflow:hidden;text-overflow:ellipsis}
