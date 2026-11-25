@@ -193,6 +193,21 @@ const STUDIO = (() => {
 .mixer .strip .ms button{flex:1;font:500 12px var(--body)}
 .mixer .strip .ms button[aria-pressed="true"][data-m]{background:var(--line3);color:var(--fg);border-color:var(--line3)}
 .mixer .strip.off{opacity:.42}
+/* the studio rail is one narrow column: each strip packs into three short rows (name + M/S, meter, level + send)
+   instead of five, so all 13 fit in about half the scroll */
+html.rooms-rail .side #pgrid.mixer{gap:6px}
+html.rooms-rail .side #pgrid.mixer .strip{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;column-gap:14px;align-items:center;padding:9px 12px 4px}
+html.rooms-rail .side #pgrid.mixer .strip>b{grid-column:1/3;grid-row:1;min-width:0}
+html.rooms-rail .side #pgrid.mixer .strip>.ms{grid-column:3;grid-row:1;display:flex;gap:4px}
+html.rooms-rail .side #pgrid.mixer .strip>.ms button{flex:none;width:30px;height:24px;padding:0;font-size:0;border-radius:6px}
+html.rooms-rail .side #pgrid.mixer .strip>.ms button::after{font:600 11px var(--mono)}
+html.rooms-rail .side #pgrid.mixer .strip>.ms button[data-m]::after{content:"M"}
+html.rooms-rail .side #pgrid.mixer .strip>.ms button[data-s]::after{content:"S"}
+html.rooms-rail .side #pgrid.mixer .strip>.ms button[data-s][aria-pressed="true"]{background:var(--c);color:var(--bg);border-color:var(--c)}
+html.rooms-rail .side #pgrid.mixer .strip>.mtr{grid-column:1/-1;grid-row:2;height:4px;margin:7px 0 1px}
+html.rooms-rail .side #pgrid.mixer .strip>.pc{grid-row:3;grid-column:1;margin:3px 0 0;font-size:11.5px}
+html.rooms-rail .side #pgrid.mixer .strip>.pc+.pc{grid-column:2/4}
+html.rooms-rail .side #pgrid.mixer .strip>.pc output{min-width:0;font:11px var(--mono)}
 /* export panel cards */
 #exp .pgrp{--ac:var(--fg);position:relative;overflow:hidden;border-radius:14px;background:radial-gradient(90% 60% at 0% 0%,color-mix(in srgb,var(--ac) 9%,transparent),transparent 70%),var(--sf1);border-color:color-mix(in srgb,var(--ac) 18%,var(--line))}
 #exp .pgrp::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--ac),transparent 75%)}
